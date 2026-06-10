@@ -3,40 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CA Test - Covenant Arrows</title>
+  <title>CBT Test | Covenant Arrows</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f9ff;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
     }
     .card {
       background: white;
-      border-radius: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       padding: 2rem;
-      width: 100%;
-      max-width: 700px;
+      border: 1px solid #f1f5f9;
     }
-    h2 {
-      color: #0c4a6e;
+    .hidden { display: none !important; }
+
+    /* Entry screen */
+    .entry-card h2 {
+      color: #b8860b;
       margin-bottom: 1.5rem;
     }
     .input-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
     }
-    label {
-      display: block;
+    .input-group label {
       font-weight: 600;
+      display: block;
       margin-bottom: 0.3rem;
-      color: #334155;
+      color: #475569;
     }
-    input, select {
+    .input-group input, .input-group select {
       width: 100%;
       padding: 12px 16px;
       border: 2px solid #e2e8f0;
@@ -44,144 +47,179 @@
       font-size: 1rem;
       outline: none;
     }
-    input:focus, select:focus {
-      border-color: #0284c7;
+    .input-group input:focus, .input-group select:focus {
+      border-color: #d4af37;
     }
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: #0284c7;
+    .gold-btn {
+      background: #b8860b;
       color: white;
       border: none;
+      padding: 14px 24px;
       border-radius: 12px;
       font-weight: bold;
       font-size: 1.1rem;
       cursor: pointer;
-      transition: background 0.2s;
+      width: 100%;
     }
-    .btn:hover { background: #0369a1; }
-    .hidden { display: none !important; }
+    .gold-btn:hover { background: #9a7209; }
 
+    /* Test area layout */
+    .test-layout {
+      display: flex;
+      gap: 2rem;
+    }
+    .question-panel {
+      flex: 3;
+    }
+    .navigator {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+      height: fit-content;
+    }
     .timer {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #0f172a;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #b8860b;
       text-align: center;
       margin-bottom: 1rem;
     }
+    .status-summary {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .status-summary span {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+    }
+    .q-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .q-btn {
+      width: 100%;
+      aspect-ratio: 1;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #1e293b;
+    }
+    .q-btn.answered { background: #dcfce7; border-color: #22c55e; }
+    .q-btn.unanswered { background: #fee2e2; border-color: #ef4444; }
+    .q-btn.current { border: 3px solid #d4af37; box-shadow: 0 0 0 2px rgba(212,175,55,0.3); }
+    .q-btn:hover { background: #f1f5f9; }
+
     .question-block {
-      margin-bottom: 1.2rem;
-      border-left: 4px solid #0284c7;
-      padding-left: 1rem;
+      margin-bottom: 1.5rem;
     }
     .question-block p {
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.8rem;
     }
     .option {
       margin-left: 1.5rem;
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.5rem;
     }
-    .option label {
-      display: inline-block;
-      font-weight: normal;
-    }
-    .option input { width: auto; margin-right: 0.5rem; }
+    .option input { margin-right: 0.5rem; }
+
     .submit-btn {
       background: #059669;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
     .submit-btn:hover { background: #047857; }
 
     /* Result overlay */
     .result-overlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.7);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 200;
+      z-index: 100;
     }
     .result-card {
       background: white;
       border-radius: 24px;
-      padding: 2rem;
-      max-width: 500px;
-      width: 90%;
+      padding: 2.5rem;
       text-align: center;
-      animation: bounceIn 0.5s ease;
+      max-width: 450px;
+      animation: pop 0.4s ease;
     }
-    @keyframes bounceIn {
-      0% { transform: scale(0.5); opacity: 0; }
+    @keyframes pop {
+      0% { transform: scale(0.7); opacity: 0; }
       70% { transform: scale(1.05); }
       100% { transform: scale(1); opacity: 1; }
     }
-    .congrats {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #f59e0b;
-      margin-bottom: 0.5rem;
-    }
-    .score {
-      font-size: 3rem;
-      font-weight: 900;
-      color: #4f46e5;
-      margin: 1rem 0;
-    }
-    .message {
-      font-size: 1.2rem;
-      color: #334155;
-      margin-bottom: 1.5rem;
-    }
-    .btn-retry {
-      background: #f59e0b;
+    .congrats { font-size: 2rem; font-weight: 800; color: #b8860b; }
+    .score { font-size: 3.5rem; font-weight: 900; color: #1e40af; margin: 1rem 0; }
+    .retry-btn {
+      background: #d4af37;
       color: white;
-      padding: 12px 24px;
       border: none;
+      padding: 12px 24px;
       border-radius: 12px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 1rem;
     }
   </style>
-  <!-- Confetti library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <!-- Student entry form -->
-  <div id="entryScreen" class="card">
-    <h2>👋 Welcome! Enter your details</h2>
-    <div class="input-group">
-      <label for="studentName">Full Name</label>
-      <input type="text" id="studentName" placeholder="Your name" required />
+  <div class="container">
+    <!-- Entry -->
+    <div id="entryScreen" class="card entry-card">
+      <h2>👋 Welcome! Enter your details</h2>
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="studentName" placeholder="Your name" />
+      </div>
+      <div class="input-group">
+        <label>Class</label>
+        <select id="studentClass">
+          <option value="basic3">Basic 3</option>
+          <option value="basic4">Basic 4</option>
+          <option value="basic5">Basic 5</option>
+          <option value="basic6">Basic 6</option>
+        </select>
+      </div>
+      <button class="gold-btn" id="startBtn">Start Test</button>
     </div>
-    <div class="input-group">
-      <label for="studentClass">Class</label>
-      <select id="studentClass">
-        <option value="basic3">Basic 3</option>
-        <option value="basic4">Basic 4</option>
-        <option value="basic5">Basic 5</option>
-        <option value="basic6">Basic 6</option>
-      </select>
+
+    <!-- Test -->
+    <div id="testScreen" class="hidden">
+      <div class="test-layout">
+        <div class="question-panel card">
+          <div class="timer" id="timerDisplay">10:00</div>
+          <div id="questionContent"></div>
+          <button class="gold-btn submit-btn" id="submitBtn">Submit Answers</button>
+        </div>
+        <div class="navigator">
+          <h3 style="margin-bottom:1rem; color:#b8860b;">Questions</h3>
+          <div class="status-summary">
+            <span id="attemptedCount">0</span> Attempted
+            <span id="unansweredCount">5</span> Unanswered
+            <span id="remainingCount">5</span> Remaining
+          </div>
+          <div class="q-grid" id="qGrid"></div>
+        </div>
+      </div>
     </div>
-    <button class="btn" id="startTestBtn">Start Test</button>
-    <p style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">
-      You have 10 minutes for 5 questions.
-    </p>
   </div>
 
-  <!-- Test screen (hidden initially) -->
-  <div id="testScreen" class="card hidden">
-    <div class="timer" id="timer">10:00</div>
-    <div id="questionsContainer"></div>
-    <button class="btn submit-btn" id="submitBtn">Submit Answers</button>
-  </div>
-
-  <!-- Firebase & Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script>
-    // Init Firebase
     firebase.initializeApp({
       apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
       authDomain: "edumeta-c5588.firebaseapp.com",
@@ -193,91 +231,98 @@
     });
     const db = firebase.firestore();
 
-    // State
-    let questions = [];
-    let answers = {};
-    let timeLeft = 600; // 10 min
-    let timerInterval;
+    let questions = [], answers = {}, currentQ = 0, timeLeft = 600, timerInterval, testSubmitted = false;
     let studentName, studentClass;
-    let testSubmitted = false;
 
-    // DOM elements
     const entryScreen = document.getElementById('entryScreen');
     const testScreen = document.getElementById('testScreen');
-    const startBtn = document.getElementById('startTestBtn');
+    const startBtn = document.getElementById('startBtn');
     const submitBtn = document.getElementById('submitBtn');
-    const timerDisplay = document.getElementById('timer');
-    const questionsContainer = document.getElementById('questionsContainer');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const questionContent = document.getElementById('questionContent');
+    const qGrid = document.getElementById('qGrid');
+    const attemptedSpan = document.getElementById('attemptedCount');
+    const unansweredSpan = document.getElementById('unansweredCount');
+    const remainingSpan = document.getElementById('remainingCount');
 
     startBtn.addEventListener('click', async () => {
       studentName = document.getElementById('studentName').value.trim();
       studentClass = document.getElementById('studentClass').value;
-      if (!studentName) {
-        alert('Please enter your name.');
-        return;
+      if (!studentName) { alert('Please enter your name.'); return; }
+      const doc = await db.collection('questions').doc(studentClass).get();
+      if (!doc.exists || !doc.data().items) {
+        alert('No questions for this class yet.'); return;
       }
-      // Fetch questions from Firestore
-      try {
-        const docRef = db.collection('questions').doc(studentClass);
-        const doc = await docRef.get();
-        if (doc.exists && doc.data().items) {
-          questions = doc.data().items;
-        } else {
-          alert('No questions available for this class yet. Contact your teacher.');
-          return;
-        }
-        // Show test screen
-        entryScreen.classList.add('hidden');
-        testScreen.classList.remove('hidden');
-        renderQuestions();
-        startTimer();
-      } catch (error) {
-        console.error(error);
-        alert('Error loading questions. Please try again.');
-      }
+      questions = doc.data().items;
+      entryScreen.classList.add('hidden');
+      testScreen.classList.remove('hidden');
+      renderNavigator();
+      showQuestion(0);
+      startTimer();
     });
 
-    function renderQuestions() {
-      questionsContainer.innerHTML = '';
-      questions.forEach((q, idx) => {
-        const block = document.createElement('div');
-        block.className = 'question-block';
-        block.innerHTML = `
+    function renderNavigator() {
+      qGrid.innerHTML = '';
+      for (let i = 0; i < questions.length; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'q-btn';
+        btn.textContent = i+1;
+        btn.onclick = () => showQuestion(i);
+        qGrid.appendChild(btn);
+      }
+      updateStatus();
+    }
+
+    function showQuestion(idx) {
+      currentQ = idx;
+      const q = questions[idx];
+      questionContent.innerHTML = `
+        <div class="question-block">
           <p>${idx+1}. ${q.question}</p>
           ${['A','B','C','D'].map(opt => `
             <div class="option">
               <label>
-                <input type="radio" name="q${idx}" value="${opt}" onchange="selectAnswer(${idx}, '${opt}')" />
+                <input type="radio" name="q${idx}" value="${opt}" ${answers[idx] === opt ? 'checked' : ''} 
+                  onchange="saveAnswer(${idx}, '${opt}')" />
                 ${opt}. ${q['option'+opt]}
               </label>
             </div>
           `).join('')}
-        `;
-        questionsContainer.appendChild(block);
-      });
+        </div>
+      `;
+      updateStatus();
     }
 
-    window.selectAnswer = function(idx, opt) {
+    window.saveAnswer = function(idx, opt) {
       answers[idx] = opt;
+      updateStatus();
     };
 
-    function startTimer() {
-      updateTimerDisplay();
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          submitTest();
-        }
-      }, 1000);
+    function updateStatus() {
+      let attempted = Object.keys(answers).length;
+      let unanswered = questions.length - attempted;
+      attemptedSpan.textContent = attempted;
+      unansweredSpan.textContent = unanswered;
+      remainingSpan.textContent = unanswered;
+
+      // Update grid button colors
+      const btns = qGrid.children;
+      for (let i = 0; i < btns.length; i++) {
+        btns[i].classList.remove('answered', 'unanswered', 'current');
+        if (i === currentQ) btns[i].classList.add('current');
+        if (answers[i] !== undefined) btns[i].classList.add('answered');
+        else btns[i].classList.add('unanswered');
+      }
     }
 
-    function updateTimerDisplay() {
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      timerDisplay.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-      if (timeLeft < 60) timerDisplay.style.color = '#ef4444';
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const m = Math.floor(timeLeft/60), s = timeLeft%60;
+        timerDisplay.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+        if (timeLeft < 60) timerDisplay.style.color = '#ef4444';
+        if (timeLeft <= 0) { clearInterval(timerInterval); submitTest(); }
+      }, 1000);
     }
 
     submitBtn.addEventListener('click', submitTest);
@@ -286,53 +331,29 @@
       if (testSubmitted) return;
       testSubmitted = true;
       clearInterval(timerInterval);
-
-      // Calculate score
       let score = 0;
-      questions.forEach((q, idx) => {
-        if (answers[idx] === q.correct) score++;
-      });
+      questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
       const total = questions.length;
 
-      // Save result to Firestore (anonymous student)
-      try {
-        await db.collection('results').add({
-          studentName,
-          class: studentClass,
-          answers,
-          score,
-          total,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      } catch (error) {
-        console.error('Could not save result:', error);
-      }
-
-      // Show result overlay with confetti
-      showResult(score, total);
-    }
-
-    function showResult(score, total) {
-      // Launch confetti!
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 }
+      await db.collection('results').add({
+        studentName, class: studentClass, answers, score, total,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
-      setTimeout(() => confetti({ particleCount: 50, spread: 70, origin: { y: 0.7 } }), 500);
 
-      // Create overlay
+      // Result overlay
       const overlay = document.createElement('div');
       overlay.className = 'result-overlay';
       overlay.innerHTML = `
         <div class="result-card">
-          <div class="congrats">🎉 Congratulations, ${studentName}! 🎉</div>
+          <div class="congrats">🎉 Congratulations, ${studentName}!</div>
           <div class="score">${score} / ${total}</div>
-          <div class="message">You did great! Keep it up.</div>
-          <button class="btn-retry" onclick="location.reload()">Take Another Test</button>
+          <p style="color:#475569;">Great job! Keep shining.</p>
+          <button class="retry-btn" onclick="location.reload()">Take Another Test</button>
         </div>
       `;
       document.body.appendChild(overlay);
+      confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+      setTimeout(() => confetti({ particleCount: 50, spread: 70, origin: { y: 0.7 } }), 500);
     }
   </script>
 </body>
