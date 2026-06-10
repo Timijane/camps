@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Covenant Arrows</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+    header {
+      background: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    header h1 {
+      color: #1e40af;
+    }
+    .logout-btn {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab {
+      padding: 10px 20px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab.active {
+      background: #1e40af;
+      color: white;
+      border-color: #1e40af;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    button {
+      padding: 10px 20px;
+      background: #1e40af;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1e3a8a; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    th {
+      background: #f8fafc;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 Admin Dashboard</h1>
+    <button class="logout-btn" id="logoutBtn">Logout</button>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" data-tab="questions">Manage Questions</div>
+      <div class="tab" data-tab="results">View Results</div>
+    </div>
+
+    <!-- Manage Questions Section -->
+    <div id="questionsSection">
+      <div class="card">
+        <div class="form-group">
+          <label for="classSelect">Select Class</label>
+          <select id="classSelect">
+            <option value="basic3">Basic 3</option>
+            <option value="basic4">Basic 4</option>
+            <option value="basic5">Basic 5</option>
+            <option value="basic6">Basic 6</option>
+          </select>
+        </div>
+        <div id="questionsEditor"></div>
+        <button id="saveQuestionsBtn" style="margin-top:1rem;">Save Questions</button>
+      </div>
+    </div>
+
+    <!-- View Results Section (hidden by default) -->
+    <div id="resultsSection" class="hidden">
+      <div class="card">
+        <div class="form-group">
+          <label for="filterClass">Filter by Class</label>
+          <select id="filterClass">
+            <option value="">All Classes</option>
+            <option value="basic3">Basic 3</option>
+            <option value="basic4">Basic 4</option>
+            <option value="basic5">Basic 5</option>
+            <option value="basic6">Basic 6</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
+      authDomain: "edumeta-c5588.firebaseapp.com",
+      projectId: "edumeta-c5588",
+      storageBucket: "edumeta-c5588.firebasestorage.app",
+      messagingSenderId: "332853259697",
+      appId: "1:332853259697:web:92e0c07e43d1c3bf432190",
+      measurementId: "G-WY24HER46Q"
+    });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Protect this page
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      auth.signOut().then(() => window.location.href = 'index.html');
+    });
+
+    // Tab switching
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const section = tab.dataset.tab;
+        document.getElementById('questionsSection').classList.toggle('hidden', section !== 'questions');
+        document.getElementById('resultsSection').classList.toggle('hidden', section !== 'results');
+        if (section === 'results') loadResults();
+      });
+    });
+
+    // ----------- MANAGE QUESTIONS -----------
+    const classSelect = document.getElementById('classSelect');
+    const questionsEditor = document.getElementById('questionsEditor');
+    const saveBtn = document.getElementById('saveQuestionsBtn');
+
+    const emptyQuestion = {
+      question: '',
+      optionA: '',
+      optionB: '',
+      optionC: '',
+      optionD: '',
+      correct: 'A'
+    };
+
+    let currentQuestions = Array(5).fill().map(() => ({...emptyQuestion}));
+
+    async function loadQuestions() {
+      const cls = classSelect.value;
+      const doc = await db.collection('questions').doc(cls).get();
+      if (doc.exists && doc.data().items) {
+        currentQuestions = doc.data().items;
+      } else {
+        currentQuestions = Array(5).fill().map(() => ({...emptyQuestion}));
+      }
+      renderEditor();
+    }
+
+    function renderEditor() {
+      questionsEditor.innerHTML = '';
+      currentQuestions.forEach((q, idx) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.style.marginBottom = '1rem';
+        div.innerHTML = `
+          <h3>Question ${idx+1}</h3>
+          <input type="text" class="q-text" placeholder="Question" value="${q.question}" data-idx="${idx}" />
+          ${['A','B','C','D'].map(opt => `
+            <input type="text" class="opt-${opt}" placeholder="Option ${opt}" value="${q['option'+opt]}" data-idx="${idx}" style="margin-top:0.5rem;" />
+          `).join('')}
+          <label style="margin-top:0.5rem;">Correct Answer:
+            <select class="correct-sel" data-idx="${idx}">
+              <option value="A" ${q.correct==='A'?'selected':''}>A</option>
+              <option value="B" ${q.correct==='B'?'selected':''}>B</option>
+              <option value="C" ${q.correct==='C'?'selected':''}>C</option>
+              <option value="D" ${q.correct==='D'?'selected':''}>D</option>
+            </select>
+          </label>
+        `;
+        questionsEditor.appendChild(div);
+      });
+    }
+
+    // Update currentQuestions on input change
+    questionsEditor.addEventListener('input', (e) => {
+      const idx = e.target.dataset.idx;
+      if (idx === undefined) return;
+      const field = e.target.classList.contains('q-text') ? 'question' :
+                    e.target.classList.contains('opt-A') ? 'optionA' :
+                    e.target.classList.contains('opt-B') ? 'optionB' :
+                    e.target.classList.contains('opt-C') ? 'optionC' :
+                    e.target.classList.contains('opt-D') ? 'optionD' : null;
+      if (field) currentQuestions[idx][field] = e.target.value;
+    });
+    questionsEditor.addEventListener('change', (e) => {
+      if (e.target.classList.contains('correct-sel')) {
+        const idx = e.target.dataset.idx;
+        currentQuestions[idx].correct = e.target.value;
+      }
+    });
+
+    saveBtn.addEventListener('click', async () => {
+      // Basic validation
+      for (let i = 0; i < currentQuestions.length; i++) {
+        const q = currentQuestions[i];
+        if (!q.question.trim() || !q.optionA.trim() || !q.optionB.trim() || !q.optionC.trim() || !q.optionD.trim()) {
+          alert(`Question ${i+1} is incomplete.`);
+          return;
+        }
+      }
+      await db.collection('questions').doc(classSelect.value).set({ items: currentQuestions });
+      alert('Questions saved successfully!');
+    });
+
+    classSelect.addEventListener('change', loadQuestions);
+    loadQuestions(); // initial load
+
+    // ----------- VIEW RESULTS -----------
+    const filterClass = document.getElementById('filterClass');
+    const resultsBody = document.getElementById('resultsBody');
+
+    filterClass.addEventListener('change', loadResults);
+
+    async function loadResults() {
+      resultsBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+      let query = db.collection('results').orderBy('timestamp', 'desc');
+      const cls = filterClass.value;
+      if (cls) query = query.where('class', '==', cls);
+      const snapshot = await query.get();
+      resultsBody.innerHTML = '';
+      if (snapshot.empty) {
+        resultsBody.innerHTML = '<tr><td colspan="4">No results found.</td></tr>';
+        return;
+      }
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString() : 'N/A';
+        resultsBody.innerHTML += `
+          <tr>
+            <td>${data.studentName}</td>
+            <td>${data.class.replace('basic','Basic ')}</td>
+            <td>${data.score}/${data.total}</td>
+            <td>${date}</td>
+          </tr>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>
