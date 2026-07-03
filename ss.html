@@ -1,1463 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Covenant Arrows' Model | Third Term Exam System</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check Results | Covenant Arrows' Model</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <style>
+        :root {
+            --primary: #1E3A5F;
+            --primary-light: #2A5088;
+            --gold: #C8963E;
+            --gold-light: #D4AF37;
+            --gold-dark: #B8860B;
+            --teal: #2A9D8F;
+            --bg: #F1F5F9;
+            --card-bg: #FFFFFF;
+            --text: #1E293B;
+            --text-light: #64748B;
+            --border: #E2E8F0;
+            --danger: #EF4444;
+            --success: #22C55E;
+        }
 
-    :root {
-      --primary: #1E3A5F;
-      --primary-light: #2A5088;
-      --gold: #C8963E;
-      --gold-light: #D4AF37;
-      --teal: #2A9D8F;
-      --bg: #F0F4F8;
-      --card-bg: #FFFFFF;
-      --text: #1E293B;
-      --text-light: #64748B;
-      --border: #E2E8F0;
-      --danger: #EF4444;
-      --success: #22C55E;
-      --warning: #F59E0B;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      background: #F0F4F8;
-      color: var(--text);
-      min-height: 100vh;
-    }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F1B2D 0%, #1E3A5F 50%, #1a2744 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
 
-    /* ========== LANDING PAGE ========== */
-    .landing-bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: linear-gradient(135deg, #0F1B2D 0%, #1E3A5F 40%, #1a2744 100%);
-      z-index: -2;
-    }
-    .landing-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="80" cy="50" r="1.5" fill="rgba(255,255,255,0.03)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.04)"/></svg>');
-      z-index: -1;
-    }
-    .landing-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .landing-card {
-      background: rgba(255,255,255,0.96);
-      backdrop-filter: blur(20px);
-      border-radius: 28px;
-      padding: 3rem 2.5rem;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-      max-width: 580px;
-      width: 100%;
-      text-align: center;
-      border: 1px solid rgba(200,150,62,0.2);
-    }
-    .landing-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 20px; right: 20px;
-      height: 4px;
-      background: linear-gradient(90deg, #1E3A5F, #C8963E, #2A9D8F, #C8963E, #1E3A5F);
-      border-radius: 4px 4px 0 0;
-    }
-    .school-crest {
-      width: 70px; height: 70px;
-      margin: 0 auto 1rem;
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid var(--gold);
-      font-size: 2rem;
-    }
-    .school-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 2rem;
-      font-weight: 800;
-      color: #1E3A5F;
-      line-height: 1.2;
-    }
-    .school-name .gold { color: #C8963E; }
-    .school-motto {
-      font-size: 0.85rem;
-      color: #64748B;
-      font-style: italic;
-      margin-bottom: 1.5rem;
-    }
-    .role-selector {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin: 1.5rem 0;
-    }
-    .role-card {
-      flex: 1;
-      min-width: 130px;
-      padding: 1.5rem 1rem;
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: white;
-    }
-    .role-card:hover {
-      border-color: var(--gold);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
-    .role-card.selected {
-      border-color: var(--primary);
-      background: #EFF6FF;
-      box-shadow: 0 8px 25px rgba(30,58,95,0.15);
-    }
-    .role-card .role-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
-    .role-card .role-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
 
-    .login-form {
-      display: none;
-      margin-top: 1.5rem;
-      text-align: left;
-    }
-    .login-form.active { display: block; }
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      margin-bottom: 0.3rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      font-size: 1rem;
-      font-family: 'Inter', sans-serif;
-      transition: border-color 0.2s;
-    }
-    .form-group input:focus, .form-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    .btn {
-      padding: 14px 28px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 1rem;
-      transition: all 0.2s;
-      font-family: 'Inter', sans-serif;
-      width: 100%;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
-      color: white;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(30,58,95,0.3); }
-    .btn-gold {
-      background: linear-gradient(135deg, #D4AF37, #B8860B);
-      color: white;
-    }
-    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(184,134,11,0.3); }
-    .btn-success { background: var(--success); color: white; }
+        /* PIN Entry Card */
+        .card {
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
 
-    /* ========== TEACHER/ADMIN DASHBOARD ========== */
-    .dashboard-header {
-      background: linear-gradient(135deg, #1E3A5F, #1a2744);
-      color: white;
-      padding: 0.8rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .dashboard-header h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1rem;
-    }
-    .dashboard-header .gold-dot { color: var(--gold-light); }
-    .dashboard-main {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 1.5rem;
-    }
-    .tab-nav {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-      background: white;
-      padding: 0.4rem;
-      border-radius: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .tab-btn {
-      padding: 10px 20px;
-      border: none;
-      background: transparent;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      transition: all 0.2s;
-    }
-    .tab-btn.active { background: var(--primary); color: white; }
-    .tab-btn:hover:not(.active) { background: #F1F5F9; }
-    .card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-      margin-bottom: 1.5rem;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.2rem;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-    }
-    .btn-sm {
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      border-radius: 8px;
-      width: auto;
-    }
-    .btn-outline {
-      background: white;
-      border: 2px solid var(--primary);
-      color: var(--primary);
-    }
-    .btn-outline:hover { background: var(--primary); color: white; }
-    .btn-danger { background: var(--danger); color: white; width: auto; }
-    .btn-gold-sm { background: var(--gold); color: white; width: auto; }
+        .school-crest {
+            width: 64px; height: 64px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #1E3A5F, #2A5088);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--gold);
+            font-size: 1.8rem;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    th, td {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      text-align: left;
-    }
-    th {
-      background: #F8FAFC;
-      font-weight: 700;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: var(--text-light);
-    }
-    .hidden { display: none !important; }
+        .school-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1E3A5F;
+            margin-bottom: 0.3rem;
+        }
+        .school-name .gold { color: var(--gold-dark); }
+        .school-motto {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
 
-    /* Question Editor */
-    .question-block {
-      background: #FAFBFC;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.2rem;
-      margin-bottom: 1rem;
-    }
-    .question-block .q-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.8rem;
-    }
-    .options-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.6rem;
-    }
-    @media (max-width: 600px) {
-      .options-row { grid-template-columns: 1fr; }
-    }
-    .option-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .option-item .opt-letter {
-      font-weight: 700;
-      color: var(--primary);
-      width: 20px;
-    }
+        .pin-input-group {
+            margin: 1.5rem 0;
+        }
+        .pin-input-group label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        .pin-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 16px 20px;
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            font-size: 2rem;
+            text-align: center;
+            letter-spacing: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .pin-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(30,58,95,0.1);
+        }
 
-    /* Upload Zone */
-    .upload-zone {
-      border: 3px dashed #CBD5E1;
-      border-radius: 14px;
-      padding: 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .upload-zone:hover { border-color: var(--primary); background: #EFF6FF; }
+        .btn-check {
+            background: linear-gradient(135deg, #D4AF37, #B8860B);
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(184,134,11,0.4);
+        }
+        .btn-check:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(184,134,11,0.5);
+        }
+        .btn-check:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    /* CBT Exam */
-    .cbt-container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .cbt-header {
-      background: white;
-      padding: 1rem 1.5rem;
-      border-radius: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .timer {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--danger);
-    }
-    .question-nav {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .q-nav-btn {
-      width: 35px; height: 35px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: white;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
-    .q-nav-btn.answered { background: #DCFCE7; border-color: #22C55E; }
-    .q-nav-btn.current { background: var(--primary); color: white; border-color: var(--primary); }
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            display: none;
+            background: #FEE2E2;
+            padding: 10px 16px;
+            border-radius: 8px;
+        }
+        .error-msg.show { display: block; }
 
-    /* Report Card */
-    .report-card {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 2rem;
-      font-size: 0.8rem;
-    }
-    .report-card .school-header {
-      text-align: center;
-      border-bottom: 3px double #1E3A5F;
-      padding-bottom: 1rem;
-      margin-bottom: 1rem;
-    }
-    .report-card .school-header h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      color: #1E3A5F;
-    }
-    .report-card .info-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .report-card .info-item {
-      font-size: 0.78rem;
-      line-height: 1.5;
-    }
-    .report-card table {
-      font-size: 0.7rem;
-    }
-    .report-card table th {
-      font-size: 0.65rem;
-      text-align: center;
-      padding: 6px 4px;
-    }
-    .report-card table td {
-      text-align: center;
-      padding: 5px 4px;
-    }
-    .report-card .totals-row {
-      font-weight: 700;
-      background: #F8FAFC;
-    }
+        /* Results Display */
+        .results-container {
+            display: none;
+        }
+        .results-container.show {
+            display: block;
+        }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #1E293B;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-weight: 600;
-      z-index: 9999;
-      animation: slideIn 0.3s ease;
-    }
-    @keyframes slideIn {
-      from { transform: translateX(100px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    .toast.success { background: #166534; }
-    .toast.error { background: #991B1B; }
+        .result-header {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #1E3A5F, #1a2744);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+        .result-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+        }
+        .result-header .gold-dot { color: var(--gold-light); }
 
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      align-items: center; justify-content: center;
-      z-index: 1000;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: white;
-      border-radius: 18px;
-      padding: 2rem;
-      width: 90%;
-      max-width: 550px;
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-    .modal h3 { margin-bottom: 1rem; }
-  </style>
+        .result-body {
+            padding: 1.5rem;
+        }
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-item {
+            background: #F8FAFC;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .summary-item .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-light);
+        }
+        .summary-item .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+        .summary-item .value.grade-a { color: #16A34A; }
+        .summary-item .value.grade-b { color: #2563EB; }
+        .summary-item .value.grade-c { color: #D97706; }
+        .summary-item .value.grade-d { color: #DC2626; }
+        .summary-item .value.grade-f { color: #991B1B; }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        thead th {
+            background: #F8FAFC;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+            border-bottom: 2px solid var(--border);
+        }
+        tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr:hover { background: #F8FAFC; }
+        .correct-row { background: #F0FDF4; }
+        .wrong-row { background: #FEF2F2; }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 2rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .card { padding: 1.5rem; }
+            .pin-input { font-size: 1.5rem; letter-spacing: 6px; max-width: 250px; }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- PIN Entry View -->
+        <div class="card" id="pinEntryView">
+            <div class="school-crest">🕊️</div>
+            <h1 class="school-name">Covenant <span class="gold">Arrows'</span> Model</h1>
+            <p class="school-motto">✝️ Christ-Centered Learning • Modern Excellence</p>
+            
+            <h3 style="margin-bottom:0.5rem; color:#1E3A5F;">📊 Result Checker</h3>
+            <p style="color:var(--text-light); font-size:0.9rem; margin-bottom:1rem;">
+                Enter the 8-digit PIN given to you by your teacher
+            </p>
 
-<!-- ==================== LANDING PAGE ==================== -->
-<div id="landingPage">
-  <div class="landing-bg"></div>
-  <div class="landing-overlay"></div>
-  <div class="landing-container">
-    <div class="landing-card" style="position:relative;">
-      <div class="school-crest">🕊️</div>
-      <h1 class="school-name">Covenant <span class="gold">Arrows'</span><br>Model</h1>
-      <p class="school-motto">✝️ Christ-Centered Learning • Modern Excellence</p>
-      <p style="color:#64748B; margin-bottom:1rem;">Third Term Examination 2025/2026</p>
-
-      <div class="role-selector" id="roleSelector">
-        <div class="role-card" data-role="student" onclick="selectRole('student')">
-          <div class="role-icon">👨‍🎓</div>
-          <div class="role-title">Student</div>
-        </div>
-        <div class="role-card" data-role="teacher" onclick="selectRole('teacher')">
-          <div class="role-icon">👨‍🏫</div>
-          <div class="role-title">Teacher</div>
-        </div>
-        <div class="role-card" data-role="admin" onclick="selectRole('admin')">
-          <div class="role-icon">🔐</div>
-          <div class="role-title">Admin</div>
-        </div>
-      </div>
-
-      <!-- Student Login -->
-      <form class="login-form" id="studentLoginForm" onsubmit="loginAsStudent(event)">
-        <div class="form-group">
-          <label>Student Name</label>
-          <input type="text" id="studentName" placeholder="Enter your full name" required />
-        </div>
-        <div class="form-group">
-          <label>Class</label>
-          <select id="studentClass" required></select>
-        </div>
-        <button type="submit" class="btn btn-primary">🚀 Start Examination</button>
-      </form>
-
-      <!-- Teacher Login -->
-      <form class="login-form" id="teacherLoginForm" onsubmit="loginAsTeacher(event)">
-        <div class="form-group">
-          <label>Teacher Name</label>
-          <input type="text" id="teacherName" placeholder="Enter your name" required />
-        </div>
-        <div class="form-group">
-          <label>Class</label>
-          <select id="teacherClass" required></select>
-        </div>
-        <button type="submit" class="btn btn-gold">👨‍🏫 Access Dashboard</button>
-      </form>
-
-      <!-- Admin Login -->
-      <form class="login-form" id="adminLoginForm" onsubmit="loginAsAdmin(event)">
-        <div class="form-group">
-          <label>Admin Email</label>
-          <input type="email" id="adminEmail" placeholder="Admin email" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="adminPassword" placeholder="Password" required />
-        </div>
-        <button type="submit" class="btn btn-primary">🔐 Admin Login</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== STUDENT CBT PAGE ==================== -->
-<div id="cbtPage" class="hidden">
-  <div class="dashboard-header">
-    <h3>📝 Covenant Arrows' <span class="gold-dot">Model</span> | CBT Exam</h3>
-    <div style="display:flex; align-items:center; gap:1rem;">
-      <span id="cbtStudentInfo"></span>
-      <button class="btn-sm btn-danger" onclick="submitExam()">Submit Exam</button>
-    </div>
-  </div>
-  <div class="dashboard-main cbt-container">
-    <div class="cbt-header">
-      <div>
-        <strong id="cbtSubjectTitle">Mathematics</strong>
-        <span style="color:#64748B; margin-left:10px;" id="cbtProgress">Question 1 of 10</span>
-      </div>
-      <div class="timer" id="cbtTimer">60:00</div>
-    </div>
-    <div class="card" id="cbtQuestionCard">
-      <h3 id="cbtQuestionText" style="margin-bottom:1rem;">Loading...</h3>
-      <div id="cbtOptions"></div>
-      <div style="display:flex; justify-content:space-between; margin-top:1.5rem;">
-        <button class="btn-sm btn-outline" onclick="prevQuestion()">⬅ Previous</button>
-        <button class="btn-sm btn-primary" onclick="nextQuestion()">Next ➡</button>
-      </div>
-    </div>
-    <div class="card">
-      <p style="font-weight:600; margin-bottom:0.5rem;">Question Navigator:</p>
-      <div class="question-nav" id="questionNav"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== TEACHER DASHBOARD ==================== -->
-<div id="teacherDashboard" class="hidden">
-  <div class="dashboard-header">
-    <h3>👨‍🏫 Covenant Arrows' <span class="gold-dot">Model</span> | Teacher Dashboard</h3>
-    <div style="display:flex; align-items:center; gap:1rem;">
-      <span id="teacherInfoDisplay"></span>
-      <button class="btn-sm" style="background:rgba(255,255,255,0.2); color:white;" onclick="logout()">Logout</button>
-    </div>
-  </div>
-  <div class="dashboard-main">
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab="manageQuestions">📝 Manage Questions</button>
-      <button class="tab-btn" data-tab="csvUpload">📥 CSV Upload</button>
-      <button class="tab-btn" data-tab="reportCard">📄 Report Card</button>
-      <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
-    </div>
-
-    <!-- Manage Questions Tab -->
-    <div id="tab-manageQuestions" class="tab-content">
-      <div class="card">
-        <div class="card-header">
-          <h3>Questions for <span id="teacherClassName"></span></h3>
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn-sm btn-primary" onclick="addNewQuestion()">+ Add Question</button>
-            <button class="btn-sm btn-success" onclick="saveAllQuestions()">💾 Save All</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Subject</label>
-          <select id="questionSubject" onchange="loadQuestions()">
-            <option value="">-- Select Subject --</option>
-          </select>
-        </div>
-        <div id="questionsContainer">
-          <p style="color:#94A3B8; text-align:center; padding:2rem;">Select a subject to manage questions.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- CSV Upload Tab -->
-    <div id="tab-csvUpload" class="tab-content hidden">
-      <div class="card">
-        <h3>📥 Bulk Upload Questions via CSV</h3>
-        <p style="color:#64748B; margin-bottom:1rem;">
-          Download template, fill in questions, upload. Format: Subject,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points
-        </p>
-        <button class="btn-sm btn-outline" onclick="downloadTemplate()">📥 Download CSV Template</button>
-        <div class="upload-zone" style="margin-top:1rem;" onclick="document.getElementById('csvFile').click()">
-          <p>📁 Click to upload CSV file or drag & drop</p>
-        </div>
-        <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="handleCsvUpload(event)" />
-        <div id="csvPreview" style="margin-top:1rem;"></div>
-      </div>
-    </div>
-
-    <!-- Report Card Tab -->
-    <div id="tab-reportCard" class="tab-content hidden">
-      <div class="card">
-        <div class="card-header">
-          <h3>📄 Report Card - Third Term</h3>
-          <button class="btn-sm btn-gold-sm" onclick="generateReportCard()">🖨️ Generate/Print Report Card</button>
-        </div>
-        <div id="reportCardPreview"></div>
-      </div>
-    </div>
-
-    <!-- Settings Tab -->
-    <div id="tab-settings" class="tab-content hidden">
-      <div class="card">
-        <h3>⚙️ Grading System Settings</h3>
-        <div class="form-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:1rem;">
-          <div class="form-group">
-            <label>A Grade (minimum %)</label>
-            <input type="number" id="gradeA" value="80" min="0" max="100" />
-          </div>
-          <div class="form-group">
-            <label>B Grade (minimum %)</label>
-            <input type="number" id="gradeB" value="65" min="0" max="100" />
-          </div>
-          <div class="form-group">
-            <label>C Grade (minimum %)</label>
-            <input type="number" id="gradeC" value="50" min="0" max="100" />
-          </div>
-          <div class="form-group">
-            <label>D Grade (minimum %)</label>
-            <input type="number" id="gradeD" value="40" min="0" max="100" />
-          </div>
-        </div>
-        <button class="btn-sm btn-primary" onclick="saveGradingSettings()">Save Settings</button>
-      </div>
-      <div class="card">
-        <h3>➕ Manage Classes</h3>
-        <div id="classList" style="margin-bottom:1rem;"></div>
-        <div style="display:flex; gap:0.5rem;">
-          <input type="text" id="newClassName" placeholder="e.g., Basic 7" style="flex:1; padding:8px 12px; border:2px solid var(--border); border-radius:8px;" />
-          <button class="btn-sm btn-primary" onclick="addNewClass()">+ Add Class</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>📚 Manage Subjects</h3>
-        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-          <input type="text" id="newSubjectName" placeholder="e.g., Mathematics" style="flex:1; padding:8px 12px; border:2px solid var(--border); border-radius:8px;" />
-          <button class="btn-sm btn-primary" onclick="addNewSubject()">+ Add Subject</button>
-        </div>
-        <div id="subjectList"></div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Toast Container -->
-<div id="toastContainer"></div>
-
-<!-- ==================== SCRIPTS ==================== -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<script>
-  // ==================== FIREBASE ====================
-  firebase.initializeApp({
-    apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
-    authDomain: "edumeta-c5588.firebaseapp.com",
-    projectId: "edumeta-c5588",
-    storageBucket: "edumeta-c5588.firebasestorage.app",
-    messagingSenderId: "332853259697",
-    appId: "1:332853259697:web:92e0c07e43d1c3bf432190"
-  });
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  // ==================== DEFAULT CLASSES ====================
-  const DEFAULT_CLASSES = [
-    'Kindergarten 1', 'Kindergarten 2',
-    'Nursery 1', 'Nursery 2',
-    'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'
-  ];
-
-  const DEFAULT_SUBJECTS = [
-    'Mathematics', 'English Language', 'Basic Science', 'Social Studies',
-    'Christian Religious Studies', 'Computer Studies', 'Home Economics',
-    'Agricultural Science', 'Civic Education', 'Creative Arts',
-    'French', 'Yoruba', 'Quantitative Reasoning', 'Verbal Reasoning'
-  ];
-
-  // ==================== GLOBAL STATE ====================
-  let currentUser = null; // { role, name, class, email }
-  let allClasses = [...DEFAULT_CLASSES];
-  let allSubjects = [...DEFAULT_SUBJECTS];
-  let currentQuestions = [];
-  let cbtQuestions = [];
-  let cbtAnswers = {};
-  let cbtCurrentIndex = 0;
-  let cbtTimerInterval = null;
-  let cbtTimeLeft = 3600;
-  let studentResults = {};
-  let gradingSettings = { A: 80, B: 65, C: 50, D: 40 };
-
-  // ==================== INITIALIZATION ====================
-  async function init() {
-    // Load classes from Firestore or use defaults
-    const settingsDoc = await db.collection('settings').doc('school').get();
-    if (settingsDoc.exists) {
-      const data = settingsDoc.data();
-      if (data.classes) allClasses = data.classes;
-      if (data.subjects) allSubjects = data.subjects;
-      if (data.grading) gradingSettings = data.grading;
-    } else {
-      // Save defaults
-      await db.collection('settings').doc('school').set({
-        classes: allClasses,
-        subjects: allSubjects,
-        grading: gradingSettings,
-        schoolName: "Covenant Arrows' Model",
-        motto: "Christ-Centered Learning • Modern Excellence",
-        address: "Abiola Way, Abeokuta, Ogun State, Nigeria"
-      });
-    }
-    populateClassSelects();
-    loadClassesList();
-    loadSubjectsList();
-  }
-
-  function populateClassSelects() {
-    const selects = ['studentClass', 'teacherClass'];
-    selects.forEach(id => {
-      const select = document.getElementById(id);
-      if (!select) return;
-      select.innerHTML = '<option value="">-- Select Class --</option>';
-      allClasses.forEach(c => {
-        select.innerHTML += `<option value="${c}">${c}</option>`;
-      });
-    });
-  }
-
-  // ==================== ROLE SELECTION ====================
-  function selectRole(role) {
-    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-    document.querySelector(`[data-role="${role}"]`).classList.add('selected');
-    document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
-    
-    if (role === 'student') document.getElementById('studentLoginForm').classList.add('active');
-    else if (role === 'teacher') document.getElementById('teacherLoginForm').classList.add('active');
-    else if (role === 'admin') document.getElementById('adminLoginForm').classList.add('active');
-  }
-
-  // ==================== STUDENT LOGIN ====================
-  async function loginAsStudent(e) {
-    e.preventDefault();
-    const name = document.getElementById('studentName').value.trim();
-    const className = document.getElementById('studentClass').value;
-    if (!name || !className) {
-      showToast('Please fill in all fields.', 'error');
-      return;
-    }
-    currentUser = { role: 'student', name, class: className };
-    
-    // Load questions for this class
-    await loadCbtQuestions(className);
-    
-    if (cbtQuestions.length === 0) {
-      showToast('No exam questions available for this class yet. Please contact your teacher.', 'error');
-      return;
-    }
-    
-    document.getElementById('landingPage').classList.add('hidden');
-    document.getElementById('cbtPage').classList.remove('hidden');
-    document.getElementById('cbtStudentInfo').textContent = `${name} | ${className}`;
-    startCbt();
-  }
-
-  async function loadCbtQuestions(className) {
-    cbtQuestions = [];
-    // Get all subjects, load questions for each
-    const subjectsSnapshot = await db.collection('questions')
-      .where('class', '==', className)
-      .get();
-    
-    // Group by subject
-    const subjectMap = {};
-    subjectsSnapshot.forEach(doc => {
-      const q = doc.data();
-      if (!subjectMap[q.subject]) subjectMap[q.subject] = [];
-      subjectMap[q.subject].push({ id: doc.id, ...q });
-    });
-    
-    // Flatten - all subjects combined for now
-    // You can add subject selection later
-    for (const [subject, questions] of Object.entries(subjectMap)) {
-      cbtQuestions = cbtQuestions.concat(questions);
-    }
-    
-    // Shuffle
-    cbtQuestions = shuffleArray(cbtQuestions);
-    cbtAnswers = {};
-    cbtCurrentIndex = 0;
-  }
-
-  function startCbt() {
-    cbtTimeLeft = cbtQuestions.length * 60; // 1 minute per question
-    updateTimerDisplay();
-    cbtTimerInterval = setInterval(() => {
-      cbtTimeLeft--;
-      updateTimerDisplay();
-      if (cbtTimeLeft <= 0) submitExam();
-    }, 1000);
-    renderCbtQuestion();
-    renderQuestionNav();
-  }
-
-  function updateTimerDisplay() {
-    const mins = Math.floor(cbtTimeLeft / 60);
-    const secs = cbtTimeLeft % 60;
-    document.getElementById('cbtTimer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-    if (cbtTimeLeft < 300) document.getElementById('cbtTimer').style.color = '#EF4444';
-  }
-
-  function renderCbtQuestion() {
-    if (cbtCurrentIndex >= cbtQuestions.length) {
-      submitExam();
-      return;
-    }
-    const q = cbtQuestions[cbtCurrentIndex];
-    document.getElementById('cbtProgress').textContent = `Question ${cbtCurrentIndex + 1} of ${cbtQuestions.length}`;
-    document.getElementById('cbtQuestionText').textContent = q.question;
-    
-    const optionsDiv = document.getElementById('cbtOptions');
-    optionsDiv.innerHTML = ['A', 'B', 'C', 'D'].map(opt => `
-      <div style="padding:12px 16px; margin-bottom:8px; border:2px solid ${cbtAnswers[q.id] === opt ? '#1E3A5F' : '#E2E8F0'}; border-radius:10px; cursor:pointer; background:${cbtAnswers[q.id] === opt ? '#EFF6FF' : 'white'};" 
-           onclick="selectCbtAnswer('${q.id}', '${opt}')">
-        <strong>${opt}.</strong> ${q['option'+opt]}
-      </div>
-    `).join('');
-    
-    renderQuestionNav();
-  }
-
-  function selectCbtAnswer(questionId, option) {
-    cbtAnswers[questionId] = option;
-    renderCbtQuestion();
-  }
-
-  function prevQuestion() {
-    if (cbtCurrentIndex > 0) {
-      cbtCurrentIndex--;
-      renderCbtQuestion();
-    }
-  }
-
-  function nextQuestion() {
-    if (cbtCurrentIndex < cbtQuestions.length - 1) {
-      cbtCurrentIndex++;
-      renderCbtQuestion();
-    }
-  }
-
-  function renderQuestionNav() {
-    const nav = document.getElementById('questionNav');
-    nav.innerHTML = cbtQuestions.map((q, i) => `
-      <button class="q-nav-btn ${cbtAnswers[q.id] ? 'answered' : ''} ${i === cbtCurrentIndex ? 'current' : ''}"
-              onclick="cbtCurrentIndex=${i}; renderCbtQuestion();">
-        ${i+1}
-      </button>
-    `).join('');
-  }
-
-  function submitExam() {
-    clearInterval(cbtTimerInterval);
-    let score = 0;
-    let totalPoints = 0;
-    
-    cbtQuestions.forEach(q => {
-      totalPoints += (q.points || 1);
-      if (cbtAnswers[q.id] === q.correctAnswer) {
-        score += (q.points || 1);
-      }
-    });
-    
-    const percentage = Math.round((score / totalPoints) * 100);
-    const grade = calculateGrade(percentage);
-    
-    // Save result
-    db.collection('results').add({
-      studentName: currentUser.name,
-      class: currentUser.class,
-      score: score,
-      total: totalPoints,
-      percentage: percentage,
-      grade: grade,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      answers: cbtAnswers,
-      questions: cbtQuestions.map(q => ({ id: q.id, subject: q.subject, question: q.question }))
-    });
-    
-    alert(`Exam Submitted!\n\nScore: ${score}/${totalPoints}\nPercentage: ${percentage}%\nGrade: ${grade}`);
-    logout();
-  }
-
-  function calculateGrade(percentage) {
-    if (percentage >= gradingSettings.A) return 'A';
-    if (percentage >= gradingSettings.B) return 'B';
-    if (percentage >= gradingSettings.C) return 'C';
-    if (percentage >= gradingSettings.D) return 'D';
-    return 'F';
-  }
-
-  // ==================== TEACHER LOGIN ====================
-  async function loginAsTeacher(e) {
-    e.preventDefault();
-    const name = document.getElementById('teacherName').value.trim();
-    const className = document.getElementById('teacherClass').value;
-    if (!name || !className) {
-      showToast('Please fill in all fields.', 'error');
-      return;
-    }
-    currentUser = { role: 'teacher', name, class: className };
-    
-    document.getElementById('landingPage').classList.add('hidden');
-    document.getElementById('teacherDashboard').classList.remove('hidden');
-    document.getElementById('teacherInfoDisplay').textContent = `${name} | ${className}`;
-    document.getElementById('teacherClassName').textContent = className;
-    
-    loadTeacherData();
-    setupTeacherTabs();
-  }
-
-  function loadTeacherData() {
-    populateSubjectSelectForTeacher();
-    loadGradingSettings();
-  }
-
-  function populateSubjectSelectForTeacher() {
-    const select = document.getElementById('questionSubject');
-    select.innerHTML = '<option value="">-- Select Subject --</option>';
-    allSubjects.forEach(s => {
-      select.innerHTML += `<option value="${s}">${s}</option>`;
-    });
-  }
-
-  async function loadQuestions() {
-    const subject = document.getElementById('questionSubject').value;
-    if (!subject) {
-      document.getElementById('questionsContainer').innerHTML = 
-        '<p style="color:#94A3B8; text-align:center; padding:2rem;">Select a subject to manage questions.</p>';
-      return;
-    }
-    
-    const snapshot = await db.collection('questions')
-      .where('class', '==', currentUser.class)
-      .where('subject', '==', subject)
-      .get();
-    
-    currentQuestions = [];
-    snapshot.forEach(doc => {
-      currentQuestions.push({ id: doc.id, ...doc.data() });
-    });
-    
-    renderQuestionEditor();
-  }
-
-  function addNewQuestion() {
-    const subject = document.getElementById('questionSubject').value;
-    if (!subject) {
-      showToast('Please select a subject first.', 'error');
-      return;
-    }
-    currentQuestions.push({
-      class: currentUser.class,
-      subject: subject,
-      question: '',
-      optionA: '',
-      optionB: '',
-      optionC: '',
-      optionD: '',
-      correctAnswer: 'A',
-      points: 5
-    });
-    renderQuestionEditor();
-  }
-
-  function renderQuestionEditor() {
-    const container = document.getElementById('questionsContainer');
-    if (currentQuestions.length === 0) {
-      container.innerHTML = '<p style="color:#94A3B8; text-align:center; padding:2rem;">No questions yet. Click "Add Question" to begin.</p>';
-      return;
-    }
-    
-    container.innerHTML = currentQuestions.map((q, idx) => `
-      <div class="question-block">
-        <div class="q-header">
-          <strong>Q${idx + 1}</strong>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <label style="font-size:0.8rem;">Points: <input type="number" class="q-point" data-idx="${idx}" value="${q.points}" min="1" style="width:60px; padding:4px;" /></label>
-            <button class="btn-sm btn-danger" onclick="removeQuestion(${idx})">🗑️</button>
-          </div>
-        </div>
-        <textarea class="q-text" data-idx="${idx}" placeholder="Enter question" style="width:100%; min-height:50px; padding:8px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">${q.question}</textarea>
-        <div class="options-row">
-          ${['A','B','C','D'].map(opt => `
-            <div class="option-item">
-              <span class="opt-letter">${opt}</span>
-              <input type="text" class="opt-${opt}" data-idx="${idx}" placeholder="Option ${opt}" value="${q['option'+opt]}" style="flex:1; padding:6px 8px; border:1px solid var(--border); border-radius:6px;" />
+            <div class="pin-input-group">
+                <label>Enter Your PIN</label>
+                <input 
+                    type="text" 
+                    class="pin-input" 
+                    id="pinInput" 
+                    placeholder="________" 
+                    maxlength="8" 
+                    inputmode="numeric"
+                    pattern="[0-9]{8}"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                />
             </div>
-          `).join('')}
+
+            <button class="btn-check" onclick="checkPin()" id="checkBtn">
+                🔍 View My Results
+            </button>
+            <div class="error-msg" id="errorMsg"></div>
+
+            <p style="margin-top:1rem; font-size:0.8rem; color:var(--text-light);">
+                <strong>ℹ️ Note:</strong> Each PIN can only be used once.<br>
+                If your PIN doesn't work, contact your class teacher.
+            </p>
         </div>
-        <label style="font-size:0.8rem; margin-top:6px; display:block;">
-          Correct Answer:
-          <select class="correct-sel" data-idx="${idx}" style="padding:4px 8px;">
-            <option value="A" ${q.correctAnswer === 'A' ? 'selected' : ''}>A</option>
-            <option value="B" ${q.correctAnswer === 'B' ? 'selected' : ''}>B</option>
-            <option value="C" ${q.correctAnswer === 'C' ? 'selected' : ''}>C</option>
-            <option value="D" ${q.correctAnswer === 'D' ? 'selected' : ''}>D</option>
-          </select>
-        </label>
-      </div>
-    `).join('');
-    
-    // Attach listeners
-    attachQuestionEditorListeners();
-  }
 
-  function attachQuestionEditorListeners() {
-    const container = document.getElementById('questionsContainer');
-    container.querySelectorAll('textarea.q-text, input[class*="opt-"]').forEach(el => {
-      el.addEventListener('input', function() {
-        const idx = parseInt(this.dataset.idx);
-        if (this.classList.contains('q-text')) currentQuestions[idx].question = this.value;
-        else if (this.classList.contains('opt-A')) currentQuestions[idx].optionA = this.value;
-        else if (this.classList.contains('opt-B')) currentQuestions[idx].optionB = this.value;
-        else if (this.classList.contains('opt-C')) currentQuestions[idx].optionC = this.value;
-        else if (this.classList.contains('opt-D')) currentQuestions[idx].optionD = this.value;
-      });
-    });
-    container.querySelectorAll('.q-point').forEach(el => {
-      el.addEventListener('change', function() {
-        currentQuestions[parseInt(this.dataset.idx)].points = parseInt(this.value) || 5;
-      });
-    });
-    container.querySelectorAll('.correct-sel').forEach(el => {
-      el.addEventListener('change', function() {
-        currentQuestions[parseInt(this.dataset.idx)].correctAnswer = this.value;
-      });
-    });
-  }
-
-  function removeQuestion(idx) {
-    currentQuestions.splice(idx, 1);
-    renderQuestionEditor();
-  }
-
-  async function saveAllQuestions() {
-    const subject = document.getElementById('questionSubject').value;
-    if (!subject) {
-      showToast('Please select a subject.', 'error');
-      return;
-    }
-    
-    // Validate
-    for (let i = 0; i < currentQuestions.length; i++) {
-      const q = currentQuestions[i];
-      if (!q.question.trim()) { showToast(`Question ${i+1} is empty.`, 'error'); return; }
-    }
-    
-    const batch = db.batch();
-    
-    // Delete existing
-    const existing = await db.collection('questions')
-      .where('class', '==', currentUser.class)
-      .where('subject', '==', subject)
-      .get();
-    existing.forEach(doc => batch.delete(doc.ref));
-    
-    // Add new
-    currentQuestions.forEach(q => {
-      q.class = currentUser.class;
-      q.subject = subject;
-      const ref = db.collection('questions').doc();
-      batch.set(ref, q);
-    });
-    
-    await batch.commit();
-    showToast(`${currentQuestions.length} questions saved! ✅`, 'success');
-  }
-
-  // ==================== CSV UPLOAD ====================
-  function downloadTemplate() {
-    const headers = 'Subject,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points';
-    const sample = 'Mathematics,What is 2+2?,3,4,5,6,B,5';
-    downloadCsv('question_template.csv', headers + '\n' + sample);
-  }
-
-  function downloadCsv(filename, content) {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function handleCsvUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const text = await file.text();
-    const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) {
-      showToast('CSV is empty.', 'error');
-      return;
-    }
-    
-    const headers = lines[0].split(',').map(h => h.trim());
-    const questions = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-      if (cols.length >= 8) {
-        questions.push({
-          class: currentUser.class,
-          subject: cols[0],
-          question: cols[1],
-          optionA: cols[2],
-          optionB: cols[3],
-          optionC: cols[4],
-          optionD: cols[5],
-          correctAnswer: cols[6].toUpperCase(),
-          points: parseInt(cols[7]) || 5
-        });
-      }
-    }
-    
-    document.getElementById('csvPreview').innerHTML = `
-      <p style="color:#22C55E;">✅ ${questions.length} questions parsed!</p>
-      <button class="btn-sm btn-success" id="importCsvBtn">Import Questions</button>
-    `;
-    
-    document.getElementById('importCsvBtn').addEventListener('click', async () => {
-      const batch = db.batch();
-      questions.forEach(q => {
-        const ref = db.collection('questions').doc();
-        batch.set(ref, q);
-      });
-      await batch.commit();
-      showToast(`${questions.length} questions imported! ✅`, 'success');
-      document.getElementById('csvPreview').innerHTML = '';
-    });
-  }
-
-  // ==================== REPORT CARD ====================
-  async function generateReportCard() {
-    const preview = document.getElementById('reportCardPreview');
-    
-    // Load students for this class
-    const resultsSnapshot = await db.collection('results')
-      .where('class', '==', currentUser.class)
-      .orderBy('timestamp', 'desc')
-      .get();
-    
-    // Group results by student
-    const studentResultsMap = {};
-    resultsSnapshot.forEach(doc => {
-      const r = doc.data();
-      if (!studentResultsMap[r.studentName]) studentResultsMap[r.studentName] = [];
-      studentResultsMap[r.studentName].push(r);
-    });
-    
-    const studentNames = Object.keys(studentResultsMap);
-    if (studentNames.length === 0) {
-      preview.innerHTML = '<p style="color:#94A3B8; text-align:center; padding:2rem;">No exam results yet. Students must take the CBT exam first.</p>';
-      return;
-    }
-    
-    // Build report card HTML
-    let html = `
-      <div class="report-card">
-        <div class="school-header">
-          <h2>COVENANT ARROWS' MODEL</h2>
-          <p style="color:#64748B;">Abiola Way, Abeokuta, Ogun State</p>
-          <p style="font-style:italic; color:#C8963E;">✝️ Christ-Centered Learning • Modern Excellence</p>
-          <p><strong>THIRD TERM REPORT CARD - 2025/2026</strong></p>
+        <!-- Results View -->
+        <div class="card results-container" id="resultsView">
+            <div class="result-header">
+                <h2>📊 Examination Results</h2>
+                <p style="margin-top:4px; opacity:0.9;" id="resultStudentInfo"></p>
+            </div>
+            <div class="result-body">
+                <div class="result-summary" id="resultSummary"></div>
+                <h4 style="margin-top:0.5rem;">📝 Question Review</h4>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>Your Answer</th>
+                                <th>Correct</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questionsReview"></tbody>
+                    </table>
+                </div>
+                <div style="text-align:center; margin-top:1.5rem;">
+                    <button class="btn-back" onclick="goBack()">← Back to PIN Entry</button>
+                </div>
+            </div>
         </div>
-        <div class="info-row">
-          <div class="info-item"><strong>Class:</strong> ${currentUser.class}</div>
-          <div class="info-item"><strong>No. of Students:</strong> ${studentNames.length}</div>
-          <div class="info-item"><strong>School Opens:</strong> 8:00 AM</div>
-          <div class="info-item"><strong>School Closes:</strong> 2:00 PM</div>
-          <div class="info-item"><strong>School Days:</strong> <span id="schoolDays">65</span></div>
-        </div>
-        <hr style="margin:1rem 0;" />
-    `;
-    
-    // Table for each student
-    for (const studentName of studentNames) {
-      const results = studentResultsMap[studentName];
-      
-      html += `
-        <div style="margin-bottom:2rem; page-break-before:always;">
-          <h4 style="text-align:center; background:#1E3A5F; color:white; padding:8px; border-radius:8px;">
-            STUDENT: ${studentName} | CLASS: ${currentUser.class}
-          </h4>
-          <div class="info-row" style="margin-top:0.5rem;">
-            <div class="info-item"><strong>Days Present:</strong> <input type="number" id="daysPresent_${studentName}" value="60" style="width:60px;" /></div>
-            <div class="info-item"><strong>Days Absent:</strong> <input type="number" id="daysAbsent_${studentName}" value="5" style="width:60px;" /></div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th rowspan="2">S/N</th>
-                <th rowspan="2">Subject</th>
-                <th colspan="2">First Term</th>
-                <th colspan="2">Second Term</th>
-                <th colspan="3">Third Term</th>
-                <th rowspan="2">Grade</th>
-                <th rowspan="2">%</th>
-                <th rowspan="2">Remarks</th>
-              </tr>
-              <tr>
-                <th>CA</th><th>Exam</th>
-                <th>CA</th><th>Exam</th>
-                <th>CA</th><th>Exam</th><th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-      
-      let sn = 1;
-      let grandTotal = 0;
-      let subjectCount = 0;
-      
-      // Group results by subject
-      const subjectResults = {};
-      results.forEach(r => {
-        const subj = r.subject || 'General';
-        if (!subjectResults[subj]) subjectResults[subj] = r;
-      });
-      
-      for (const [subject, r] of Object.entries(subjectResults)) {
-        // First & Second term would be pre-filled from Firestore in production
-        const firstTermCa = 0;
-        const firstTermExam = 0;
-        const secondTermCa = 0;
-        const secondTermExam = 0;
-        const thirdTermCa = Math.round(r.score * 0.3);
-        const thirdTermExam = Math.round(r.score * 0.7);
-        const thirdTermTotal = thirdTermCa + thirdTermExam;
-        const percentage = Math.round((r.score / r.total) * 100);
-        const grade = calculateGrade(percentage);
-        
-        grandTotal += thirdTermTotal;
-        subjectCount++;
-        
-        html += `
-          <tr>
-            <td>${sn++}</td>
-            <td style="text-align:left;">${subject}</td>
-            <td><input type="number" value="${firstTermCa}" style="width:40px;" /></td>
-            <td><input type="number" value="${firstTermExam}" style="width:40px;" /></td>
-            <td><input type="number" value="${secondTermCa}" style="width:40px;" /></td>
-            <td><input type="number" value="${secondTermExam}" style="width:40px;" /></td>
-            <td><input type="number" value="${thirdTermCa}" style="width:40px;" /></td>
-            <td><input type="number" value="${thirdTermExam}" style="width:40px;" /></td>
-            <td><strong>${thirdTermTotal}</strong></td>
-            <td><strong>${grade}</strong></td>
-            <td><strong>${percentage}%</strong></td>
-            <td><input type="text" placeholder="Remarks" style="width:80px;" /></td>
-          </tr>
-        `;
-      }
-      
-      const average = subjectCount > 0 ? Math.round(grandTotal / subjectCount) : 0;
-      
-      html += `
-            </tbody>
-            <tfoot>
-              <tr class="totals-row">
-                <td colspan="8"><strong>TOTAL</strong></td>
-                <td><strong>${grandTotal}</strong></td>
-                <td colspan="3"><strong>AVERAGE: ${average} | ${calculateGrade(average)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      `;
-    }
-    
-    html += `
-        <div style="text-align:center; margin-top:2rem; font-size:0.8rem;">
-          <p><strong>Teacher's Signature:</strong> _______________ &nbsp;&nbsp; <strong>Principal's Signature:</strong> _______________</p>
-          <p style="margin-top:1rem; font-style:italic;">"Train up a child in the way he should go..." — Proverbs 22:6</p>
-        </div>
-      </div>
-    `;
-    
-    preview.innerHTML = html;
-  }
 
-  // ==================== SETTINGS ====================
-  function loadGradingSettings() {
-    document.getElementById('gradeA').value = gradingSettings.A;
-    document.getElementById('gradeB').value = gradingSettings.B;
-    document.getElementById('gradeC').value = gradingSettings.C;
-    document.getElementById('gradeD').value = gradingSettings.D;
-  }
+        <p class="footer-note">
+            Covenant Arrows' Model &copy; 2025/2026 Third Term<br>
+            Abiola Way, Abeokuta, Ogun State
+        </p>
+    </div>
 
-  async function saveGradingSettings() {
-    gradingSettings = {
-      A: parseInt(document.getElementById('gradeA').value),
-      B: parseInt(document.getElementById('gradeB').value),
-      C: parseInt(document.getElementById('gradeC').value),
-      D: parseInt(document.getElementById('gradeD').value)
-    };
-    await db.collection('settings').doc('school').update({ grading: gradingSettings });
-    showToast('Grading settings saved! ✅', 'success');
-  }
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-  function loadClassesList() {
-    const div = document.getElementById('classList');
-    div.innerHTML = allClasses.map((c, i) => `
-      <span style="display:inline-block; background:#F1F5F9; padding:6px 12px; border-radius:15px; margin:4px; font-size:0.85rem;">
-        ${c} <button style="background:none; border:none; cursor:pointer; color:#EF4444;" onclick="removeClass(${i})">✕</button>
-      </span>
-    `).join('');
-  }
+    <script>
+        // ==================== FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
+            authDomain: "edumeta-c5588.firebaseapp.com",
+            projectId: "edumeta-c5588",
+            storageBucket: "edumeta-c5588.firebasestorage.app",
+            messagingSenderId: "332853259697",
+            appId: "1:332853259697:web:92e0c07e43d1c3bf432190"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-  function loadSubjectsList() {
-    const div = document.getElementById('subjectList');
-    div.innerHTML = allSubjects.map((s, i) => `
-      <span style="display:inline-block; background:#F1F5F9; padding:6px 12px; border-radius:15px; margin:4px; font-size:0.85rem;">
-        ${s} <button style="background:none; border:none; cursor:pointer; color:#EF4444;" onclick="removeSubject(${i})">✕</button>
-      </span>
-    `).join('');
-  }
+        // ==================== GRADING (loaded from settings) ====================
+        let gradingSystem = {
+            A: { min: 80, remark: 'Excellent' },
+            B: { min: 65, remark: 'Very Good' },
+            C: { min: 50, remark: 'Good' },
+            D: { min: 40, remark: 'Fair' },
+            F: { remark: 'Poor' }
+        };
 
-  async function addNewClass() {
-    const newClass = document.getElementById('newClassName').value.trim();
-    if (!newClass) return;
-    if (allClasses.includes(newClass)) {
-      showToast('Class already exists.', 'error');
-      return;
-    }
-    allClasses.push(newClass);
-    await db.collection('settings').doc('school').update({ classes: allClasses });
-    populateClassSelects();
-    loadClassesList();
-    document.getElementById('newClassName').value = '';
-    showToast('Class added! ✅', 'success');
-  }
-
-  async function removeClass(index) {
-    if (!confirm('Remove this class?')) return;
-    allClasses.splice(index, 1);
-    await db.collection('settings').doc('school').update({ classes: allClasses });
-    populateClassSelects();
-    loadClassesList();
-  }
-
-  async function addNewSubject() {
-    const newSubject = document.getElementById('newSubjectName').value.trim();
-    if (!newSubject) return;
-    if (allSubjects.includes(newSubject)) {
-      showToast('Subject already exists.', 'error');
-      return;
-    }
-    allSubjects.push(newSubject);
-    await db.collection('settings').doc('school').update({ subjects: allSubjects });
-    populateSubjectSelectForTeacher();
-    loadSubjectsList();
-    document.getElementById('newSubjectName').value = '';
-    showToast('Subject added! ✅', 'success');
-  }
-
-  async function removeSubject(index) {
-    if (!confirm('Remove this subject?')) return;
-    allSubjects.splice(index, 1);
-    await db.collection('settings').doc('school').update({ subjects: allSubjects });
-    populateSubjectSelectForTeacher();
-    loadSubjectsList();
-  }
-
-  // ==================== ADMIN LOGIN ====================
-  async function loginAsAdmin(e) {
-    e.preventDefault();
-    const email = document.getElementById('adminEmail').value;
-    const password = document.getElementById('adminPassword').value;
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
-      currentUser = { role: 'admin', email };
-      document.getElementById('landingPage').classList.add('hidden');
-      document.getElementById('teacherDashboard').classList.remove('hidden');
-      document.getElementById('teacherInfoDisplay').textContent = `Admin: ${email}`;
-      document.getElementById('teacherClassName').textContent = 'All Classes';
-      loadTeacherData();
-      setupTeacherTabs();
-    } catch (error) {
-      showToast('Login failed: ' + error.message, 'error');
-    }
-  }
-
-  // ==================== TEACHER TABS ====================
-  function setupTeacherTabs() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-        this.classList.add('active');
-        document.getElementById('tab-' + this.dataset.tab).classList.remove('hidden');
-        if (this.dataset.tab === 'manageQuestions') loadQuestions();
-        if (this.dataset.tab === 'reportCard') generateReportCard();
-        if (this.dataset.tab === 'settings') {
-          loadGradingSettings();
-          loadClassesList();
-          loadSubjectsList();
+        async function loadGrading() {
+            try {
+                const doc = await db.collection('settings').doc('grading').get();
+                if (doc.exists) {
+                    gradingSystem = { ...gradingSystem, ...doc.data() };
+                }
+            } catch (e) {
+                console.log('Using default grading');
+            }
         }
-      });
-    });
-  }
 
-  // ==================== UTILS ====================
-  function showToast(msg, type = '') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = msg;
-    document.getElementById('toastContainer').appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  }
+        function calculateGrade(pct) {
+            if (pct >= gradingSystem.A.min) return 'A';
+            if (pct >= gradingSystem.B.min) return 'B';
+            if (pct >= gradingSystem.C.min) return 'C';
+            if (pct >= gradingSystem.D.min) return 'D';
+            return 'F';
+        }
 
-  function shuffleArray(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
+        function getGradeClass(pct) {
+            const grade = calculateGrade(pct);
+            return `grade-${grade.toLowerCase()}`;
+        }
 
-  function logout() {
-    currentUser = null;
-    cbtQuestions = [];
-    cbtAnswers = {};
-    clearInterval(cbtTimerInterval);
-    document.getElementById('landingPage').classList.remove('hidden');
-    document.getElementById('cbtPage').classList.add('hidden');
-    document.getElementById('teacherDashboard').classList.add('hidden');
-    auth.signOut();
-  }
+        // ==================== PIN CHECKING ====================
+        async function checkPin() {
+            const pinInput = document.getElementById('pinInput');
+            const pin = pinInput.value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const checkBtn = document.getElementById('checkBtn');
 
-  // ==================== INIT ====================
-  init();
-  console.log('✅ Covenant Arrows Model - Third Term Exam System Ready');
-</script>
+            errorMsg.classList.remove('show');
 
+            if (pin.length !== 8) {
+                errorMsg.textContent = 'Please enter a valid 8-digit PIN.';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            if (!/^\d{8}$/.test(pin)) {
+                errorMsg.textContent = 'PIN must contain only numbers.';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            checkBtn.disabled = true;
+            checkBtn.textContent = '⏳ Checking...';
+
+            try {
+                // Find the PIN in Firestore
+                const pinSnapshot = await db.collection('result_pins')
+                    .where('pin', '==', pin)
+                    .limit(1)
+                    .get();
+
+                if (pinSnapshot.empty) {
+                    errorMsg.textContent = 'Invalid PIN. Please check and try again.';
+                    errorMsg.classList.add('show');
+                    checkBtn.disabled = false;
+                    checkBtn.textContent = '🔍 View My Results';
+                    return;
+                }
+
+                const pinDoc = pinSnapshot.docs[0];
+                const pinData = pinDoc.data();
+
+                if (pinData.status === 'used') {
+                    errorMsg.textContent = 'This PIN has already been used. Each PIN can only be used once. Please contact your teacher for a new PIN.';
+                    errorMsg.classList.add('show');
+                    checkBtn.disabled = false;
+                    checkBtn.textContent = '🔍 View My Results';
+                    return;
+                }
+
+                if (pinData.status === 'deactivated') {
+                    errorMsg.textContent = 'This PIN has been deactivated. Please contact your teacher.';
+                    errorMsg.classList.add('show');
+                    checkBtn.disabled = false;
+                    checkBtn.textContent = '🔍 View My Results';
+                    return;
+                }
+
+                // PIN is valid - find the student's results
+                const resultsSnapshot = await db.collection('results')
+                    .where('studentName', '==', pinData.studentName)
+                    .where('class', '==', pinData.class)
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get();
+
+                if (resultsSnapshot.empty) {
+                    errorMsg.textContent = 'No exam results found for this student. Please contact your teacher.';
+                    errorMsg.classList.add('show');
+                    checkBtn.disabled = false;
+                    checkBtn.textContent = '🔍 View My Results';
+                    return;
+                }
+
+                // Mark PIN as used
+                await db.collection('result_pins').doc(pinDoc.id).update({
+                    status: 'used',
+                    usedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Display results
+                const resultDoc = resultsSnapshot.docs[0];
+                const result = resultDoc.data();
+                displayResults(result, pinData);
+
+            } catch (error) {
+                console.error('Error checking PIN:', error);
+                errorMsg.textContent = 'An error occurred. Please try again later.';
+                errorMsg.classList.add('show');
+                checkBtn.disabled = false;
+                checkBtn.textContent = '🔍 View My Results';
+            }
+        }
+
+        function displayResults(result, pinData) {
+            const pct = result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
+            const grade = calculateGrade(pct);
+
+            // Hide PIN entry, show results
+            document.getElementById('pinEntryView').style.display = 'none';
+            document.getElementById('resultsView').classList.add('show');
+
+            // Student info
+            document.getElementById('resultStudentInfo').innerHTML = `
+                <strong>${result.studentName}</strong> | Class: ${result.class}<br>
+                <small>Date: ${result.timestamp ? result.timestamp.toDate().toLocaleDateString() : 'N/A'}</small>
+            `;
+
+            // Summary
+            document.getElementById('resultSummary').innerHTML = `
+                <div class="summary-item">
+                    <div class="label">Score</div>
+                    <div class="value">${result.score}/${result.total}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Percentage</div>
+                    <div class="value">${pct}%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="label">Grade</div>
+                    <div class="value ${getGradeClass(pct)}">${grade}</div>
+                </div>
+            `;
+
+            // Questions review
+            let questionsHtml = '';
+            if (result.answers && result.questions) {
+                questionsHtml = result.questions.map((q, idx) => {
+                    const userAnswer = result.answers[q.id] || '—';
+                    const isCorrect = userAnswer === q.correctAnswer;
+                    return `
+                        <tr class="${isCorrect ? 'correct-row' : 'wrong-row'}">
+                            <td>${idx + 1}</td>
+                            <td>${q.question?.substring(0, 60)}${q.question?.length > 60 ? '...' : ''}</td>
+                            <td><strong>${userAnswer}</strong></td>
+                            <td><strong style="color:#16A34A;">${q.correctAnswer}</strong></td>
+                            <td>${isCorrect ? '✅ Correct' : '❌ Wrong'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                questionsHtml = '<tr><td colspan="5" style="text-align:center;">Detailed answers not available.</td></tr>';
+            }
+
+            document.getElementById('questionsReview').innerHTML = questionsHtml;
+        }
+
+        function goBack() {
+            document.getElementById('pinEntryView').style.display = '';
+            document.getElementById('resultsView').classList.remove('show');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('errorMsg').classList.remove('show');
+            document.getElementById('checkBtn').disabled = false;
+            document.getElementById('checkBtn').textContent = '🔍 View My Results';
+        }
+
+        // ==================== INIT ====================
+        async function init() {
+            await loadGrading();
+            console.log('✅ Covenant Arrows Model — Results Checker Ready');
+        }
+
+        init();
+    </script>
 </body>
 </html>
