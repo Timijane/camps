@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Covenant Arrows' Model - Home</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <style>
+        /* ========================================================== */
+        /* RESET & BASE                                               */
+        /* ========================================================== */
         * {
             margin: 0;
             padding: 0;
@@ -15,24 +18,17 @@
         }
 
         body {
-            font-family: 'Nunito', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: #f8fafc;
             overflow-x: hidden;
         }
 
-        /* ===== GLASSMORPHISM CARD STYLE ===== */
-        .glass {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-        }
-
-        /* ===== HERO / LANDING SECTION ===== */
+        /* ========================================================== */
+        /* HERO SECTION WITH ANIMATED GRADIENT                       */
+        /* ========================================================== */
         .hero {
             min-height: 100vh;
-            background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 50%, #fce7f3 100%);
+            background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 40%, #fce7f3 80%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -42,39 +38,61 @@
             overflow: hidden;
         }
 
-        /* Decorative floating orbs */
-        .hero::before,
-        .hero::after {
-            content: '';
+        /* Animated Floating Orbs */
+        .orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
+            filter: blur(90px);
             opacity: 0.3;
+            animation: floatOrb 8s ease-in-out infinite alternate;
             z-index: 0;
         }
-        .hero::before {
-            width: 400px;
-            height: 400px;
-            background: #4f46e5;
-            top: -100px;
-            left: -100px;
-        }
-        .hero::after {
+        .orb-1 {
             width: 500px;
             height: 500px;
+            background: #4f46e5;
+            top: -150px;
+            left: -150px;
+            animation-delay: 0s;
+        }
+        .orb-2 {
+            width: 600px;
+            height: 600px;
             background: #7c3aed;
-            bottom: -150px;
-            right: -150px;
+            bottom: -200px;
+            right: -200px;
+            animation-delay: 2s;
+        }
+        .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #f59e0b;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 4s;
+            opacity: 0.15;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(40px, -30px) scale(1.1);
+            }
         }
 
         .hero-content {
-            max-width: 1100px;
+            max-width: 1200px;
             width: 100%;
             z-index: 1;
             text-align: center;
         }
 
-        /* ===== SCHOOL BRANDING ===== */
+        /* ========================================================== */
+        /* SCHOOL BRANDING                                            */
+        /* ========================================================== */
         .school-badge {
             display: inline-block;
             background: rgba(255, 255, 255, 0.6);
@@ -86,23 +104,22 @@
             font-size: 14px;
             letter-spacing: 2px;
             border: 1px solid rgba(255, 255, 255, 0.5);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .school-name {
-            font-size: clamp(2.8rem, 10vw, 5.5rem);
+            font-size: clamp(2.8rem, 10vw, 5.2rem);
             font-weight: 900;
-            color: #1e1b4b;
             line-height: 1.1;
             margin-bottom: 8px;
-            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            background: linear-gradient(to right, #4f46e5, #7c3aed, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .school-motto {
-            font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
             font-weight: 700;
             color: #475569;
             background: rgba(255, 255, 255, 0.5);
@@ -110,7 +127,7 @@
             display: inline-block;
             padding: 6px 28px;
             border-radius: 60px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .school-location {
@@ -120,17 +137,20 @@
             margin-bottom: 30px;
         }
 
-        /* ===== CAROUSEL (Scriptures & Quotes) ===== */
+        /* ========================================================== */
+        /* GLASS CAROUSEL (Scriptures & Quotes)                      */
+        /* ========================================================== */
         .carousel-container {
             max-width: 750px;
-            margin: 25px auto 40px auto;
-            padding: 30px 25px;
+            margin: 20px auto 35px auto;
+            padding: 30px 28px;
             border-radius: 40px;
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 15px 40px rgba(79, 70, 229, 0.08);
-            min-height: 160px;
+            min-height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -152,16 +172,16 @@
         @keyframes fadeSlide {
             0% {
                 opacity: 0;
-                transform: translateY(15px);
+                transform: translateY(18px) scale(0.98);
             }
             100% {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
         .slide .icon {
-            font-size: 2.4rem;
+            font-size: 2.8rem;
             margin-bottom: 6px;
             display: block;
         }
@@ -181,17 +201,17 @@
         .slide .reference {
             font-weight: 700;
             color: #4f46e5;
-            font-size: clamp(1rem, 1.5vw, 1.2rem);
+            font-size: clamp(0.95rem, 1.4vw, 1.15rem);
             margin-top: 8px;
             display: block;
         }
 
-        /* ===== CAROUSEL DOTS ===== */
+        /* Carousel Dots */
         .carousel-dots {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 15px;
+            margin-top: 16px;
         }
 
         .carousel-dots span {
@@ -209,104 +229,109 @@
             width: 32px;
         }
 
-        /* ===== ACTION BUTTONS ===== */
-        .action-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
+        /* ========================================================== */
+        /* PORTAL GRID (4 Beautiful Cards)                           */
+        /* ========================================================== */
+        .portal-section {
             margin-top: 20px;
-        }
-
-        .btn-hero {
-            font-family: 'Nunito', sans-serif;
-            font-weight: 800;
-            padding: 18px 48px;
-            font-size: 1.2rem;
-            border: none;
-            border-radius: 60px;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
-            letter-spacing: 0.5px;
-        }
-
-        .btn-hero:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-        }
-
-        .btn-hero:active {
-            transform: scale(0.96);
-        }
-
-        .btn-student {
-            background: linear-gradient(to right, #4f46e5, #7c3aed);
-            color: white;
-        }
-
-        .btn-student:hover {
-            background: linear-gradient(to right, #4338ca, #6d28d9);
-        }
-
-        .btn-staff {
-            background: white;
-            color: #1e293b;
-            border: 2px solid #e2e8f0;
-        }
-
-        .btn-staff:hover {
-            border-color: #4f46e5;
-            background: #f8fafc;
-        }
-
-        /* ===== FEATURES / VALUES SECTION ===== */
-        .values-section {
-            max-width: 1100px;
             width: 100%;
-            margin-top: 60px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
+            max-width: 1100px;
         }
 
-        .value-card {
-            padding: 25px 20px;
-            border-radius: 28px;
+        .portal-section h2 {
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 800;
+            color: #1e1b4b;
+            margin-bottom: 25px;
+            letter-spacing: -0.5px;
+        }
+        .portal-section h2 span {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 22px;
+        }
+
+        .portal-card {
             background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 28px;
+            padding: 30px 20px 25px;
             text-align: center;
+            text-decoration: none;
+            color: #0f172a;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            background: white;
+            box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.25);
+            border-color: #c7d2fe;
+        }
+
+        .portal-card .card-icon {
+            font-size: 3.2rem;
+            margin-bottom: 4px;
+        }
+
+        .portal-card .card-title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #1e1b4b;
+        }
+
+        .portal-card .card-desc {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+
+        .portal-card .card-arrow {
+            margin-top: 8px;
+            font-size: 1.4rem;
+            color: #4f46e5;
             transition: 0.2s;
         }
 
-        .value-card:hover {
-            background: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        .portal-card:hover .card-arrow {
+            transform: translateX(6px);
         }
 
-        .value-card .emoji {
-            font-size: 2.8rem;
+        /* Individual Card Accents */
+        .portal-card.student {
+            border-top: 4px solid #4f46e5;
         }
-        .value-card h4 {
-            color: #1e1b4b;
-            margin: 10px 0 4px 0;
-            font-size: 1.2rem;
+        .portal-card.teacher {
+            border-top: 4px solid #10b981;
         }
-        .value-card p {
-            color: #64748b;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin: 0;
+        .portal-card.admin {
+            border-top: 4px solid #f59e0b;
+        }
+        .portal-card.parent {
+            border-top: 4px solid #ec4899;
         }
 
-        /* ===== FOOTER ===== */
+        /* ========================================================== */
+        /* FOOTER                                                     */
+        /* ========================================================== */
         .footer {
-            margin-top: 50px;
+            margin-top: 60px;
             padding-top: 25px;
             border-top: 2px dashed rgba(79, 70, 229, 0.15);
             width: 100%;
@@ -314,14 +339,15 @@
             color: #64748b;
             font-weight: 600;
             font-size: 0.9rem;
-            z-index: 1;
         }
 
         .footer span {
             color: #4f46e5;
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* ========================================================== */
+        /* RESPONSIVE                                                 */
+        /* ========================================================== */
         @media (max-width: 600px) {
             .hero {
                 padding: 30px 15px;
@@ -330,19 +356,21 @@
                 padding: 20px 18px;
                 min-height: 140px;
             }
-            .btn-hero {
-                padding: 16px 30px;
-                font-size: 1rem;
-                width: 100%;
-                justify-content: center;
-            }
-            .action-grid {
-                flex-direction: column;
-                width: 100%;
-            }
-            .values-section {
+            .portal-grid {
                 grid-template-columns: 1fr 1fr;
-                gap: 12px;
+                gap: 14px;
+            }
+            .portal-card {
+                padding: 20px 12px 18px;
+            }
+            .portal-card .card-icon {
+                font-size: 2.4rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .portal-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -350,102 +378,143 @@
 <body>
 
     <div class="hero">
+
+        <!-- Floating Orbs -->
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+
         <div class="hero-content">
 
             <!-- Branding -->
-            <div class="school-badge">✝️ WELCOME</div>
+            <div class="school-badge">✝️ EST. 2026</div>
             <h1 class="school-name">COVENANT ARROWS' MODEL</h1>
             <div class="school-motto">Raising Future Leaders Through Christ-Centered Learning</div>
             <div class="school-location">📍 Abiola Way, Abeokuta, Ogun State.</div>
 
-            <!-- ===== CAROUSEL SLIDES ===== -->
+            <!-- ========================================================== -->
+            <!-- CAROUSEL (12 Slides - Mix of Scriptures & Wisdom Quotes)   -->
+            <!-- ========================================================== -->
             <div class="carousel-container" id="carousel">
-                <!-- Slide 1 -->
+
+                <!-- 1 -->
                 <div class="slide active" data-index="0">
                     <span class="icon">📖</span>
                     <div class="text">"The fear of the LORD is the beginning of knowledge."</div>
                     <span class="reference">— Proverbs 1:7</span>
                 </div>
-                <!-- Slide 2 -->
+                <!-- 2 -->
                 <div class="slide" data-index="1">
                     <span class="icon">💡</span>
                     <div class="text quote">"Diligence is the mother of good fortune."</div>
                     <span class="reference">— Benjamin Franklin</span>
                 </div>
-                <!-- Slide 3 -->
+                <!-- 3 -->
                 <div class="slide" data-index="2">
                     <span class="icon">🌱</span>
                     <div class="text">"Get wisdom, get understanding; do not forget my words."</div>
                     <span class="reference">— Proverbs 4:5</span>
                 </div>
-                <!-- Slide 4 -->
+                <!-- 4 -->
                 <div class="slide" data-index="3">
                     <span class="icon">🧠</span>
                     <div class="text quote">"Education is the most powerful weapon you can use to change the world."</div>
                     <span class="reference">— Nelson Mandela</span>
                 </div>
-                <!-- Slide 5 -->
+                <!-- 5 -->
                 <div class="slide" data-index="4">
                     <span class="icon">🕊️</span>
                     <div class="text">"For I know the plans I have for you, plans to prosper you and not to harm you."</div>
                     <span class="reference">— Jeremiah 29:11</span>
                 </div>
-                <!-- Slide 6 -->
+                <!-- 6 -->
                 <div class="slide" data-index="5">
                     <span class="icon">📚</span>
                     <div class="text quote">"Learning is a treasure that will follow its owner everywhere."</div>
                     <span class="reference">— Chinese Proverb</span>
                 </div>
-                <!-- Slide 7 -->
+                <!-- 7 -->
                 <div class="slide" data-index="6">
                     <span class="icon">🏹</span>
                     <div class="text">"Train up a child in the way he should go, and when he is old he will not depart from it."</div>
                     <span class="reference">— Proverbs 22:6</span>
                 </div>
+                <!-- 8 (NEW) -->
+                <div class="slide" data-index="7">
+                    <span class="icon">⚡</span>
+                    <div class="text">"Commit your work to the Lord, and your plans will be established."</div>
+                    <span class="reference">— Proverbs 16:3</span>
+                </div>
+                <!-- 9 (NEW) -->
+                <div class="slide" data-index="8">
+                    <span class="icon">🔍</span>
+                    <div class="text">"The heart of the discerning acquires knowledge, for the ears of the wise seek it out."</div>
+                    <span class="reference">— Proverbs 18:15</span>
+                </div>
+                <!-- 10 (NEW) -->
+                <div class="slide" data-index="9">
+                    <span class="icon">🔥</span>
+                    <div class="text quote">"Education is the kindling of a flame, not the filling of a vessel."</div>
+                    <span class="reference">— Socrates</span>
+                </div>
+                <!-- 11 (NEW) -->
+                <div class="slide" data-index="10">
+                    <span class="icon">🎁</span>
+                    <div class="text quote">"The beautiful thing about learning is that nobody can take it away from you."</div>
+                    <span class="reference">— B.B. King</span>
+                </div>
+                <!-- 12 (NEW) -->
+                <div class="slide" data-index="11">
+                    <span class="icon">🌟</span>
+                    <div class="text">"For the Lord gives wisdom; from his mouth come knowledge and understanding."</div>
+                    <span class="reference">— Proverbs 2:6</span>
+                </div>
             </div>
 
             <!-- Carousel Dots -->
-            <div class="carousel-dots" id="dotsContainer">
-                <!-- Generated by JS -->
-            </div>
+            <div class="carousel-dots" id="dotsContainer"></div>
 
-            <!-- ===== ACTION BUTTONS ===== -->
-            <div class="action-grid">
-                <a href="exam.html" class="btn-hero btn-student">
-                    ✏️ Take Exam
-                </a>
-                <a href="dashboard.html" class="btn-hero btn-staff">
-                    🔐 Staff Login
-                </a>
-            </div>
+            <!-- ========================================================== -->
+            <!-- PORTAL GRID (4 Cards linking to all pages)                -->
+            <!-- ========================================================== -->
+            <div class="portal-section">
+                <h2>🚪 Choose Your <span>Portal</span></h2>
+                <div class="portal-grid">
 
-            <!-- ===== VALUES / FEATURES ===== -->
-            <div class="values-section">
-                <div class="value-card">
-                    <div class="emoji">📖</div>
-                    <h4>Scripture-Based</h4>
-                    <p>Grounding knowledge in God's Word</p>
-                </div>
-                <div class="value-card">
-                    <div class="emoji">🧑‍🏫</div>
-                    <h4>Excellence</h4>
-                    <p>Raising diligent future leaders</p>
-                </div>
-                <div class="value-card">
-                    <div class="emoji">💻</div>
-                    <h4>Modern CBT</h4>
-                    <p>Digital exams for the 21st century</p>
-                </div>
-                <div class="value-card">
-                    <div class="emoji">🤝</div>
-                    <h4>Community</h4>
-                    <p>Parents, teachers, and students united</p>
+                    <a href="exam.html" class="portal-card student">
+                        <div class="card-icon">🎓</div>
+                        <div class="card-title">Student Exam</div>
+                        <div class="card-desc">Take your Computer-Based Test (CBT)</div>
+                        <div class="card-arrow">→</div>
+                    </a>
+
+                    <a href="teacher.html" class="portal-card teacher">
+                        <div class="card-icon">👨‍🏫</div>
+                        <div class="card-title">Teacher Dashboard</div>
+                        <div class="card-desc">Manage subjects, questions & report cards</div>
+                        <div class="card-arrow">→</div>
+                    </a>
+
+                    <a href="admin.html" class="portal-card admin">
+                        <div class="card-icon">🔑</div>
+                        <div class="card-title">Admin Console</div>
+                        <div class="card-desc">Approve reports & generate student PINs</div>
+                        <div class="card-arrow">→</div>
+                    </a>
+
+                    <a href="report.html" class="portal-card parent">
+                        <div class="card-icon">👪</div>
+                        <div class="card-title">Check Results</div>
+                        <div class="card-desc">View report card with student name + PIN</div>
+                        <div class="card-arrow">→</div>
+                    </a>
+
                 </div>
             </div>
 
             <!-- Footer -->
             <div class="footer">
-                © 2026 <span>Covenant Arrows' Model</span> — Raising Future Leaders in Abeokuta.
+                © 2026 <span>Covenant Arrows' Model</span> — Raising Future Leaders in Abeokuta. Built with Faith & Excellence.
             </div>
 
         </div>
@@ -453,7 +522,7 @@
 
     <script>
         // =============================================================
-        // CAROUSEL LOGIC (Auto-rotate every 5 seconds)
+        // CAROUSEL LOGIC (Auto-rotate every 6 seconds)
         // =============================================================
         const slides = document.querySelectorAll('.slide');
         const dotsContainer = document.getElementById('dotsContainer');
@@ -472,11 +541,9 @@
         const dots = document.querySelectorAll('.carousel-dots span');
 
         function goToSlide(index) {
-            // Remove active from all slides and dots
             slides.forEach(s => s.classList.remove('active'));
             dots.forEach(d => d.classList.remove('active'));
 
-            // Set active
             slides[index].classList.add('active');
             dots[index].classList.add('active');
             currentIndex = index;
@@ -487,13 +554,12 @@
             goToSlide(next);
         }
 
-        // Start auto-rotation
         function startCarousel() {
             if (interval) clearInterval(interval);
             interval = setInterval(nextSlide, 6000);
         }
 
-        // Pause on hover (good UX)
+        // Pause on hover (great UX)
         const carouselEl = document.getElementById('carousel');
         carouselEl.addEventListener('mouseenter', () => clearInterval(interval));
         carouselEl.addEventListener('mouseleave', startCarousel);
@@ -502,7 +568,7 @@
         goToSlide(0);
         startCarousel();
 
-        console.log('🙏 Welcome to Covenant Arrows\' Model Landing Page!');
+        console.log('🙏 Covenant Arrows\' Model Landing Page loaded.');
     </script>
 
 </body>
