@@ -1,643 +1,1107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Covenant Arrows' Model | Third Term Examination</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap');
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Covenant Arrows' Model | Third Term Examination 2025/2026</title>
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap" rel="stylesheet" />
 
-    :root {
-      --primary: #1E3A5F;
-      --primary-light: #2A5088;
-      --gold: #C8963E;
-      --gold-light: #D4AF37;
-      --teal: #2A9D8F;
-      --bg-light: #F8F9FA;
-      --text-dark: #1A1A2E;
-      --text-gray: #475569;
-      --white: #FFFFFF;
-      --danger: #E74C3C;
-      --success: #27AE60;
-    }
+    <style>
+        :root {
+            --primary: #0F1B2D;
+            --primary-light: #1E3A5F;
+            --primary-mid: #2A5088;
+            --gold: #C8963E;
+            --gold-light: #D4AF37;
+            --gold-pale: #F5E6C8;
+            --teal: #2A9D8F;
+            --white: #FFFFFF;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+            --danger: #DC2626;
+            --danger-light: #FEE2E2;
+            --success: #16A34A;
+            --success-light: #DCFCE7;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.25);
+            --shadow-gold: 0 10px 30px rgba(200, 150, 62, 0.25);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-2xl: 32px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-    body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      color: var(--text-dark);
-      overflow-x: hidden;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    /* Premium Background */
-    .premium-bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: -2;
-      background: linear-gradient(135deg, #0F1B2D 0%, #1E3A5F 50%, #1a2744 100%);
-    }
+        html {
+            scroll-behavior: smooth;
+        }
 
-    /* Floating particles */
-    .particles {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: -1;
-      pointer-events: none;
-    }
-    .particle {
-      position: absolute;
-      background: rgba(212, 175, 55, 0.1);
-      border-radius: 50%;
-      animation: float 15s infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-100px) rotate(180deg); }
-    }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--primary);
+            color: var(--gray-800);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
 
-    /* Main Container */
-    .main-container {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+        /* ============ BACKGROUND LAYERS ============ */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
 
-    /* Glass Card */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 30px;
-      padding: 3.5rem 2.5rem;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.2);
-      max-width: 620px;
-      width: 100%;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
+        .bg-gradient {
+            background: linear-gradient(160deg, #080F1A 0%, #0F1B2D 25%, #1E3A5F 55%, #152238 80%, #0A111F 100%);
+        }
 
-    .glass-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #1E3A5F, #C8963E, #2A9D8F, #C8963E, #1E3A5F);
-    }
+        .bg-pattern {
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(42, 157, 143, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, rgba(30, 58, 95, 0.15) 0%, transparent 50%);
+        }
 
-    /* Logo & Branding */
-    .school-crest {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1rem;
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid var(--gold);
-      box-shadow: 0 5px 20px rgba(200, 150, 62, 0.3);
-    }
-    .school-crest span {
-      font-size: 2.5rem;
-      color: var(--gold-light);
-      font-weight: 900;
-    }
+        .bg-dots {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
 
-    .school-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #1E3A5F;
-      line-height: 1.2;
-      margin-bottom: 0.3rem;
-      letter-spacing: -0.5px;
-    }
-    .school-name .gold {
-      color: #C8963E;
-    }
+        /* ============ FLOATING ORBS ============ */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .orb-1 {
+            width: 350px;
+            height: 350px;
+            background: rgba(212, 175, 55, 0.12);
+            top: -10%;
+            left: -5%;
+            animation-delay: 0s;
+        }
+        .orb-2 {
+            width: 280px;
+            height: 280px;
+            background: rgba(42, 157, 143, 0.1);
+            bottom: -8%;
+            right: -5%;
+            animation-delay: -7s;
+        }
+        .orb-3 {
+            width: 220px;
+            height: 220px;
+            background: rgba(30, 58, 95, 0.2);
+            top: 50%;
+            left: 60%;
+            animation-delay: -14s;
+        }
 
-    .school-motto {
-      font-size: 0.9rem;
-      color: #64748b;
-      font-style: italic;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
+        @keyframes orbFloat {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(40px, -30px) scale(1.08);
+            }
+            50% {
+                transform: translate(-20px, 25px) scale(0.94);
+            }
+            75% {
+                transform: translate(-35px, -15px) scale(1.04);
+            }
+        }
 
-    .exam-badge {
-      display: inline-block;
-      background: linear-gradient(135deg, #E8F4FD, #D4E7F7);
-      color: #1E3A5F;
-      padding: 8px 20px;
-      border-radius: 25px;
-      font-weight: 700;
-      font-size: 1rem;
-      margin: 1rem 0;
-      border: 1px solid rgba(30, 58, 95, 0.2);
-    }
+        /* ============ MAIN CONTAINER ============ */
+        .main-wrapper {
+            width: 100%;
+            max-width: 620px;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
 
-    .exam-info {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin: 1.5rem 0;
-      flex-wrap: wrap;
-    }
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-gray);
-      font-weight: 500;
-    }
-    .info-item .icon {
-      font-size: 1.3rem;
-    }
+        /* ============ GLASS CARD ============ */
+        .landing-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: var(--radius-2xl);
+            padding: 3rem 2.5rem;
+            text-align: center;
+            position: relative;
+            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(200, 150, 62, 0.15);
+            animation: cardIn 0.7s ease-out;
+        }
 
-    /* Buttons */
-    .btn-primary {
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
-      color: white;
-      padding: 16px 45px;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.15rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 25px rgba(30, 58, 95, 0.3);
-      letter-spacing: 0.5px;
-    }
-    .btn-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 35px rgba(30, 58, 95, 0.4);
-      background: linear-gradient(135deg, #2A5088, #1E3A5F);
-    }
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    .btn-gold {
-      background: linear-gradient(135deg, #D4AF37, #B8860B);
-      color: white;
-      padding: 16px 45px;
-      border: none;
-      border-radius: 50px;
-      font-size: 1.15rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 25px rgba(184, 134, 11, 0.4);
-      letter-spacing: 0.5px;
-    }
-    .btn-gold:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 35px rgba(184, 134, 11, 0.5);
-    }
+        /* Gold accent line at top */
+        .landing-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 24px;
+            right: 24px;
+            height: 5px;
+            background: linear-gradient(90deg, #1E3A5F 0%, #C8963E 25%, #2A9D8F 50%, #C8963E 75%, #1E3A5F 100%);
+            border-radius: 0 0 8px 8px;
+        }
 
-    .btn-outline {
-      background: transparent;
-      color: var(--primary);
-      padding: 14px 35px;
-      border: 2px solid var(--primary);
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .btn-outline:hover {
-      background: var(--primary);
-      color: white;
-    }
+        /* Subtle inner glow */
+        .landing-card::after {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            border-radius: var(--radius-2xl);
+            pointer-events: none;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
 
-    .action-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 2rem;
-    }
+        /* ============ SCHOOL CREST ============ */
+        .crest-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+        }
 
-    /* Links */
-    .secondary-links {
-      margin-top: 1.8rem;
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .link-item {
-      color: #64748b;
-      text-decoration: none;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 500;
-      transition: color 0.2s;
-      padding: 8px 16px;
-      border-radius: 20px;
-    }
-    .link-item:hover {
-      color: #C8963E;
-      background: rgba(200, 150, 62, 0.08);
-    }
+        .school-crest {
+            width: 78px;
+            height: 78px;
+            background: linear-gradient(145deg, #0F1B2D, #1E3A5F);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--gold);
+            box-shadow: 0 6px 24px rgba(200, 150, 62, 0.3), inset 0 2px 8px rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
 
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      align-items: center; justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-    .modal.active { display: flex; }
+        .school-crest .crest-icon {
+            font-size: 2.6rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
 
-    .modal-card {
-      background: white;
-      border-radius: 24px;
-      padding: 2.5rem;
-      width: 90%;
-      max-width: 440px;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-      animation: slideUp 0.4s ease;
-      position: relative;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
+        /* ============ SCHOOL NAME ============ */
+        .school-name {
+            font-family: 'Playfair Display', 'Georgia', serif;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #1a2744;
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+            letter-spacing: -0.3px;
+        }
 
-    .modal-card h2 {
-      color: #1E3A5F;
-      margin-bottom: 0.5rem;
-      font-size: 1.8rem;
-    }
-    .modal-card .modal-subtitle {
-      color: #64748b;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-    }
-    .modal-card input, .modal-card select {
-      width: 100%;
-      padding: 13px 16px;
-      margin-bottom: 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-      font-family: 'Inter', sans-serif;
-    }
-    .modal-card input:focus, .modal-card select:focus {
-      border-color: #1E3A5F;
-    }
-    .modal-card button[type="submit"] {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-    .modal-card button[type="submit"]:hover {
-      background: linear-gradient(135deg, #2A5088, #1E3A5F);
-    }
-    .close-btn {
-      position: absolute;
-      top: 15px; right: 20px;
-      background: #f1f5f9;
-      border: none;
-      width: 35px; height: 35px;
-      border-radius: 50%;
-      font-size: 1.3rem;
-      color: #64748b;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .close-btn:hover {
-      background: #e2e8f0;
-      color: #1e293b;
-    }
-    .error-msg {
-      color: #E74C3C;
-      font-size: 0.9rem;
-      display: none;
-      margin-top: 0.5rem;
-      text-align: center;
-    }
+        .school-name .gold-text {
+            color: #B8860B;
+            font-weight: 900;
+        }
 
-    /* Responsive */
-    @media (max-width: 600px) {
-      .glass-card {
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-      }
-      .school-name {
-        font-size: 1.6rem;
-      }
-      .exam-info {
-        gap: 1rem;
-      }
-      .action-buttons {
-        flex-direction: column;
-      }
-      .btn-primary, .btn-gold {
-        width: 100%;
-      }
-    }
+        .school-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1E3A5F;
+            margin-bottom: 0.3rem;
+        }
 
-    /* Verse styling */
-    .verse {
-      margin-top: 1.5rem;
-      font-style: italic;
-      color: #94a3b8;
-      font-size: 0.85rem;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 1rem;
-    }
-  </style>
+        .school-motto {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            font-style: italic;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.2px;
+        }
+
+        /* ============ EXAM BADGE ============ */
+        .exam-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #E8F0FE, #D4E4F7);
+            color: #1E3A5F;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 1.8rem;
+            border: 1px solid rgba(30, 58, 95, 0.15);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .exam-badge .badge-dot {
+            width: 9px;
+            height: 9px;
+            background: var(--gold);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.8);
+            }
+        }
+
+        /* ============ INFO ROW ============ */
+        .info-row {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .info-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            background: var(--gray-50);
+            padding: 8px 18px;
+            border-radius: 50px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .info-pill .pill-icon {
+            font-size: 1.1rem;
+        }
+
+        /* ============ MAIN BUTTONS ============ */
+        .main-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 15px 32px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: var(--transition);
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-student {
+            background: linear-gradient(135deg, #1E3A5F, #2A5088);
+            color: white;
+            box-shadow: 0 8px 24px rgba(30, 58, 95, 0.35);
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .btn-student:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(30, 58, 95, 0.45);
+            background: linear-gradient(135deg, #2A5088, #1E3A5F);
+        }
+
+        .btn-student:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(30, 58, 95, 0.35);
+        }
+
+        .btn-report {
+            background: linear-gradient(135deg, #D4AF37, #B8860B);
+            color: white;
+            box-shadow: 0 8px 24px rgba(184, 134, 11, 0.35);
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .btn-report:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(184, 134, 11, 0.45);
+            background: linear-gradient(135deg, #C8963E, #9A7209);
+        }
+
+        .btn-report:active {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(184, 134, 11, 0.35);
+        }
+
+        .btn .btn-arrow {
+            transition: transform 0.3s ease;
+        }
+        .btn:hover .btn-arrow {
+            transform: translateX(4px);
+        }
+
+        /* ============ SECONDARY LINKS ============ */
+        .secondary-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .link-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 9px 18px;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1.5px solid transparent;
+            background: var(--gray-50);
+            color: var(--gray-600);
+            border-color: var(--gray-200);
+        }
+
+        .link-chip:hover {
+            background: var(--gray-100);
+            border-color: var(--gold);
+            color: #B8860B;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .link-chip.teacher-link:hover {
+            border-color: var(--primary-mid);
+            color: #1E3A5F;
+        }
+
+        .link-chip.admin-link:hover {
+            border-color: var(--teal);
+            color: #1E7A6B;
+        }
+
+        /* ============ VERSE ============ */
+        .verse-divider {
+            margin-top: 1.8rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--gray-200);
+            font-style: italic;
+            color: var(--gray-400);
+            font-size: 0.82rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* ============ MODALS ============ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 2.2rem 2rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            animation: modalIn 0.35s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-card .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--gray-100);
+            color: var(--gray-500);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .modal-card .modal-close:hover {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+
+        .modal-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            color: #1E3A5F;
+            margin-bottom: 4px;
+        }
+
+        .modal-card .modal-subtitle {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .modal-card .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .modal-card .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 5px;
+        }
+
+        .modal-card input,
+        .modal-card select {
+            width: 100%;
+            padding: 13px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-800);
+            background: var(--gray-50);
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .modal-card input:focus,
+        .modal-card select:focus {
+            border-color: #1E3A5F;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.06);
+        }
+
+        .modal-card .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1E3A5F, #2A5088);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 0.4rem;
+        }
+
+        .modal-card .btn-submit:hover {
+            background: linear-gradient(135deg, #2A5088, #1E3A5F);
+            box-shadow: 0 8px 24px rgba(30, 58, 95, 0.3);
+        }
+
+        .modal-card .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            display: none;
+            background: var(--danger-light);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .modal-card .error-msg.show {
+            display: block;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 640px) {
+            .landing-card {
+                padding: 2rem 1.4rem;
+                border-radius: var(--radius-xl);
+            }
+
+            .landing-card::before {
+                left: 16px;
+                right: 16px;
+                height: 4px;
+            }
+
+            .school-name {
+                font-size: 1.6rem;
+            }
+
+            .school-crest {
+                width: 62px;
+                height: 62px;
+            }
+
+            .school-crest .crest-icon {
+                font-size: 2rem;
+            }
+
+            .main-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn {
+                width: 100%;
+                min-width: unset;
+            }
+
+            .info-row {
+                gap: 0.8rem;
+            }
+
+            .info-pill {
+                font-size: 0.8rem;
+                padding: 6px 14px;
+            }
+
+            .modal-card {
+                padding: 1.6rem 1.2rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .landing-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .school-name {
+                font-size: 1.35rem;
+            }
+
+            .secondary-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Premium Dark Background -->
-  <div class="premium-bg"></div>
 
-  <!-- Floating Particles -->
-  <div class="particles" id="particles"></div>
+    <!-- Background Layers -->
+    <div class="bg-layer bg-gradient"></div>
+    <div class="bg-layer bg-pattern"></div>
+    <div class="bg-layer bg-dots"></div>
 
-  <!-- Main Container -->
-  <div class="main-container">
-    <div class="glass-card">
-      <!-- School Crest -->
-      <div class="school-crest">
-        <span>🕊️</span>
-      </div>
+    <!-- Floating Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
-      <!-- School Name -->
-      <h1 class="school-name">
-        Covenant <span class="gold">Arrows'</span><br>Model
-      </h1>
-      <p class="school-motto">✝️ Christ-Centered Learning • Modern Excellence</p>
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <div class="landing-card">
 
-      <!-- Exam Badge -->
-      <div class="exam-badge">
-        📚 THIRD TERM EXAMINATION 2025/2026
-      </div>
+            <!-- School Crest -->
+            <div class="crest-wrapper">
+                <div class="school-crest">
+                    <span class="crest-icon">🕊️</span>
+                </div>
+            </div>
 
-      <!-- Exam Info -->
-      <div class="exam-info">
-        <div class="info-item">
-          <span class="icon">📝</span> CBT Exam
+            <!-- School Name -->
+            <h1 class="school-name">
+                Covenant <span class="gold-text">Arrows'</span>
+            </h1>
+            <p class="school-subtitle">Model College</p>
+            <p class="school-motto">✝️ Christ-Centered Learning • Modern Excellence</p>
+
+            <!-- Exam Badge -->
+            <div class="exam-badge">
+                <span class="badge-dot"></span>
+                THIRD TERM EXAMINATION 2025/2026
+                <span class="badge-dot"></span>
+            </div>
+
+            <!-- Info Pills -->
+            <div class="info-row">
+                <div class="info-pill">
+                    <span class="pill-icon">📝</span> CBT Exam
+                </div>
+                <div class="info-pill">
+                    <span class="pill-icon">📊</span> Report Card
+                </div>
+                <div class="info-pill">
+                    <span class="pill-icon">🏫</span> K1 – Basic 6
+                </div>
+            </div>
+
+            <!-- Main Action Buttons -->
+            <div class="main-actions">
+                <button class="btn btn-student" onclick="openStudentModal()">
+                    🚀 Start Examination
+                    <span class="btn-arrow">→</span>
+                </button>
+                <button class="btn btn-report" onclick="openReportCardModal()">
+                    📄 View Report Card
+                    <span class="btn-arrow">→</span>
+                </button>
+            </div>
+
+            <!-- Secondary Links -->
+            <div class="secondary-links">
+                <span class="link-chip teacher-link" onclick="openTeacherModal()">
+                    👨‍🏫 Teacher Portal
+                </span>
+                <span class="link-chip admin-link" onclick="openAdminModal()">
+                    🔐 Admin Login
+                </span>
+                <span class="link-chip" onclick="openAboutModal()">
+                    ℹ️ How It Works
+                </span>
+            </div>
+
+            <!-- Bible Verse -->
+            <p class="verse-divider">
+                ✝️ "Train up a child in the way he should go, and when he is old he will not depart from it."
+                <br /><strong>— Proverbs 22:6</strong>
+            </p>
         </div>
-        <div class="info-item">
-          <span class="icon">🔐</span> Admin PIN
+    </div>
+
+    <!-- ==================== STUDENT LOGIN MODAL ==================== -->
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('studentModal')">✕</button>
+            <h2>🚀 Student Access</h2>
+            <p class="modal-subtitle">Enter your details to begin the examination</p>
+            <form id="studentForm" onsubmit="handleStudentLogin(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="studentName" placeholder="e.g., Adebayo Oluwaseun" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label>Select Your Class</label>
+                    <select id="studentClass" required>
+                        <option value="">— Choose Class —</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Start Examination →</button>
+                <p class="error-msg" id="studentError">Please fill in all fields correctly.</p>
+            </form>
         </div>
-        <div class="info-item">
-          <span class="icon">📊</span> Report Card
+    </div>
+
+    <!-- ==================== TEACHER LOGIN MODAL ==================== -->
+    <div class="modal-overlay" id="teacherModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('teacherModal')">✕</button>
+            <h2>👨‍🏫 Teacher Portal</h2>
+            <p class="modal-subtitle">Access your class dashboard</p>
+            <form id="teacherForm" onsubmit="handleTeacherLogin(event)">
+                <div class="form-group">
+                    <label>Your Full Name</label>
+                    <input type="text" id="teacherName" placeholder="e.g., Mr. Adewale Johnson" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label>Your Assigned Class</label>
+                    <select id="teacherClass" required>
+                        <option value="">— Choose Class —</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #D4AF37, #B8860B);">
+                    Access Dashboard →
+                </button>
+                <p class="error-msg" id="teacherError">Please fill in all fields correctly.</p>
+            </form>
         </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <a href="exam.html" class="btn-primary">
-          🚀 Start Examination
-        </a>
-        <button class="btn-gold" onclick="openReportCardModal()">
-          📄 Check Report Card
-        </button>
-      </div>
-
-      <!-- Secondary Links -->
-      <div class="secondary-links">
-        <span class="link-item" onclick="openAdminModal()">🔐 Admin Portal</span>
-        <span class="link-item" onclick="openTeacherModal()">👨‍🏫 Teacher Login</span>
-        <span class="link-item" onclick="openPinInfoModal()">ℹ️ About PIN</span>
-      </div>
-
-      <!-- Bible Verse -->
-      <p class="verse">
-        "Train up a child in the way he should go..." — Proverbs 22:6
-      </p>
     </div>
-  </div>
 
-  <!-- Admin Login Modal -->
-  <div id="adminModal" class="modal">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeModal('adminModal')">✕</button>
-      <h2>🔐 Admin Portal</h2>
-      <p class="modal-subtitle">Access the examination dashboard</p>
-      <form id="adminLoginForm">
-        <input type="email" id="adminEmail" placeholder="Admin Email" required />
-        <input type="password" id="adminPassword" placeholder="Password" required />
-        <button type="submit">Sign In to Dashboard</button>
-        <p class="error-msg" id="adminError">Invalid credentials. Please try again.</p>
-      </form>
+    <!-- ==================== ADMIN LOGIN MODAL ==================== -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('adminModal')">✕</button>
+            <h2>🔐 Admin Login</h2>
+            <p class="modal-subtitle">Secure access for school administrators</p>
+            <form id="adminForm" onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label>Admin Email</label>
+                    <input type="email" id="adminEmail" placeholder="admin@covenantarrows.com" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="adminPassword" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #0F1B2D, #1E3A5F);">
+                    Sign In Securely →
+                </button>
+                <p class="error-msg" id="adminError">Invalid credentials. Please try again.</p>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <!-- Teacher Login Modal -->
-  <div id="teacherModal" class="modal">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeModal('teacherModal')">✕</button>
-      <h2>👨‍🏫 Teacher Access</h2>
-      <p class="modal-subtitle">Enter your teaching credentials</p>
-      <form id="teacherLoginForm">
-        <input type="email" id="teacherEmail" placeholder="Teacher Email" required />
-        <input type="password" id="teacherPassword" placeholder="Password" required />
-        <button type="submit">Access Portal</button>
-        <p class="error-msg" id="teacherError">Invalid credentials.</p>
-      </form>
+    <!-- ==================== REPORT CARD MODAL ==================== -->
+    <div class="modal-overlay" id="reportCardModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('reportCardModal')">✕</button>
+            <h2>📄 View Report Card</h2>
+            <p class="modal-subtitle">Enter your details to view your results</p>
+            <form id="reportForm" onsubmit="handleReportCardLookup(event)">
+                <div class="form-group">
+                    <label>Student Full Name</label>
+                    <input type="text" id="reportStudentName" placeholder="Enter your full name" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <label>Your Class</label>
+                    <select id="reportStudentClass" required>
+                        <option value="">— Choose Class —</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #D4AF37, #B8860B);">
+                    View Report Card →
+                </button>
+                <p class="error-msg" id="reportError">No results found. Please check your details or contact your teacher.</p>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <!-- Report Card Modal -->
-  <div id="reportCardModal" class="modal">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeModal('reportCardModal')">✕</button>
-      <h2>📊 Student Report Card</h2>
-      <p class="modal-subtitle">Enter your PIN to view results</p>
-      <form id="reportCardForm">
-        <input type="text" id="studentPin" placeholder="Enter 8-digit PIN" maxlength="8" required />
-        <button type="submit">View Report Card</button>
-        <p class="error-msg" id="reportCardError">Invalid PIN. Contact your admin.</p>
-      </form>
+    <!-- ==================== ABOUT MODAL ==================== -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('aboutModal')">✕</button>
+            <h2>ℹ️ How It Works</h2>
+            <p class="modal-subtitle">Understanding the examination system</p>
+            <div style="text-align: left; color: var(--gray-600); line-height: 1.9; font-size: 0.9rem;">
+                <p><strong>🔹 For Students:</strong> Click <em>"Start Examination"</em>, enter your name and class. You'll be taken to the CBT exam page where you answer multiple-choice questions. Your score is calculated automatically.</p>
+                <p style="margin-top: 0.6rem;"><strong>🔹 For Teachers:</strong> Click <em>"Teacher Portal"</em>, enter your name and assigned class. You can manage questions, upload via CSV, enter scores, and generate report cards.</p>
+                <p style="margin-top: 0.6rem;"><strong>🔹 For Admins:</strong> Click <em>"Admin Login"</em> to access full control — manage classes, subjects, grading system, all questions, and all report cards.</p>
+                <p style="margin-top: 0.6rem;"><strong>🔹 Report Cards:</strong> Students and parents can view results by entering the student's name and class. Teachers generate the official report cards from their dashboard.</p>
+                <p style="margin-top: 0.6rem;"><strong>📞 Need Help?</strong> Contact the school admin office during school hours.</p>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- PIN Info Modal -->
-  <div id="pinInfoModal" class="modal">
-    <div class="modal-card">
-      <button class="close-btn" onclick="closeModal('pinInfoModal')">✕</button>
-      <h2>ℹ️ About PIN System</h2>
-      <p class="modal-subtitle">How the admin PIN works</p>
-      <div style="text-align: left; color: #475569; line-height: 1.8;">
-        <p>🔹 <strong>Examination PIN:</strong> Generated by admin for each student to access the CBT exam.</p>
-        <p>🔹 <strong>Report Card PIN:</strong> Unique code to securely view your term results.</p>
-        <p>🔹 <strong>Where to get PIN:</strong> From your class teacher or school admin office.</p>
-        <p>🔹 <strong>Lost your PIN?</strong> Contact the admin office with your student ID.</p>
-      </div>
-    </div>
-  </div>
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+        // ============ DEFAULT DATA ============
+        const DEFAULT_CLASSES = [
+            'Kindergarten 1',
+            'Kindergarten 2',
+            'Nursery 1',
+            'Nursery 2',
+            'Basic 1',
+            'Basic 2',
+            'Basic 3',
+            'Basic 4',
+            'Basic 5',
+            'Basic 6'
+        ];
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-  <script>
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
-      authDomain: "edumeta-c5588.firebaseapp.com",
-      projectId: "edumeta-c5588",
-      storageBucket: "edumeta-c5588.firebasestorage.app",
-      messagingSenderId: "332853259697",
-      appId: "1:332853259697:web:92e0c07e43d1c3bf432190",
-      measurementId: "G-WY24HER46Q"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // ============ FLOATING PARTICLES ============
-    function createParticles() {
-      const container = document.getElementById('particles');
-      for (let i = 0; i < 30; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        const size = Math.random() * 6 + 2;
-        particle.style.width = size + 'px';
-        particle.style.height = size + 'px';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.top = Math.random() * 100 + '%';
-        particle.style.animationDelay = Math.random() * 15 + 's';
-        particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-        container.appendChild(particle);
-      }
-    }
-    createParticles();
-
-    // ============ MODAL FUNCTIONS ============
-    function openAdminModal() {
-      document.getElementById('adminModal').classList.add('active');
-    }
-    function openTeacherModal() {
-      document.getElementById('teacherModal').classList.add('active');
-    }
-    function openReportCardModal() {
-      document.getElementById('reportCardModal').classList.add('active');
-    }
-    function openPinInfoModal() {
-      document.getElementById('pinInfoModal').classList.add('active');
-    }
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
-      // Clear errors
-      const errorEl = document.getElementById(modalId.replace('Modal', 'Error'));
-      if (errorEl) errorEl.style.display = 'none';
-    }
-
-    // Close modals on outside click
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-          this.classList.remove('active');
+        // ============ INITIALIZATION ============
+        function init() {
+            populateAllClassSelects();
+            // Load classes from localStorage if available
+            const savedClasses = localStorage.getItem('cam_classes');
+            if (savedClasses) {
+                const classes = JSON.parse(savedClasses);
+                populateAllClassSelects(classes);
+            }
         }
-      });
-    });
 
-    // ============ ADMIN LOGIN ============
-    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('adminEmail').value;
-      const password = document.getElementById('adminPassword').value;
-      try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        // Check if user is admin (you can set custom claims or check Firestore)
-        window.location.href = 'admin-dashboard.html';
-      } catch (error) {
-        document.getElementById('adminError').style.display = 'block';
-        document.getElementById('adminError').textContent = error.message;
-      }
-    });
+        function populateAllClassSelects(classList) {
+            const classes = classList || DEFAULT_CLASSES;
+            const selects = ['studentClass', 'teacherClass', 'reportStudentClass'];
 
-    // ============ TEACHER LOGIN ============
-    document.getElementById('teacherLoginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('teacherEmail').value;
-      const password = document.getElementById('teacherPassword').value;
-      try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        window.location.href = 'teacher-dashboard.html';
-      } catch (error) {
-        document.getElementById('teacherError').style.display = 'block';
-        document.getElementById('teacherError').textContent = error.message;
-      }
-    });
-
-    // ============ REPORT CARD PIN ACCESS ============
-    document.getElementById('reportCardForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const pin = document.getElementById('studentPin').value.trim();
-      
-      if (pin.length !== 8) {
-        document.getElementById('reportCardError').style.display = 'block';
-        document.getElementById('reportCardError').textContent = 'PIN must be exactly 8 digits.';
-        return;
-      }
-
-      try {
-        // Query Firestore for the student with this PIN
-        const studentsRef = db.collection('students');
-        const snapshot = await studentsRef.where('reportCardPin', '==', pin).limit(1).get();
-        
-        if (snapshot.empty) {
-          document.getElementById('reportCardError').style.display = 'block';
-          document.getElementById('reportCardError').textContent = 'Invalid PIN. Please check and try again.';
-        } else {
-          const studentDoc = snapshot.docs[0];
-          const studentData = studentDoc.data();
-          // Store student info for report card page
-          localStorage.setItem('currentStudent', JSON.stringify({
-            id: studentDoc.id,
-            ...studentData
-          }));
-          window.location.href = 'report-card.html';
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                select.innerHTML = '<option value="">— Choose Class —</option>';
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls;
+                    option.textContent = cls;
+                    select.appendChild(option);
+                });
+            });
         }
-      } catch (error) {
-        document.getElementById('reportCardError').style.display = 'block';
-        document.getElementById('reportCardError').textContent = 'Error verifying PIN. Please try again.';
-        console.error('PIN verification error:', error);
-      }
-    });
 
-    // ============ SESSION CHECK ============
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        console.log('User is signed in:', user.email);
-        // Could redirect based on role if needed
-      }
-    });
+        // ============ MODAL FUNCTIONS ============
+        function openStudentModal() {
+            document.getElementById('studentModal').classList.add('active');
+            document.getElementById('studentName').focus();
+        }
 
-    console.log('✅ Covenant Arrows Model - Examination System Ready');
-    console.log('📚 Third Term Exam 2025/2026');
-    console.log('🔐 Admin PIN & Report Card System Active');
-  </script>
+        function openTeacherModal() {
+            document.getElementById('teacherModal').classList.add('active');
+            document.getElementById('teacherName').focus();
+        }
+
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            document.getElementById('adminEmail').focus();
+        }
+
+        function openReportCardModal() {
+            document.getElementById('reportCardModal').classList.add('active');
+            document.getElementById('reportStudentName').focus();
+        }
+
+        function openAboutModal() {
+            document.getElementById('aboutModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            // Clear any visible errors
+            const errorEl = modal.querySelector('.error-msg');
+            if (errorEl) errorEl.classList.remove('show');
+            // Clear form fields
+            const form = modal.querySelector('form');
+            if (form) form.reset();
+        }
+
+        // Close modals when clicking overlay (outside card)
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    const errorEl = this.querySelector('.error-msg');
+                    if (errorEl) errorEl.classList.remove('show');
+                    const form = this.querySelector('form');
+                    if (form) form.reset();
+                }
+            });
+        });
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                    const errorEl = modal.querySelector('.error-msg');
+                    if (errorEl) errorEl.classList.remove('show');
+                    const form = modal.querySelector('form');
+                    if (form) form.reset();
+                });
+            }
+        });
+
+        // ============ FORM HANDLERS ============
+
+        // --- Student Login ---
+        function handleStudentLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value.trim();
+            const className = document.getElementById('studentClass').value;
+            const errorEl = document.getElementById('studentError');
+
+            if (!name || !className) {
+                errorEl.textContent = 'Please fill in all fields.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (name.length < 3) {
+                errorEl.textContent = 'Please enter your full name.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            errorEl.classList.remove('show');
+
+            // Store student info in sessionStorage
+            const studentData = {
+                name: name,
+                class: className,
+                loginTime: new Date().toISOString()
+            };
+            sessionStorage.setItem('cam_student', JSON.stringify(studentData));
+
+            // Redirect to CBT page
+            window.location.href = 'cbt.html';
+        }
+
+        // --- Teacher Login ---
+        function handleTeacherLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('teacherName').value.trim();
+            const className = document.getElementById('teacherClass').value;
+            const errorEl = document.getElementById('teacherError');
+
+            if (!name || !className) {
+                errorEl.textContent = 'Please fill in all fields.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (name.length < 3) {
+                errorEl.textContent = 'Please enter your full name.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            errorEl.classList.remove('show');
+
+            // Store teacher info in sessionStorage
+            const teacherData = {
+                name: name,
+                class: className,
+                loginTime: new Date().toISOString()
+            };
+            sessionStorage.setItem('cam_teacher', JSON.stringify(teacherData));
+
+            // Redirect to teacher dashboard
+            window.location.href = 'teacher.html';
+        }
+
+        // --- Admin Login ---
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const errorEl = document.getElementById('adminError');
+
+            if (!email || !password) {
+                errorEl.textContent = 'Please fill in all fields.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            // Simple admin authentication (for temporary use)
+            // Default credentials: admin@covenantarrows.com / Covenant2025
+            const ADMIN_EMAIL = 'admin@covenantarrows.com';
+            const ADMIN_PASSWORD = 'Covenant2025';
+
+            if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+                errorEl.classList.remove('show');
+
+                // Store admin session
+                const adminData = {
+                    email: email,
+                    loginTime: new Date().toISOString()
+                };
+                sessionStorage.setItem('cam_admin', JSON.stringify(adminData));
+
+                // Redirect to admin dashboard
+                window.location.href = 'admin.html';
+            } else {
+                errorEl.textContent = 'Invalid email or password. Please try again.';
+                errorEl.classList.add('show');
+            }
+        }
+
+        // --- Report Card Lookup ---
+        function handleReportCardLookup(e) {
+            e.preventDefault();
+            const name = document.getElementById('reportStudentName').value.trim();
+            const className = document.getElementById('reportStudentClass').value;
+            const errorEl = document.getElementById('reportError');
+
+            if (!name || !className) {
+                errorEl.textContent = 'Please fill in all fields.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (name.length < 3) {
+                errorEl.textContent = 'Please enter the student\'s full name.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            errorEl.classList.remove('show');
+
+            // Store lookup info and redirect to report card page
+            const lookupData = {
+                studentName: name,
+                class: className
+            };
+            sessionStorage.setItem('cam_report_lookup', JSON.stringify(lookupData));
+            window.location.href = 'report-card.html';
+        }
+
+        // ============ INIT ============
+        init();
+        console.log('✅ Covenant Arrows Model — Landing Page Ready');
+        console.log('📚 Third Term Examination 2025/2026');
+        console.log('🔗 Pages: index.html | cbt.html | teacher.html | admin.html | report-card.html');
+    </script>
 </body>
 </html>
