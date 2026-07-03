@@ -5,368 +5,825 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard | Covenant Arrows' Model</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #1E3A5F;
+      --primary-light: #2A5088;
+      --gold: #C8963E;
+      --gold-light: #D4AF37;
+      --teal: #2A9D8F;
+      --bg: #F1F5F9;
+      --card-bg: #FFFFFF;
+      --text: #1E293B;
+      --text-light: #64748B;
+      --border: #E2E8F0;
+      --danger: #EF4444;
+      --success: #22C55E;
+      --warning: #F59E0B;
+    }
+
     body {
       font-family: 'Inter', 'Segoe UI', sans-serif;
-      background: #F0F4F8;
-      color: #1E293B;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
     }
-    
-    /* Top Navigation */
-    .top-nav {
-      background: linear-gradient(135deg, #1E3A5F, #2A5088);
+
+    /* ========== HEADER ========== */
+    .header {
+      background: linear-gradient(135deg, #1E3A5F 0%, #1a2744 100%);
       color: white;
-      padding: 1rem 2rem;
+      padding: 0 2rem;
+      height: 70px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .nav-brand {
+    .header-brand {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .nav-brand h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.3rem;
-    }
-    .nav-brand .gold-dot {
-      color: #D4AF37;
-    }
-    .nav-actions {
+    .header-brand .crest {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--gold), #B8860B);
+      border-radius: 50%;
       display: flex;
-      gap: 1rem;
       align-items: center;
-    }
-    .logout-btn {
-      background: rgba(255,255,255,0.15);
+      justify-content: center;
+      font-size: 1.3rem;
       color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 8px 20px;
+    }
+    .header-brand h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .header-brand .gold-accent {
+      color: var(--gold-light);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .user-info {
+      text-align: right;
+      line-height: 1.3;
+    }
+    .user-info .role {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .user-info .email {
+      font-size: 0.85rem;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 18px;
       border-radius: 20px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.85rem;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .logout-btn:hover {
-      background: rgba(255,255,255,0.25);
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.4);
     }
 
-    /* Dashboard Grid */
-    .dashboard {
-      padding: 2rem;
-      max-width: 1400px;
+    /* ========== MAIN CONTAINER ========== */
+    .main-container {
+      max-width: 1300px;
       margin: 0 auto;
+      padding: 2rem 1.5rem;
     }
-    .stats-grid {
+
+    /* ========== STATS ROW ========== */
+    .stats-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
       margin-bottom: 2rem;
     }
     .stat-card {
-      background: white;
-      padding: 1.5rem;
+      background: var(--card-bg);
       border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      border-left: 4px solid #1E3A5F;
+      padding: 1.3rem 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-left: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s;
     }
-    .stat-card.gold { border-left-color: #C8963E; }
-    .stat-card.teal { border-left-color: #2A9D8F; }
-    .stat-card h3 {
-      color: #64748B;
-      font-size: 0.9rem;
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.gold { border-left-color: var(--gold); }
+    .stat-card.teal { border-left-color: var(--teal); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .stat-icon.blue { background: #EFF6FF; }
+    .stat-icon.gold { background: #FFFBEB; }
+    .stat-icon.teal { background: #F0FDFA; }
+    .stat-icon.warning { background: #FFFBEB; }
+    .stat-info h4 {
+      font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 0.5rem;
+      color: var(--text-light);
+      margin-bottom: 2px;
     }
-    .stat-card .stat-value {
-      font-size: 2rem;
+    .stat-info .value {
+      font-size: 1.8rem;
       font-weight: 800;
-      color: #1E3A5F;
+      color: var(--text);
     }
 
-    /* Tabs */
-    .tabs {
+    /* ========== TABS ========== */
+    .tabs-container {
       display: flex;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
+      background: white;
+      padding: 0.5rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     }
     .tab-btn {
-      padding: 10px 24px;
+      padding: 12px 24px;
       border: none;
-      background: white;
-      border-radius: 25px;
+      background: transparent;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: 600;
       font-size: 0.9rem;
-      color: #64748B;
+      color: var(--text-light);
       transition: all 0.2s;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
     }
     .tab-btn.active {
-      background: #1E3A5F;
+      background: var(--primary);
       color: white;
+      box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
     }
     .tab-btn:hover:not(.active) {
-      background: #E2E8F0;
+      background: #F1F5F9;
+      color: var(--text);
     }
 
-    /* Content Cards */
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .content-card {
-      background: white;
-      padding: 2rem;
+    /* ========== CARDS ========== */
+    .card {
+      background: var(--card-bg);
       border-radius: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 1.8rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
       margin-bottom: 1.5rem;
     }
-    .content-card h3 {
-      color: #1E3A5F;
-      margin-bottom: 1rem;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .card-header h3 {
       font-size: 1.2rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-header h3 .icon {
+      color: var(--gold);
     }
 
-    /* Tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    /* ========== FORMS ========== */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #E2E8F0;
-    }
-    th {
-      background: #F8FAFC;
-      color: #64748B;
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    tr:hover td {
-      background: #F8FAFC;
-    }
-
-    /* Buttons */
-    .btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .btn-primary {
-      background: #1E3A5F;
-      color: white;
-    }
-    .btn-gold {
-      background: #C8963E;
-      color: white;
-    }
-    .btn-outline {
-      background: transparent;
-      border: 2px solid #1E3A5F;
-      color: #1E3A5F;
-    }
-    .btn-sm {
-      padding: 5px 12px;
-      font-size: 0.8rem;
-    }
-    .btn:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-    }
-
-    /* Forms */
     .form-group {
       margin-bottom: 1rem;
     }
     .form-group label {
       display: block;
-      margin-bottom: 0.3rem;
       font-weight: 600;
-      color: #475569;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .form-group input, .form-group select {
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
       width: 100%;
-      padding: 10px 14px;
-      border: 2px solid #E2E8F0;
+      padding: 11px 14px;
+      border: 2px solid var(--border);
       border-radius: 10px;
       font-size: 0.95rem;
       font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #FAFBFC;
     }
-    .form-group input:focus, .form-group select:focus {
-      border-color: #1E3A5F;
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
       outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.08);
+      background: white;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
     }
 
-    .pin-display {
-      background: #F0FDF4;
-      border: 2px dashed #22C55E;
-      padding: 1rem;
+    /* ========== BUTTONS ========== */
+    .btn {
+      padding: 11px 22px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
+    .btn-gold { background: var(--gold); color: white; }
+    .btn-gold:hover { background: #B8860B; transform: translateY(-1px); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #16A34A; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #DC2626; }
+    .btn-outline {
+      background: white;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    /* ========== TABLES ========== */
+    .table-wrapper {
+      overflow-x: auto;
       border-radius: 12px;
-      font-size: 1.5rem;
-      font-weight: 800;
-      letter-spacing: 4px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+    thead th {
+      background: #F8FAFC;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-light);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+    tbody tr:hover { background: #F8FAFC; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-active { background: #DCFCE7; color: #166534; }
+    .badge-draft { background: #FEF3C7; color: #92400E; }
+    .badge-archived { background: #F1F5F9; color: #64748B; }
+
+    /* ========== QUESTION EDITOR ========== */
+    .question-card {
+      background: #FAFBFC;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .question-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .question-card .q-number {
+      position: absolute;
+      top: -12px;
+      left: 16px;
+      background: var(--primary);
+      color: white;
+      padding: 4px 14px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .question-card .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      margin-top: 0.5rem;
+    }
+    .question-card .point-input {
+      width: 80px;
+      display: inline-block;
+      margin-left: 10px;
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    @media (max-width: 600px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .option-item .opt-label {
+      font-weight: 700;
+      color: var(--primary);
+      width: 24px;
       text-align: center;
-      color: #15803D;
-      margin: 1rem 0;
+    }
+    .option-item input {
+      flex: 1;
+    }
+    .correct-badge {
+      background: #DCFCE7;
+      color: #166534;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 8px;
     }
 
-    @media (max-width: 768px) {
-      .top-nav { flex-direction: column; gap: 1rem; text-align: center; }
-      .dashboard { padding: 1rem; }
+    /* ========== CSV UPLOAD ZONE ========== */
+    .upload-zone {
+      border: 3px dashed #CBD5E1;
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #FAFBFC;
     }
+    .upload-zone:hover {
+      border-color: var(--primary);
+      background: #EFF6FF;
+    }
+    .upload-zone .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .upload-zone p {
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+    .upload-zone .supported {
+      font-size: 0.8rem;
+      color: #94A3B8;
+    }
+    #csvFileInput { display: none; }
+
+    /* ========== MODAL ========== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 550px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h3 { font-size: 1.3rem; }
+    .modal-close {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #F1F5F9;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover { background: #E2E8F0; }
+
+    /* ========== TOAST ========== */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1E293B;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      z-index: 2000;
+      animation: toastIn 0.4s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    @keyframes toastIn {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast.success { background: #166534; }
+    .toast.error { background: #991B1B; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .header { padding: 0 1rem; }
+      .header-brand h2 { font-size: 0.9rem; }
+      .main-container { padding: 1rem; }
+      .card { padding: 1.2rem; }
+      .tabs-container { overflow-x: auto; flex-wrap: nowrap; }
+      .tab-btn { padding: 10px 16px; font-size: 0.8rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .btn-group { flex-direction: column; }
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
-  <!-- Top Navigation -->
-  <nav class="top-nav">
-    <div class="nav-brand">
-      <span style="font-size: 1.8rem;">🕊️</span>
-      <h2>Covenant Arrows' Model <span class="gold-dot">●</span> Admin</h2>
-    </div>
-    <div class="nav-actions">
-      <span id="adminName" style="font-weight: 500;">Admin</span>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-  </nav>
 
-  <!-- Dashboard Content -->
-  <div class="dashboard">
-    <!-- Stats -->
-    <div class="stats-grid">
+  <!-- ==================== HEADER ==================== -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="crest">🕊️</div>
+      <h2>Covenant Arrows' <span class="gold-accent">Model</span> <span style="font-weight:400; font-size:0.8rem;">| Admin</span></h2>
+    </div>
+    <div class="header-actions">
+      <div class="user-info">
+        <div class="role">Administrator</div>
+        <div class="email" id="adminEmailDisplay">admin@covenantarrows.sch.ng</div>
+      </div>
+      <button class="btn-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <div class="main-container">
+
+    <!-- Stats Row -->
+    <div class="stats-row">
       <div class="stat-card">
-        <h3>Total Students</h3>
-        <div class="stat-value" id="totalStudents">0</div>
+        <div class="stat-icon blue">📚</div>
+        <div class="stat-info"><h4>Total Subjects</h4><div class="value" id="statSubjects">0</div></div>
       </div>
       <div class="stat-card gold">
-        <h3>Exams Taken</h3>
-        <div class="stat-value" id="examsTaken">0</div>
+        <div class="stat-icon gold">📝</div>
+        <div class="stat-info"><h4>Total Questions</h4><div class="value" id="statQuestions">0</div></div>
       </div>
       <div class="stat-card teal">
-        <h3>PINs Generated</h3>
-        <div class="stat-value" id="pinsGenerated">0</div>
+        <div class="stat-icon teal">👨‍🎓</div>
+        <div class="stat-info"><h4>Exams Taken</h4><div class="value" id="statExams">0</div></div>
       </div>
-      <div class="stat-card">
-        <h3>Active Exams</h3>
-        <div class="stat-value" id="activeExams">0</div>
+      <div class="stat-card warning">
+        <div class="stat-icon warning">⭐</div>
+        <div class="stat-info"><h4>Avg Score</h4><div class="value" id="statAvgScore">0%</div></div>
       </div>
     </div>
 
     <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('students')">👨‍🎓 Students</button>
-      <button class="tab-btn" onclick="switchTab('pins')">🔑 PIN Management</button>
-      <button class="tab-btn" onclick="switchTab('exams')">📝 Exams</button>
-      <button class="tab-btn" onclick="switchTab('results')">📊 Results</button>
-      <button class="tab-btn" onclick="switchTab('reportCards')">📄 Report Cards</button>
+    <div class="tabs-container">
+      <button class="tab-btn active" data-tab="subjects">📚 Subjects</button>
+      <button class="tab-btn" data-tab="questions">📝 Questions Bank</button>
+      <button class="tab-btn" data-tab="csv">📥 CSV Import/Export</button>
+      <button class="tab-btn" data-tab="exams">📋 Exams</button>
+      <button class="tab-btn" data-tab="results">📊 Results</button>
+      <button class="tab-btn" data-tab="pins">🔑 PIN Management</button>
     </div>
 
-    <!-- Students Tab -->
-    <div id="studentsTab" class="tab-content active">
-      <div class="content-card">
-        <h3>Student Management</h3>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <button class="btn btn-primary" onclick="addStudent()">+ Add Student</button>
-            <button class="btn btn-outline" onclick="importStudents()">📥 Import CSV</button>
-          </div>
-          <input type="text" placeholder="Search students..." style="padding: 8px 16px; border-radius: 20px; border: 1px solid #E2E8F0;" id="studentSearch">
+    <!-- ========== TAB: SUBJECTS ========== -->
+    <div id="tab-subjects" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📚</span> Subject Management</h3>
+          <button class="btn btn-primary" onclick="openSubjectModal()">+ Add New Subject</button>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Student ID</th>
-                <th>Name</th>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
                 <th>Class</th>
-                <th>Exam PIN</th>
-                <th>Report PIN</th>
+                <th>Total Questions</th>
+                <th>Total Points</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="studentsTableBody">
-              <tr><td colspan="6" style="text-align: center; color: #94A3B8;">Loading students...</td></tr>
+            <tbody id="subjectsTableBody">
+              <tr><td colspan="7" style="text-align:center; color:#94A3B8; padding:2rem;">No subjects created yet. Click "Add New Subject" to begin.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- PINs Tab -->
-    <div id="pinsTab" class="tab-content">
-      <div class="content-card">
-        <h3>Generate Examination & Report Card PINs</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-          <div>
-            <h4 style="margin-bottom: 1rem; color: #1E3A5F;">Generate Exam PIN</h4>
-            <div class="form-group">
-              <label>Select Student</label>
-              <select id="studentSelectForPin">
-                <option value="">Choose student...</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" onclick="generateExamPin()">Generate Exam PIN</button>
-            <div id="examPinDisplay" class="pin-display" style="display: none;"></div>
+    <!-- ========== TAB: QUESTIONS BANK ========== -->
+    <div id="tab-questions" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📝</span> Questions Bank</h3>
+          <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="addQuestionRow()">+ Add Question Manually</button>
+            <button class="btn btn-gold btn-sm" onclick="switchToCsvTab()">📥 Import CSV</button>
+            <button class="btn btn-success btn-sm" id="saveAllQuestionsBtn">💾 Save All Questions</button>
           </div>
-          <div>
-            <h4 style="margin-bottom: 1rem; color: #C8963E;">Generate Report Card PIN</h4>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Filter by Subject</label>
+            <select id="questionSubjectFilter" onchange="loadQuestionsForSubject()">
+              <option value="">-- Select Subject --</option>
+            </select>
+          </div>
+        </div>
+        <div id="questionsEditorContainer">
+          <p style="color:#94A3B8; text-align:center; padding:2rem;">Select a subject to view or add questions.</p>
+        </div>
+        <div id="bulkPointSetter" class="hidden" style="margin-top:1rem; padding:1rem; background:#FFFBEB; border-radius:12px;">
+          <strong>⚡ Quick Set Points:</strong>
+          <input type="number" id="bulkPointValue" placeholder="e.g., 5" style="width:80px; margin:0 10px;" min="1">
+          <button class="btn btn-gold btn-sm" onclick="setAllPoints()">Apply to All Questions</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: CSV IMPORT/EXPORT ========== -->
+    <div id="tab-csv" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📥</span> CSV Import & Export</h3>
+        </div>
+        
+        <!-- Download Template -->
+        <div style="margin-bottom: 2rem;">
+          <h4 style="margin-bottom: 0.8rem;">📋 Step 1: Download CSV Template</h4>
+          <p style="color: var(--text-light); margin-bottom: 1rem; font-size: 0.9rem;">
+            Download the template, fill in your questions, and upload. This ensures zero errors.
+          </p>
+          <button class="btn btn-outline" onclick="downloadCsvTemplate()">📥 Download CSV Template</button>
+          <button class="btn btn-outline" onclick="downloadCsvSample()" style="margin-left: 0.5rem;">📄 Download Sample (with data)</button>
+        </div>
+
+        <!-- CSV Format Info -->
+        <div style="background: #EFF6FF; padding: 1.2rem; border-radius: 12px; margin-bottom: 2rem; border-left: 4px solid var(--primary);">
+          <h4 style="margin-bottom: 0.5rem;">📌 CSV Format Requirements</h4>
+          <p style="font-size: 0.85rem; color: var(--text-light); line-height: 1.8;">
+            <strong>Columns:</strong> SubjectCode | Class | Question | OptionA | OptionB | OptionC | OptionD | CorrectAnswer | Points<br>
+            <strong>CorrectAnswer:</strong> Must be A, B, C, or D<br>
+            <strong>Points:</strong> Numeric value (e.g., 5)<br>
+            <strong>SubjectCode:</strong> Must match an existing subject code in the system
+          </p>
+        </div>
+
+        <!-- Upload Zone -->
+        <div>
+          <h4 style="margin-bottom: 0.8rem;">📤 Step 2: Upload Your CSV</h4>
+          <div class="upload-zone" id="csvUploadZone" onclick="document.getElementById('csvFileInput').click()">
+            <div class="upload-icon">📁</div>
+            <p><strong>Click to upload CSV file</strong></p>
+            <p class="supported">or drag and drop • .csv files only • Max 500 questions per file</p>
+          </div>
+          <input type="file" id="csvFileInput" accept=".csv" onchange="handleCsvUpload(event)" />
+          <div id="csvPreview" style="margin-top: 1.5rem;"></div>
+        </div>
+
+        <!-- Export -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--border);">
+          <h4 style="margin-bottom: 0.8rem;">📤 Export Questions</h4>
+          <div class="form-row">
             <div class="form-group">
-              <label>Select Student</label>
-              <select id="studentSelectForReportPin">
-                <option value="">Choose student...</option>
+              <label>Select Subject</label>
+              <select id="exportSubjectSelect">
+                <option value="">All Subjects</option>
               </select>
             </div>
-            <button class="btn btn-gold" onclick="generateReportPin()">Generate Report PIN</button>
-            <div id="reportPinDisplay" class="pin-display" style="display: none; border-color: #C8963E; color: #B8860B;"></div>
+          </div>
+          <button class="btn btn-success" onclick="exportQuestionsToCsv()">📥 Download Questions CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: EXAMS ========== -->
+    <div id="tab-exams" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📋</span> Exam Configuration</h3>
+          <button class="btn btn-primary" onclick="openExamModal()">+ Create New Exam</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Exam Title</th>
+                <th>Subject</th>
+                <th>Class</th>
+                <th>Duration (mins)</th>
+                <th>Total Questions</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="examsTableBody">
+              <tr><td colspan="7" style="text-align:center; color:#94A3B8; padding:2rem;">No exams created yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: RESULTS ========== -->
+    <div id="tab-results" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">📊</span> Student Results</h3>
+          <div class="btn-group">
+            <select id="resultClassFilter" onchange="loadResults()" style="padding:8px 14px; border-radius:8px; border:2px solid var(--border);">
+              <option value="">All Classes</option>
+              <option value="JSS1">JSS 1</option>
+              <option value="JSS2">JSS 2</option>
+              <option value="JSS3">JSS 3</option>
+              <option value="SS1">SS 1</option>
+              <option value="SS2">SS 2</option>
+              <option value="SS3">SS 3</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportResultsCsv()">📥 Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Class</th>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Total Points</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+              <tr><td colspan="8" style="text-align:center; color:#94A3B8; padding:2rem;">No results yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB: PIN MANAGEMENT ========== -->
+    <div id="tab-pins" class="tab-content hidden">
+      <div class="card">
+        <div class="card-header">
+          <h3><span class="icon">🔑</span> PIN Management</h3>
+          <button class="btn btn-gold" onclick="generateBulkPins()">Generate Bulk PINs</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Select Student</label>
+            <select id="pinStudentSelect">
+              <option value="">-- Choose Student --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>PIN Type</label>
+            <select id="pinType">
+              <option value="exam">Exam PIN</option>
+              <option value="report">Report Card PIN</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="generateSinglePin()">Generate PIN</button>
+        <div id="pinDisplay" style="margin-top:1rem; display:none;">
+          <div style="background:#F0FDF4; border:2px dashed #22C55E; padding:1.2rem; border-radius:14px; text-align:center;">
+            <p style="color:#64748B; margin-bottom:0.3rem;">Generated PIN</p>
+            <p style="font-size:2rem; font-weight:800; letter-spacing:6px; color:#15803D;" id="pinValue"></p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Exams Tab -->
-    <div id="examsTab" class="tab-content">
-      <div class="content-card">
-        <h3>Exam Management</h3>
-        <button class="btn btn-primary" style="margin-bottom: 1rem;" onclick="createExam()">+ Create New Exam</button>
-        <table>
-          <thead>
-            <tr>
-              <th>Subject</th>
-              <th>Class</th>
-              <th>Duration</th>
-              <th>Questions</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="examsTableBody">
-            <tr><td colspan="6" style="text-align: center; color: #94A3B8;">Loading exams...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+  </div>
 
-    <!-- Results Tab -->
-    <div id="resultsTab" class="tab-content">
-      <div class="content-card">
-        <h3>Examination Results</h3>
-        <div class="form-group" style="max-width: 300px;">
-          <label>Filter by Class</label>
-          <select id="resultClassFilter">
-            <option value="">All Classes</option>
+  <!-- ==================== SUBJECT MODAL ==================== -->
+  <div class="modal-overlay" id="subjectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="subjectModalTitle">Add New Subject</h3>
+        <button class="modal-close" onclick="closeSubjectModal()">✕</button>
+      </div>
+      <form id="subjectForm">
+        <input type="hidden" id="subjectDocId" />
+        <div class="form-group">
+          <label>Subject Code *</label>
+          <input type="text" id="subjectCode" placeholder="e.g., MTH101, ENG101" required />
+        </div>
+        <div class="form-group">
+          <label>Subject Name *</label>
+          <input type="text" id="subjectName" placeholder="e.g., Mathematics" required />
+        </div>
+        <div class="form-group">
+          <label>Class *</label>
+          <select id="subjectClass" required>
+            <option value="">-- Select Class --</option>
             <option value="JSS1">JSS 1</option>
             <option value="JSS2">JSS 2</option>
             <option value="JSS3">JSS 3</option>
@@ -375,59 +832,66 @@
             <option value="SS3">SS 3</option>
           </select>
         </div>
-        <button class="btn btn-gold" style="margin-bottom: 1rem;" onclick="exportResults()">📥 Export All Results</button>
-        <table>
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Subject</th>
-              <th>Score</th>
-              <th>Grade</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody id="resultsTableBody">
-            <tr><td colspan="5" style="text-align: center; color: #94A3B8;">Loading results...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Report Cards Tab -->
-    <div id="reportCardsTab" class="tab-content">
-      <div class="content-card">
-        <h3>📄 Report Card Generation</h3>
-        <p style="color: #64748B; margin-bottom: 1rem;">Generate and print official report cards for students.</p>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-          <div class="form-group">
-            <label>Select Class</label>
-            <select id="reportCardClass">
-              <option value="">Choose class...</option>
-              <option value="JSS1">JSS 1</option>
-              <option value="JSS2">JSS 2</option>
-              <option value="JSS3">JSS 3</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Select Student</label>
-            <select id="reportCardStudent">
-              <option value="">Choose student...</option>
-            </select>
-          </div>
-          <button class="btn btn-gold" style="align-self: flex-end; margin-bottom: 1rem;" onclick="generateReportCard()">
-            Generate Report Card
-          </button>
+        <div class="form-group">
+          <label>Default Points per Question</label>
+          <input type="number" id="subjectDefaultPoints" value="5" min="1" />
         </div>
-      </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Save Subject</button>
+      </form>
     </div>
   </div>
 
+  <!-- ==================== EXAM MODAL ==================== -->
+  <div class="modal-overlay" id="examModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Create New Exam</h3>
+        <button class="modal-close" onclick="closeExamModal()">✕</button>
+      </div>
+      <form id="examForm">
+        <div class="form-group">
+          <label>Exam Title *</label>
+          <input type="text" id="examTitle" placeholder="e.g., Third Term Mathematics Exam" required />
+        </div>
+        <div class="form-group">
+          <label>Subject *</label>
+          <select id="examSubject" required></select>
+        </div>
+        <div class="form-group">
+          <label>Class *</label>
+          <select id="examClass" required>
+            <option value="">-- Select --</option>
+            <option value="JSS1">JSS 1</option>
+            <option value="JSS2">JSS 2</option>
+            <option value="JSS3">JSS 3</option>
+            <option value="SS1">SS 1</option>
+            <option value="SS2">SS 2</option>
+            <option value="SS3">SS 3</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Duration (minutes) *</label>
+          <input type="number" id="examDuration" value="60" min="5" required />
+        </div>
+        <div class="form-group">
+          <label>Number of Questions to Show</label>
+          <input type="number" id="examQuestionCount" placeholder="Leave blank for all" min="1" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Create Exam</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- ==================== SCRIPTS ==================== -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase Config
+    // ==================== FIREBASE INIT ====================
     const firebaseConfig = {
       apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
       authDomain: "edumeta-c5588.firebaseapp.com",
@@ -440,91 +904,937 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Check auth
-    auth.onAuthStateChanged((user) => {
+    // ==================== GLOBAL STATE ====================
+    let allSubjects = [];
+    let currentQuestions = [];
+    let currentSubjectId = null;
+
+    // ==================== AUTH ====================
+    auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'index.html';
-      } else {
-        document.getElementById('adminName').textContent = user.email;
-        loadDashboardData();
+        return;
       }
+      document.getElementById('adminEmailDisplay').textContent = user.email;
+      initDashboard();
     });
 
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = 'index.html';
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      auth.signOut().then(() => window.location.href = 'index.html');
+    });
+
+    // ==================== TOAST ====================
+    function showToast(message, type = '') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
+
+    // ==================== TAB SWITCHING ====================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        btn.classList.add('active');
+        const tabId = 'tab-' + btn.dataset.tab;
+        document.getElementById(tabId).classList.remove('hidden');
+        
+        // Load data for specific tabs
+        if (btn.dataset.tab === 'questions') loadSubjectFilter();
+        if (btn.dataset.tab === 'results') loadResults();
+        if (btn.dataset.tab === 'csv') populateExportSubjectFilter();
+        if (btn.dataset.tab === 'pins') loadStudentsForPin();
+        if (btn.dataset.tab === 'exams') loadExams();
+      });
+    });
+
+    function switchToCsvTab() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      const csvTab = document.querySelector('[data-tab="csv"]');
+      csvTab.classList.add('active');
+      document.getElementById('tab-csv').classList.remove('hidden');
+      populateExportSubjectFilter();
+    }
+
+    // ==================== INIT ====================
+    async function initDashboard() {
+      await loadSubjects();
+      updateStats();
+    }
+
+    // ==================== SUBJECTS CRUD ====================
+    async function loadSubjects() {
+      const snapshot = await db.collection('subjects').get();
+      allSubjects = [];
+      snapshot.forEach(doc => {
+        allSubjects.push({ id: doc.id, ...doc.data() });
+      });
+      renderSubjectsTable();
+      populateSubjectSelects();
+    }
+
+    function renderSubjectsTable() {
+      const tbody = document.getElementById('subjectsTableBody');
+      if (allSubjects.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94A3B8; padding:2rem;">No subjects created yet. Click "Add New Subject" to begin.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = allSubjects.map(s => `
+        <tr>
+          <td><strong>${s.code}</strong></td>
+          <td>${s.name}</td>
+          <td>${s.class}</td>
+          <td>${s.questionCount || 0}</td>
+          <td>${s.totalPoints || 0}</td>
+          <td><span class="badge badge-active">Active</span></td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" onclick="editSubject('${s.id}')">✏️ Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSubject('${s.id}')">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function populateSubjectSelects() {
+      const selects = ['questionSubjectFilter', 'examSubject', 'exportSubjectSelect'];
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">-- Select Subject --</option>';
+        allSubjects.forEach(s => {
+          select.innerHTML += `<option value="${s.id}">${s.name} (${s.code}) - ${s.class}</option>`;
+        });
+        select.value = currentValue;
       });
     }
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    // Subject Modal
+    function openSubjectModal(subjectId = null) {
+      document.getElementById('subjectModal').classList.add('active');
+      if (subjectId) {
+        document.getElementById('subjectModalTitle').textContent = 'Edit Subject';
+        const subject = allSubjects.find(s => s.id === subjectId);
+        if (subject) {
+          document.getElementById('subjectDocId').value = subjectId;
+          document.getElementById('subjectCode').value = subject.code;
+          document.getElementById('subjectName').value = subject.name;
+          document.getElementById('subjectClass').value = subject.class;
+          document.getElementById('subjectDefaultPoints').value = subject.defaultPoints || 5;
+        }
+      } else {
+        document.getElementById('subjectModalTitle').textContent = 'Add New Subject';
+        document.getElementById('subjectForm').reset();
+        document.getElementById('subjectDocId').value = '';
+      }
+    }
+
+    function closeSubjectModal() {
+      document.getElementById('subjectModal').classList.remove('active');
+    }
+
+    document.getElementById('subjectForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const docId = document.getElementById('subjectDocId').value;
+      const data = {
+        code: document.getElementById('subjectCode').value.trim().toUpperCase(),
+        name: document.getElementById('subjectName').value.trim(),
+        class: document.getElementById('subjectClass').value,
+        defaultPoints: parseInt(document.getElementById('subjectDefaultPoints').value) || 5,
+        questionCount: 0,
+        totalPoints: 0,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        if (docId) {
+          await db.collection('subjects').doc(docId).update(data);
+          showToast('Subject updated successfully! ✅', 'success');
+        } else {
+          data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+          await db.collection('subjects').add(data);
+          showToast('Subject created successfully! ✅', 'success');
+        }
+        closeSubjectModal();
+        await loadSubjects();
+        updateStats();
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    });
+
+    async function editSubject(id) {
+      openSubjectModal(id);
+    }
+
+    async function deleteSubject(id) {
+      if (!confirm('Delete this subject and ALL its questions? This cannot be undone.')) return;
+      try {
+        // Delete all questions for this subject
+        const questionsSnapshot = await db.collection('questions').where('subjectId', '==', id).get();
+        const batch = db.batch();
+        questionsSnapshot.forEach(doc => batch.delete(doc.ref));
+        batch.delete(db.collection('subjects').doc(id));
+        await batch.commit();
+        showToast('Subject and all questions deleted.', 'success');
+        await loadSubjects();
+        updateStats();
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    }
+
+    // ==================== QUESTIONS MANAGEMENT ====================
+    function loadSubjectFilter() {
+      populateSubjectSelects();
+      document.getElementById('questionSubjectFilter').addEventListener('change', loadQuestionsForSubject);
+    }
+
+    async function loadQuestionsForSubject() {
+      const subjectId = document.getElementById('questionSubjectFilter').value;
+      if (!subjectId) {
+        document.getElementById('questionsEditorContainer').innerHTML = 
+          '<p style="color:#94A3B8; text-align:center; padding:2rem;">Select a subject to view or add questions.</p>';
+        document.getElementById('bulkPointSetter').classList.add('hidden');
+        currentQuestions = [];
+        currentSubjectId = null;
+        return;
+      }
+      currentSubjectId = subjectId;
+      const subject = allSubjects.find(s => s.id === subjectId);
       
-      event.target.classList.add('active');
-      document.getElementById(tabName + 'Tab').classList.add('active');
+      const snapshot = await db.collection('questions')
+        .where('subjectId', '==', subjectId)
+        .orderBy('order')
+        .get();
+      
+      currentQuestions = [];
+      snapshot.forEach(doc => {
+        currentQuestions.push({ id: doc.id, ...doc.data() });
+      });
+      
+      renderQuestionsEditor();
+      document.getElementById('bulkPointSetter').classList.remove('hidden');
+    }
+
+    function createEmptyQuestion() {
+      const subject = allSubjects.find(s => s.id === currentSubjectId);
+      return {
+        subjectId: currentSubjectId,
+        question: '',
+        optionA: '',
+        optionB: '',
+        optionC: '',
+        optionD: '',
+        correctAnswer: 'A',
+        points: subject ? subject.defaultPoints : 5,
+        order: currentQuestions.length + 1
+      };
+    }
+
+    function addQuestionRow() {
+      if (!currentSubjectId) {
+        showToast('Please select a subject first.', 'error');
+        return;
+      }
+      currentQuestions.push(createEmptyQuestion());
+      renderQuestionsEditor();
+    }
+
+    function removeQuestionRow(index) {
+      if (!confirm('Delete this question?')) return;
+      currentQuestions.splice(index, 1);
+      // Re-index order
+      currentQuestions.forEach((q, i) => q.order = i + 1);
+      renderQuestionsEditor();
+    }
+
+    function renderQuestionsEditor() {
+      const container = document.getElementById('questionsEditorContainer');
+      if (currentQuestions.length === 0) {
+        container.innerHTML = `
+          <p style="color:#94A3B8; text-align:center; padding:2rem;">
+            No questions yet. Click "Add Question Manually" or "Import CSV" to add questions.
+          </p>`;
+        return;
+      }
+      
+      container.innerHTML = currentQuestions.map((q, idx) => `
+        <div class="question-card">
+          <div class="q-number">Q${idx + 1}</div>
+          <div class="q-header">
+            <div style="flex:1; margin-right:1rem;">
+              <textarea class="q-text" data-idx="${idx}" placeholder="Enter question text here..." 
+                style="width:100%; min-height:50px;">${escapeHtml(q.question)}</textarea>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <label style="font-size:0.8rem; white-space:nowrap;">Points:
+                <input type="number" class="point-input q-point" data-idx="${idx}" value="${q.points}" min="1" style="width:65px;" />
+              </label>
+              <button class="btn btn-danger btn-sm" onclick="removeQuestionRow(${idx})">🗑️</button>
+            </div>
+          </div>
+          <div class="options-grid">
+            ${['A','B','C','D'].map(opt => `
+              <div class="option-item">
+                <span class="opt-label">${opt}</span>
+                <input type="text" class="opt-${opt}" data-idx="${idx}" placeholder="Option ${opt}" value="${escapeHtml(q['option'+opt])}" />
+                ${q.correctAnswer === opt ? '<span class="correct-badge">✓ Correct</span>' : ''}
+              </div>
+            `).join('')}
+          </div>
+          <div style="margin-top:0.5rem;">
+            <label style="font-size:0.8rem;">Correct Answer:
+              <select class="correct-sel" data-idx="${idx}" style="width:auto; padding:6px 12px;">
+                <option value="A" ${q.correctAnswer === 'A' ? 'selected' : ''}>A</option>
+                <option value="B" ${q.correctAnswer === 'B' ? 'selected' : ''}>B</option>
+                <option value="C" ${q.correctAnswer === 'C' ? 'selected' : ''}>C</option>
+                <option value="D" ${q.correctAnswer === 'D' ? 'selected' : ''}>D</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      `).join('');
+
+      // Attach event listeners
+      attachQuestionListeners();
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function attachQuestionListeners() {
+      const container = document.getElementById('questionsEditorContainer');
+      
+      // Text inputs
+      container.querySelectorAll('textarea.q-text, input[class*="opt-"]').forEach(input => {
+        input.addEventListener('input', function() {
+          const idx = parseInt(this.dataset.idx);
+          if (isNaN(idx)) return;
+          
+          if (this.classList.contains('q-text')) {
+            currentQuestions[idx].question = this.value;
+          } else if (this.classList.contains('opt-A')) {
+            currentQuestions[idx].optionA = this.value;
+          } else if (this.classList.contains('opt-B')) {
+            currentQuestions[idx].optionB = this.value;
+          } else if (this.classList.contains('opt-C')) {
+            currentQuestions[idx].optionC = this.value;
+          } else if (this.classList.contains('opt-D')) {
+            currentQuestions[idx].optionD = this.value;
+          }
+        });
+      });
+
+      // Points inputs
+      container.querySelectorAll('.q-point').forEach(input => {
+        input.addEventListener('change', function() {
+          const idx = parseInt(this.dataset.idx);
+          currentQuestions[idx].points = parseInt(this.value) || 1;
+        });
+      });
+
+      // Correct answer selects
+      container.querySelectorAll('.correct-sel').forEach(select => {
+        select.addEventListener('change', function() {
+          const idx = parseInt(this.dataset.idx);
+          currentQuestions[idx].correctAnswer = this.value;
+          // Refresh to update correct badge
+          renderQuestionsEditor();
+        });
+      });
+    }
+
+    function setAllPoints() {
+      const pointValue = parseInt(document.getElementById('bulkPointValue').value);
+      if (!pointValue || pointValue < 1) {
+        showToast('Please enter a valid point value.', 'error');
+        return;
+      }
+      currentQuestions.forEach(q => q.points = pointValue);
+      renderQuestionsEditor();
+      showToast(`All questions set to ${pointValue} points!`, 'success');
+    }
+
+    // Save All Questions
+    document.getElementById('saveAllQuestionsBtn').addEventListener('click', async () => {
+      if (!currentSubjectId) {
+        showToast('Please select a subject first.', 'error');
+        return;
+      }
+      
+      // Validate
+      for (let i = 0; i < currentQuestions.length; i++) {
+        const q = currentQuestions[i];
+        if (!q.question.trim()) {
+          showToast(`Question ${i+1} is empty. Please fill in all questions.`, 'error');
+          return;
+        }
+        if (!q.optionA.trim() || !q.optionB.trim() || !q.optionC.trim() || !q.optionD.trim()) {
+          showToast(`Question ${i+1} is missing some options.`, 'error');
+          return;
+        }
+      }
+
+      try {
+        const batch = db.batch();
+        const subjectRef = db.collection('subjects').doc(currentSubjectId);
+        
+        // Delete existing questions for this subject
+        const existingSnapshot = await db.collection('questions')
+          .where('subjectId', '==', currentSubjectId)
+          .get();
+        existingSnapshot.forEach(doc => batch.delete(doc.ref));
+
+        // Add all current questions
+        currentQuestions.forEach((q, idx) => {
+          q.order = idx + 1;
+          q.subjectId = currentSubjectId;
+          const docRef = db.collection('questions').doc();
+          batch.set(docRef, {
+            ...q,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+
+        // Update subject stats
+        const totalPoints = currentQuestions.reduce((sum, q) => sum + (q.points || 0), 0);
+        batch.update(subjectRef, {
+          questionCount: currentQuestions.length,
+          totalPoints: totalPoints,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await batch.commit();
+        showToast(`${currentQuestions.length} questions saved successfully! ✅`, 'success');
+        await loadSubjects();
+        updateStats();
+      } catch (error) {
+        showToast('Error saving questions: ' + error.message, 'error');
+      }
+    });
+
+    // ==================== CSV IMPORT ====================
+    function downloadCsvTemplate() {
+      const headers = 'SubjectCode,Class,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points';
+      downloadCsv('covenant_arrows_question_template.csv', headers + '\n');
+    }
+
+    function downloadCsvSample() {
+      const headers = 'SubjectCode,Class,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points';
+      const rows = [
+        'MTH101,JSS1,What is 2+2?,3,4,5,6,B,5',
+        'MTH101,JSS1,What is 10-7?,2,3,4,5,B,5',
+        'ENG101,JSS1,"Choose the noun: The boy runs fast.",boy,runs,fast,The,A,5',
+      ];
+      downloadCsv('covenant_arrows_sample_questions.csv', headers + '\n' + rows.join('\n'));
+    }
+
+    function downloadCsv(filename, content) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function handleCsvUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const parsed = parseCsv(text);
+        previewCsvData(parsed);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCsv(csvText) {
+      const lines = csvText.split('\n').filter(line => line.trim());
+      if (lines.length < 2) {
+        showToast('CSV file is empty or has no data rows.', 'error');
+        return [];
+      }
+      
+      // Parse header
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const expectedHeaders = ['SubjectCode', 'Class', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
+      
+      // Validate headers
+      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        showToast(`Missing columns: ${missingHeaders.join(', ')}. Please use the template.`, 'error');
+        return [];
+      }
+
+      const data = [];
+      const errors = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        // Handle commas within quoted fields
+        const row = parseCsvLine(lines[i]);
+        if (row.length < expectedHeaders.length) {
+          errors.push(`Row ${i+1}: Not enough columns.`);
+          continue;
+        }
+
+        const record = {};
+        expectedHeaders.forEach((header, idx) => {
+          record[header] = (row[idx] || '').trim().replace(/^"|"$/g, '');
+        });
+
+        // Validate
+        if (!record.SubjectCode) errors.push(`Row ${i+1}: Missing SubjectCode.`);
+        if (!record.Question) errors.push(`Row ${i+1}: Missing Question.`);
+        if (!['A','B','C','D'].includes(record.CorrectAnswer?.toUpperCase())) {
+          errors.push(`Row ${i+1}: CorrectAnswer must be A, B, C, or D.`);
+        }
+        const points = parseInt(record.Points);
+        if (isNaN(points) || points < 1) {
+          errors.push(`Row ${i+1}: Points must be a positive number.`);
+        }
+
+        record.CorrectAnswer = record.CorrectAnswer?.toUpperCase();
+        record.Points = points || 5;
+        data.push(record);
+      }
+
+      if (errors.length > 0) {
+        document.getElementById('csvPreview').innerHTML = `
+          <div style="background:#FEF2F2; padding:1rem; border-radius:10px; border-left:4px solid #EF4444;">
+            <strong>⚠️ Errors Found:</strong><br>
+            ${errors.map(e => `<span style="font-size:0.85rem;">• ${e}</span><br>`).join('')}
+          </div>`;
+        return [];
+      }
+
+      return data;
+    }
+
+    function parseCsvLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result;
+    }
+
+    function previewCsvData(parsedData) {
+      if (parsedData.length === 0) return;
+      
+      const preview = document.getElementById('csvPreview');
+      preview.innerHTML = `
+        <div style="background:#F0FDF4; padding:1rem; border-radius:10px; border-left:4px solid #22C55E; margin-bottom:1rem;">
+          <strong>✅ ${parsedData.length} questions parsed successfully!</strong>
+        </div>
+        <button class="btn btn-success" onclick="importCsvData(${JSON.stringify(parsedData).replace(/"/g, '&quot;')})">
+          📥 Import ${parsedData.length} Questions
+        </button>
+        <div style="margin-top:1rem; max-height:300px; overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Subject Code</th><th>Question</th><th>Answer</th><th>Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${parsedData.slice(0, 20).map((q, i) => `
+                <tr>
+                  <td>${i+1}</td>
+                  <td>${q.SubjectCode}</td>
+                  <td>${q.Question.substring(0, 50)}...</td>
+                  <td>${q.CorrectAnswer}</td>
+                  <td>${q.Points}</td>
+                </tr>
+              `).join('')}
+              ${parsedData.length > 20 ? `<tr><td colspan="5">...and ${parsedData.length - 20} more</td></tr>` : ''}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function importCsvData(parsedData) {
+      try {
+        // Group by SubjectCode
+        const grouped = {};
+        parsedData.forEach(q => {
+          if (!grouped[q.SubjectCode]) grouped[q.SubjectCode] = [];
+          grouped[q.SubjectCode].push(q);
+        });
+
+        const batch = db.batch();
+        let totalImported = 0;
+
+        for (const [subjectCode, questions] of Object.entries(grouped)) {
+          // Find subject by code
+          const subject = allSubjects.find(s => s.code === subjectCode);
+          if (!subject) {
+            showToast(`Subject code "${subjectCode}" not found. Skipping ${questions.length} questions.`, 'error');
+            continue;
+          }
+
+          // Delete existing questions for this subject
+          const existingSnapshot = await db.collection('questions')
+            .where('subjectId', '==', subject.id)
+            .get();
+          existingSnapshot.forEach(doc => batch.delete(doc.ref));
+
+          // Add new questions
+          questions.forEach((q, idx) => {
+            const docRef = db.collection('questions').doc();
+            batch.set(docRef, {
+              subjectId: subject.id,
+              question: q.Question,
+              optionA: q.OptionA,
+              optionB: q.OptionB,
+              optionC: q.OptionC,
+              optionD: q.OptionD,
+              correctAnswer: q.CorrectAnswer,
+              points: q.Points,
+              order: idx + 1,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          });
+
+          // Update subject stats
+          const totalPoints = questions.reduce((sum, q) => sum + q.Points, 0);
+          batch.update(db.collection('subjects').doc(subject.id), {
+            questionCount: questions.length,
+            totalPoints: totalPoints,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          totalImported += questions.length;
+        }
+
+        await batch.commit();
+        showToast(`✅ Successfully imported ${totalImported} questions!`, 'success');
+        document.getElementById('csvPreview').innerHTML = '';
+        document.getElementById('csvFileInput').value = '';
+        await loadSubjects();
+        updateStats();
+      } catch (error) {
+        showToast('Import error: ' + error.message, 'error');
+      }
+    }
+
+    // ==================== CSV EXPORT ====================
+    function populateExportSubjectFilter() {
+      const select = document.getElementById('exportSubjectSelect');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">All Subjects</option>';
+      allSubjects.forEach(s => {
+        select.innerHTML += `<option value="${s.id}">${s.name} (${s.code}) - ${s.class}</option>`;
+      });
+      select.value = currentValue;
+    }
+
+    async function exportQuestionsToCsv() {
+      const subjectId = document.getElementById('exportSubjectSelect').value;
+      
+      let query = db.collection('questions');
+      if (subjectId) {
+        query = query.where('subjectId', '==', subjectId);
+      }
+      
+      const snapshot = await query.orderBy('subjectId').orderBy('order').get();
+      
+      if (snapshot.empty) {
+        showToast('No questions to export.', 'error');
+        return;
+      }
+
+      const headers = 'SubjectCode,Class,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points';
+      const rows = [];
+      
+      for (const doc of snapshot.docs) {
+        const q = doc.data();
+        const subject = allSubjects.find(s => s.id === q.subjectId);
+        const subjectCode = subject ? subject.code : 'UNKNOWN';
+        const className = subject ? subject.class : 'UNKNOWN';
+        
+        // Escape fields that might contain commas
+        const escapeCsv = (str) => {
+          if (!str) return '';
+          return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+        };
+        
+        rows.push([
+          escapeCsv(subjectCode),
+          escapeCsv(className),
+          escapeCsv(q.question),
+          escapeCsv(q.optionA),
+          escapeCsv(q.optionB),
+          escapeCsv(q.optionC),
+          escapeCsv(q.optionD),
+          q.correctAnswer,
+          q.points
+        ].join(','));
+      }
+
+      const content = headers + '\n' + rows.join('\n');
+      const filename = subjectId 
+        ? `covenant_arrows_questions_${allSubjects.find(s=>s.id===subjectId)?.code || 'export'}.csv`
+        : 'covenant_arrows_all_questions.csv';
+      
+      downloadCsv(filename, content);
+      showToast(`✅ ${rows.length} questions exported!`, 'success');
+    }
+
+    // ==================== EXAMS ====================
+    async function loadExams() {
+      const snapshot = await db.collection('exams').orderBy('createdAt', 'desc').get();
+      const tbody = document.getElementById('examsTableBody');
+      
+      if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94A3B8; padding:2rem;">No exams created yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      snapshot.forEach(doc => {
+        const exam = doc.data();
+        const subject = allSubjects.find(s => s.id === exam.subjectId);
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${exam.title}</strong></td>
+            <td>${subject ? subject.name : 'N/A'}</td>
+            <td>${exam.class}</td>
+            <td>${exam.duration} mins</td>
+            <td>${exam.questionCount || 'All'}</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td>
+              <button class="btn btn-outline btn-sm" onclick="viewExam('${doc.id}')">👁️ View</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteExam('${doc.id}')">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openExamModal() {
+      document.getElementById('examModal').classList.add('active');
+      populateSubjectSelects();
+    }
+
+    function closeExamModal() {
+      document.getElementById('examModal').classList.remove('active');
+    }
+
+    document.getElementById('examForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('examTitle').value.trim(),
+        subjectId: document.getElementById('examSubject').value,
+        class: document.getElementById('examClass').value,
+        duration: parseInt(document.getElementById('examDuration').value),
+        questionCount: parseInt(document.getElementById('examQuestionCount').value) || null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection('exams').add(data);
+        showToast('Exam created successfully! ✅', 'success');
+        closeExamModal();
+        loadExams();
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      }
+    });
+
+    async function deleteExam(id) {
+      if (!confirm('Delete this exam?')) return;
+      await db.collection('exams').doc(id).delete();
+      showToast('Exam deleted.', 'success');
+      loadExams();
+    }
+
+    // ==================== RESULTS ====================
+    async function loadResults() {
+      const classFilter = document.getElementById('resultClassFilter')?.value;
+      let query = db.collection('results').orderBy('timestamp', 'desc');
+      if (classFilter) query = query.where('class', '==', classFilter);
+      
+      const snapshot = await query.get();
+      const tbody = document.getElementById('resultsTableBody');
+      
+      if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94A3B8; padding:2rem;">No results yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        const percentage = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+        const grade = percentage >= 80 ? 'A' : percentage >= 65 ? 'B' : percentage >= 50 ? 'C' : percentage >= 40 ? 'D' : 'F';
+        const date = r.timestamp ? r.timestamp.toDate().toLocaleDateString() : 'N/A';
+        
+        tbody.innerHTML += `
+          <tr>
+            <td>${r.studentName || 'N/A'}</td>
+            <td>${r.class || 'N/A'}</td>
+            <td>${r.subject || 'N/A'}</td>
+            <td>${r.score}</td>
+            <td>${r.total}</td>
+            <td><strong>${percentage}%</strong></td>
+            <td><span class="badge ${percentage >= 50 ? 'badge-active' : 'badge-archived'}">${grade}</span></td>
+            <td>${date}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function exportResultsCsv() {
+      const snapshot = await db.collection('results').orderBy('timestamp', 'desc').get();
+      const headers = 'StudentName,Class,Subject,Score,Total,Percentage,Grade,Date';
+      const rows = [];
+      
+      snapshot.forEach(doc => {
+        const r = doc.data();
+        const percentage = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
+        const grade = percentage >= 80 ? 'A' : percentage >= 65 ? 'B' : percentage >= 50 ? 'C' : percentage >= 40 ? 'D' : 'F';
+        const date = r.timestamp ? r.timestamp.toDate().toLocaleDateString() : 'N/A';
+        
+        rows.push([r.studentName, r.class, r.subject, r.score, r.total, `${percentage}%`, grade, date].join(','));
+      });
+      
+      downloadCsv('covenant_arrows_results.csv', headers + '\n' + rows.join('\n'));
+      showToast('Results exported!', 'success');
+    }
+
+    // ==================== PINS ====================
+    async function loadStudentsForPin() {
+      const snapshot = await db.collection('students').get();
+      const select = document.getElementById('pinStudentSelect');
+      select.innerHTML = '<option value="">-- Choose Student --</option>';
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        select.innerHTML += `<option value="${doc.id}">${s.name} - ${s.class}</option>`;
+      });
     }
 
     function generatePin() {
       return Math.floor(10000000 + Math.random() * 90000000).toString();
     }
 
-    // Generate Exam PIN
-    async function generateExamPin() {
-      const studentId = document.getElementById('studentSelectForPin').value;
+    async function generateSinglePin() {
+      const studentId = document.getElementById('pinStudentSelect').value;
+      const pinType = document.getElementById('pinType').value;
+      
       if (!studentId) {
-        alert('Please select a student');
+        showToast('Please select a student.', 'error');
         return;
       }
+
       const pin = generatePin();
-      try {
-        await db.collection('students').doc(studentId).update({
-          examPin: pin
-        });
-        document.getElementById('examPinDisplay').style.display = 'block';
-        document.getElementById('examPinDisplay').textContent = pin;
-      } catch (error) {
-        alert('Error generating PIN: ' + error.message);
-      }
+      const updateData = {};
+      updateData[pinType === 'exam' ? 'examPin' : 'reportCardPin'] = pin;
+      
+      await db.collection('students').doc(studentId).update(updateData);
+      
+      document.getElementById('pinDisplay').style.display = 'block';
+      document.getElementById('pinValue').textContent = pin;
+      showToast(`${pinType === 'exam' ? 'Exam' : 'Report Card'} PIN generated!`, 'success');
     }
 
-    // Generate Report Card PIN
-    async function generateReportPin() {
-      const studentId = document.getElementById('studentSelectForReportPin').value;
-      if (!studentId) {
-        alert('Please select a student');
-        return;
-      }
-      const pin = generatePin();
-      try {
-        await db.collection('students').doc(studentId).update({
-          reportCardPin: pin
-        });
-        document.getElementById('reportPinDisplay').style.display = 'block';
-        document.getElementById('reportPinDisplay').textContent = pin;
-      } catch (error) {
-        alert('Error generating PIN: ' + error.message);
-      }
-    }
-
-    // Load students into selects
-    async function loadStudents() {
+    async function generateBulkPins() {
+      const pinType = document.getElementById('pinType').value;
+      const field = pinType === 'exam' ? 'examPin' : 'reportCardPin';
+      
+      if (!confirm(`Generate ${pinType} PINs for ALL students?`)) return;
+      
       const snapshot = await db.collection('students').get();
-      const selects = ['studentSelectForPin', 'studentSelectForReportPin', 'reportCardStudent'];
+      const batch = db.batch();
       
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const option = `<option value="${doc.id}">${data.name} - ${data.class}</option>`;
-        selects.forEach(selectId => {
-          document.getElementById(selectId).innerHTML += option;
-        });
+        batch.update(doc.ref, { [field]: generatePin() });
+      });
+      
+      await batch.commit();
+      showToast(`${pinType === 'exam' ? 'Exam' : 'Report Card'} PINs generated for all students!`, 'success');
+    }
+
+    // ==================== STATS ====================
+    async function updateStats() {
+      // Count subjects
+      document.getElementById('statSubjects').textContent = allSubjects.length;
+      
+      // Count questions
+      let totalQuestions = 0;
+      allSubjects.forEach(s => totalQuestions += (s.questionCount || 0));
+      document.getElementById('statQuestions').textContent = totalQuestions;
+      
+      // Count exams taken
+      const resultsSnapshot = await db.collection('results').get();
+      document.getElementById('statExams').textContent = resultsSnapshot.size;
+      
+      // Average score
+      let totalPercentage = 0;
+      resultsSnapshot.forEach(doc => {
+        const r = doc.data();
+        if (r.total > 0) {
+          totalPercentage += (r.score / r.total) * 100;
+        }
+      });
+      const avg = resultsSnapshot.size > 0 ? Math.round(totalPercentage / resultsSnapshot.size) : 0;
+      document.getElementById('statAvgScore').textContent = avg + '%';
+    }
+
+    // ==================== DRAG & DROP FOR CSV ====================
+    const uploadZone = document.getElementById('csvUploadZone');
+    if (uploadZone) {
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#1E3A5F';
+        uploadZone.style.background = '#EFF6FF';
+      });
+      uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = '#CBD5E1';
+        uploadZone.style.background = '#FAFBFC';
+      });
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#CBD5E1';
+        uploadZone.style.background = '#FAFBFC';
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          document.getElementById('csvFileInput').files = e.dataTransfer.files;
+          handleCsvUpload({ target: { files: [file] } });
+        }
       });
     }
 
-    function loadDashboardData() {
-      loadStudents();
-      // Load other dashboard data...
-      console.log('Dashboard loaded for Covenant Arrows Model');
-    }
+    // ==================== INITIALIZATION ====================
+    console.log('✅ Covenant Arrows Model - Professional Admin Dashboard Ready');
+    console.log('📚 Features: Subjects | Questions Bank | CSV Import/Export | Exams | Results | PINs');
   </script>
 </body>
 </html>
