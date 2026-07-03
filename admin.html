@@ -14,7 +14,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        #app { width: 100%; max-width: 1100px; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); padding: 40px; overflow: hidden; position: relative; }
+        #app { width: 100%; max-width: 1200px; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); padding: 40px; overflow: hidden; position: relative; }
         .page { display: none; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -63,12 +63,26 @@
         .btn-success:hover { background: #059669; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
 
         .flex-input { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        .flex-input input { flex: 1; min-width: 150px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: white; }
-        .flex-input input:focus { border-color: #4f46e5; }
+        .flex-input input, .flex-input select { flex: 1; min-width: 150px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: white; }
+        .flex-input input:focus, .flex-input select:focus { border-color: #4f46e5; }
+
         .pin-display { background: #1e1b4b; color: white; padding: 16px 20px; border-radius: 16px; font-family: monospace; font-size: 20px; letter-spacing: 2px; margin-top: 15px; text-align: center; }
         .pin-display small { font-family: 'Inter', sans-serif; font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px; }
+
+        /* Class Droplet Styles */
+        .class-droplet { display: inline-flex; align-items: center; gap: 8px; background: white; padding: 8px 16px; border-radius: 60px; border: 1px solid #e2e8f0; font-weight: 600; margin: 4px 8px 4px 0; }
+        .class-droplet .del-class { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 800; font-size: 16px; padding: 0 4px; }
+        .class-droplet .del-class:hover { color: #dc2626; }
+        .droplet-container { display: flex; flex-wrap: wrap; padding: 10px 0; }
+        .add-class-row { display: flex; gap: 10px; margin-top: 10px; }
+        .add-class-row input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: white; }
+        .add-class-row input:focus { border-color: #4f46e5; }
+        .add-class-row button { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .add-class-row button:hover { background: #059669; }
     </style>
 </head>
 <body>
@@ -80,7 +94,7 @@
     <div id="loginPage" class="page active">
         <div class="login-box">
             <h2>🔑 Admin Console</h2>
-            <p>Enter your Admin PIN to manage approvals and student PINs.</p>
+            <p>Enter your Admin PIN to manage the school system.</p>
             <input id="adminName" placeholder="👤 Admin Name" value="Administrator" />
             <input id="adminPin" placeholder="🔐 Admin PIN" type="password" />
             <button id="loginBtn">🚀 Enter Console</button>
@@ -95,6 +109,7 @@
             <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
         </div>
 
+        <!-- Grid 2 -->
         <div class="grid-2">
             <!-- Left: Pending Approvals -->
             <div class="card">
@@ -109,7 +124,9 @@
                 <div class="sub">Create an 8-digit alphanumeric PIN for a student's report card.</div>
                 <div class="flex-input">
                     <input id="pinName" placeholder="👤 Student Name" />
-                    <input id="pinClass" placeholder="📚 Class" />
+                    <select id="pinClassSelect">
+                        <option value="">-- Select Class --</option>
+                    </select>
                 </div>
                 <button class="btn-sm btn-primary" id="genPinBtn" style="margin-top:12px; padding:12px 24px; width:100%;">🔐 Generate PIN</button>
                 <div id="pinDisplay" class="pin-display" style="display:none;">
@@ -118,6 +135,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Full Width: Class Droplets Manager -->
+        <div class="card" style="margin-top:30px;">
+            <h3>📚 Manage Classes (Droplets)</h3>
+            <div class="sub">Add or remove standardized classes. Students and teachers will select from this list.</div>
+            
+            <div class="add-class-row">
+                <input id="newClassInput" placeholder="e.g. Basic 7" />
+                <button id="addClassBtn">➕ Add Class</button>
+            </div>
+            
+            <div id="classDropletContainer" class="droplet-container">
+                <!-- Dynamically populated -->
+                <span style="color:#94a3b8; font-size:14px;">Loading classes...</span>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -153,6 +187,12 @@
     }
 
     // =============================================================
+    // HELPERS & GLOBALS
+    // =============================================================
+    const $ = (id) => document.getElementById(id);
+    let masterClassList = [];
+
+    // =============================================================
     // LOGIN
     // =============================================================
     $('loginBtn').addEventListener('click', async () => {
@@ -162,7 +202,6 @@
         if (!pin) return err.innerText = '⚠️ Please enter the Admin PIN.';
 
         try {
-            // Fetch Admin PIN from Firestore settings
             const settingsDoc = await db.collection('settings').doc('adminConfig').get();
             let storedPin = 'admin123';
             if (settingsDoc.exists) storedPin = settingsDoc.data().pin || 'admin123';
@@ -173,17 +212,18 @@
                 $('dashboardPage').classList.add('active');
                 showToast(`👑 Welcome, ${name || 'Admin'}!`, 'success');
                 loadPendingReports();
+                loadMasterClassList();
             } else {
                 err.innerText = '❌ Invalid Admin PIN.';
             }
         } catch (e) {
-            // Fallback if Firestore fails
             if (pin === 'admin123') {
                 err.innerText = '';
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 $('dashboardPage').classList.add('active');
                 showToast('👑 Welcome Admin! (Fallback mode)', 'success');
                 loadPendingReports();
+                loadMasterClassList();
             } else {
                 err.innerText = '❌ Invalid Admin PIN. (Fallback: admin123)';
             }
@@ -197,7 +237,81 @@
     });
 
     // =============================================================
-    // 1. PENDING APPROVALS
+    // 1. MASTER CLASS LIST (DROPLETS)
+    // =============================================================
+    async function loadMasterClassList() {
+        try {
+            const doc = await db.collection('classList').doc('allClasses').get();
+            if (doc.exists) {
+                masterClassList = doc.data().classes || [];
+            } else {
+                // Initialize with default classes if not exists
+                masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+                await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
+            }
+            renderDroplets();
+            populateClassSelectors();
+        } catch (e) {
+            showToast('❌ Error loading master class list: ' + e.message, 'error');
+        }
+    }
+
+    function renderDroplets() {
+        const container = $('classDropletContainer');
+        if (!masterClassList.length) {
+            container.innerHTML = '<span style="color:#94a3b8; font-size:14px;">No classes added yet. Add one above!</span>';
+            return;
+        }
+        container.innerHTML = masterClassList.map(cls => `
+            <span class="class-droplet">
+                📘 ${cls}
+                <button class="del-class" data-class="${cls}">✕</button>
+            </span>
+        `).join('');
+
+        // Attach delete events
+        container.querySelectorAll('.del-class').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const cls = btn.dataset.class;
+                if (!confirm(`Remove "${cls}" from the master list?`)) return;
+                masterClassList = masterClassList.filter(c => c !== cls);
+                await db.collection('classList').doc('allClasses').update({ classes: masterClassList });
+                renderDroplets();
+                populateClassSelectors();
+                showToast(`🗑️ "${cls}" removed.`, 'warning');
+            });
+        });
+    }
+
+    function populateClassSelectors() {
+        // Populate the PIN generation dropdown
+        const select = $('pinClassSelect');
+        select.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            select.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+    }
+
+    // Add Class
+    $('addClassBtn').addEventListener('click', async () => {
+        const val = $('newClassInput').value.trim();
+        if (!val) return showToast('⚠️ Please enter a class name.', 'warning');
+        if (masterClassList.includes(val)) return showToast('⚠️ Class already exists in the list.', 'warning');
+
+        try {
+            masterClassList.push(val);
+            await db.collection('classList').doc('allClasses').update({ classes: masterClassList });
+            $('newClassInput').value = '';
+            renderDroplets();
+            populateClassSelectors();
+            showToast(`✅ "${val}" added to master list!`, 'success');
+        } catch (e) {
+            showToast('❌ Error adding class: ' + e.message, 'error');
+        }
+    });
+
+    // =============================================================
+    // 2. PENDING APPROVALS
     // =============================================================
     async function loadPendingReports() {
         const container = $('pendingList');
@@ -234,12 +348,13 @@
     }
 
     // =============================================================
-    // 2. GENERATE PIN
+    // 3. GENERATE PIN (Now uses Dropdown)
     // =============================================================
     $('genPinBtn').addEventListener('click', async () => {
         const name = $('pinName').value.trim();
-        const cls = $('pinClass').value.trim();
-        if (!name || !cls) return showToast('⚠️ Enter student name and class.', 'warning');
+        const cls = $('pinClassSelect').value;
+        if (!name) return showToast('⚠️ Enter student name.', 'warning');
+        if (!cls) return showToast('⚠️ Please select a class.', 'warning');
 
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
         let pin = '';
@@ -256,14 +371,11 @@
     });
 
     // =============================================================
-    // HELPERS
-    // =============================================================
-    function $(id) { return document.getElementById(id); }
-
     // INIT
+    // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Admin Console ready.');
+    console.log('✅ Admin Console with Class Droplets is ready!');
 </script>
 </body>
 </html>
