@@ -1,360 +1,701 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CBT Test | Covenant Arrows</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
-    }
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      padding: 2rem;
-      border: 1px solid #f1f5f9;
-    }
-    .hidden { display: none !important; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📚 CBT Portal - Covenant Arrows' Model</title>
 
-    /* Entry screen */
-    .entry-card h2 {
-      color: #b8860b;
-      margin-bottom: 1.5rem;
-    }
-    .input-group {
-      margin-bottom: 1.2rem;
-    }
-    .input-group label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 0.3rem;
-      color: #475569;
-    }
-    .input-group input, .input-group select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-      outline: none;
-    }
-    .input-group input:focus, .input-group select:focus {
-      border-color: #d4af37;
-    }
-    .gold-btn {
-      background: #b8860b;
-      color: white;
-      border: none;
-      padding: 14px 24px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 1.1rem;
-      cursor: pointer;
-      width: 100%;
-    }
-    .gold-btn:hover { background: #9a7209; }
+    <!-- Google Fonts for a friendly, clean look -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
-    /* Test area layout */
-    .test-layout {
-      display: flex;
-      gap: 2rem;
-    }
-    .question-panel {
-      flex: 3;
-    }
-    .navigator {
-      flex: 1;
-      background: #f8fafc;
-      border-radius: 16px;
-      padding: 1.5rem;
-      border: 1px solid #e2e8f0;
-      height: fit-content;
-    }
-    .timer {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #b8860b;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .status-summary {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-    .status-summary span {
-      padding: 4px 8px;
-      border-radius: 8px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-    }
-    .q-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .q-btn {
-      width: 100%;
-      aspect-ratio: 1;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      background: white;
-      color: #1e293b;
-    }
-    .q-btn.answered { background: #dcfce7; border-color: #22c55e; }
-    .q-btn.unanswered { background: #fee2e2; border-color: #ef4444; }
-    .q-btn.current { border: 3px solid #d4af37; box-shadow: 0 0 0 2px rgba(212,175,55,0.3); }
-    .q-btn:hover { background: #f1f5f9; }
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    .question-block {
-      margin-bottom: 1.5rem;
-    }
-    .question-block p {
-      font-weight: 600;
-      margin-bottom: 0.8rem;
-    }
-    .option {
-      margin-left: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .option input { margin-right: 0.5rem; }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .submit-btn {
-      background: #059669;
-      margin-top: 1.5rem;
-    }
-    .submit-btn:hover { background: #047857; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    /* Result overlay */
-    .result-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .result-card {
-      background: white;
-      border-radius: 24px;
-      padding: 2.5rem;
-      text-align: center;
-      max-width: 450px;
-      animation: pop 0.4s ease;
-    }
-    @keyframes pop {
-      0% { transform: scale(0.7); opacity: 0; }
-      70% { transform: scale(1.05); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .congrats { font-size: 2rem; font-weight: 800; color: #b8860b; }
-    .score { font-size: 3.5rem; font-weight: 900; color: #1e40af; margin: 1rem 0; }
-    .retry-btn {
-      background: #d4af37;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+        #app {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== HEADER / SCHOOL BRANDING ===== */
+        .school-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px dashed #c7d2fe;
+        }
+
+        .school-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e1b4b;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .school-header .motto {
+            font-weight: 600;
+            color: #475569;
+            font-size: 15px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 4px 20px;
+            border-radius: 30px;
+            margin-top: 4px;
+        }
+
+        .school-header .location {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* ===== CARDS & INPUTS ===== */
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 32px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            margin-top: 15px;
+        }
+
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input,
+        select {
+            flex: 1;
+            min-width: 160px;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            background: #f8fafc;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e2e8f0;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #059669, #10b981);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, #dc2626, #ef4444);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(to right, #d97706, #f59e0b);
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* ===== EXAM LIST (Subject Buttons) ===== */
+        .exam-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .exam-grid button {
+            flex: 1 0 calc(50% - 12px);
+            justify-content: center;
+            background: #f1f5f9;
+            font-size: 18px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+        }
+
+        .exam-grid button:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        /* ===== CBT QUESTION DISPLAY ===== */
+        .question-number {
+            background: #4f46e5;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 15px 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .options-grid label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 60px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+
+        .options-grid label:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+
+        .options-grid input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #4f46e5;
+            flex: 0 0 auto;
+        }
+
+        /* ===== TIMER ===== */
+        .timer-box {
+            background: #1e1b4b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .timer-box.warning {
+            background: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            #app {
+                padding: 20px;
+                border-radius: 28px;
+            }
+            .school-header h1 {
+                font-size: 22px;
+            }
+            .question-text {
+                font-size: 17px;
+            }
+            .exam-grid button {
+                flex: 1 0 100%;
+            }
+            button {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+        }
+
+        /* ===== ERROR / STATUS ===== */
+        .error-text {
+            color: #dc2626;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+        .success-text {
+            color: #059669;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Entry -->
-    <div id="entryScreen" class="card entry-card">
-      <h2>👋 Welcome! Enter your details</h2>
-      <div class="input-group">
-        <label>Full Name</label>
-        <input type="text" id="studentName" placeholder="Your name" />
-      </div>
-      <div class="input-group">
-        <label>Class</label>
-        <select id="studentClass">
-          <option value="basic3">Basic 3</option>
-          <option value="basic4">Basic 4</option>
-          <option value="basic5">Basic 5</option>
-          <option value="basic6">Basic 6</option>
-        </select>
-      </div>
-      <button class="gold-btn" id="startBtn">Start Test</button>
-    </div>
 
-    <!-- Test -->
-    <div id="testScreen" class="hidden">
-      <div class="test-layout">
-        <div class="question-panel card">
-          <div class="timer" id="timerDisplay">10:00</div>
-          <div id="questionContent"></div>
-          <button class="gold-btn submit-btn" id="submitBtn">Submit Answers</button>
+    <div id="app">
+        <!-- ======================================== -->
+        <!-- SCHOOL HEADER (Shows on all pages)       -->
+        <!-- ======================================== -->
+        <div class="school-header">
+            <h1>🏫 COVENANT ARROWS' MODEL</h1>
+            <div class="motto">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
+            <div class="location">📍 Abiola way, ABEOKUTA, Ogun State.</div>
         </div>
-        <div class="navigator">
-          <h3 style="margin-bottom:1rem; color:#b8860b;">Questions</h3>
-          <div class="status-summary">
-            <span id="attemptedCount">0</span> Attempted
-            <span id="unansweredCount">5</span> Unanswered
-            <span id="remainingCount">5</span> Remaining
-          </div>
-          <div class="q-grid" id="qGrid"></div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
-      authDomain: "edumeta-c5588.firebaseapp.com",
-      projectId: "edumeta-c5588",
-      storageBucket: "edumeta-c5588.firebasestorage.app",
-      messagingSenderId: "332853259697",
-      appId: "1:332853259697:web:92e0c07e43d1c3bf432190",
-      measurementId: "G-WY24HER46Q"
-    });
-    const db = firebase.firestore();
+        <!-- ======================================== -->
+        <!-- PAGE 1: LOGIN                            -->
+        <!-- ======================================== -->
+        <div id="loginPage" class="page active">
+            <div class="card">
+                <h2 style="color:#1e1b4b; margin-bottom:8px;">🎓 Student Exam Portal</h2>
+                <p style="color:#64748b; margin-bottom:20px;">Enter your details to start your CBT</p>
 
-    let questions = [], answers = {}, currentQ = 0, timeLeft = 600, timerInterval, testSubmitted = false;
-    let studentName, studentClass;
-
-    const entryScreen = document.getElementById('entryScreen');
-    const testScreen = document.getElementById('testScreen');
-    const startBtn = document.getElementById('startBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const questionContent = document.getElementById('questionContent');
-    const qGrid = document.getElementById('qGrid');
-    const attemptedSpan = document.getElementById('attemptedCount');
-    const unansweredSpan = document.getElementById('unansweredCount');
-    const remainingSpan = document.getElementById('remainingCount');
-
-    startBtn.addEventListener('click', async () => {
-      studentName = document.getElementById('studentName').value.trim();
-      studentClass = document.getElementById('studentClass').value;
-      if (!studentName) { alert('Please enter your name.'); return; }
-      const doc = await db.collection('questions').doc(studentClass).get();
-      if (!doc.exists || !doc.data().items) {
-        alert('No questions for this class yet.'); return;
-      }
-      questions = doc.data().items;
-      entryScreen.classList.add('hidden');
-      testScreen.classList.remove('hidden');
-      renderNavigator();
-      showQuestion(0);
-      startTimer();
-    });
-
-    function renderNavigator() {
-      qGrid.innerHTML = '';
-      for (let i = 0; i < questions.length; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'q-btn';
-        btn.textContent = i+1;
-        btn.onclick = () => showQuestion(i);
-        qGrid.appendChild(btn);
-      }
-      updateStatus();
-    }
-
-    function showQuestion(idx) {
-      currentQ = idx;
-      const q = questions[idx];
-      questionContent.innerHTML = `
-        <div class="question-block">
-          <p>${idx+1}. ${q.question}</p>
-          ${['A','B','C','D'].map(opt => `
-            <div class="option">
-              <label>
-                <input type="radio" name="q${idx}" value="${opt}" ${answers[idx] === opt ? 'checked' : ''} 
-                  onchange="saveAnswer(${idx}, '${opt}')" />
-                ${opt}. ${q['option'+opt]}
-              </label>
+                <div class="flex">
+                    <input id="studentName" placeholder="👤 Your Full Name" />
+                    <input id="studentClass" placeholder="📚 Class (e.g. Basic 3)" />
+                    <button id="enterExamBtn" class="btn-primary" style="flex:1; min-width:140px; justify-content:center;">
+                        🚀 Start Exam
+                    </button>
+                </div>
+                <p id="loginErr" class="error-text"></p>
             </div>
-          `).join('')}
         </div>
-      `;
-      updateStatus();
-    }
 
-    window.saveAnswer = function(idx, opt) {
-      answers[idx] = opt;
-      updateStatus();
-    };
+        <!-- ======================================== -->
+        <!-- PAGE 2: EXAM DASHBOARD / CBT             -->
+        <!-- ======================================== -->
+        <div id="examPage" class="page">
+            <div class="flex-between">
+                <div>
+                    <h3 style="color:#1e1b4b;">👋 <span id="sName"></span></h3>
+                    <p style="color:#64748b; margin-top:-4px;">Class: <strong id="sClass"></strong></p>
+                </div>
+                <button id="logoutExam" class="btn-danger" style="padding:10px 24px;">🚪 Logout</button>
+            </div>
 
-    function updateStatus() {
-      let attempted = Object.keys(answers).length;
-      let unanswered = questions.length - attempted;
-      attemptedSpan.textContent = attempted;
-      unansweredSpan.textContent = unanswered;
-      remainingSpan.textContent = unanswered;
+            <hr style="margin:20px 0; border:1px dashed #e2e8f0;" />
 
-      // Update grid button colors
-      const btns = qGrid.children;
-      for (let i = 0; i < btns.length; i++) {
-        btns[i].classList.remove('answered', 'unanswered', 'current');
-        if (i === currentQ) btns[i].classList.add('current');
-        if (answers[i] !== undefined) btns[i].classList.add('answered');
-        else btns[i].classList.add('unanswered');
-      }
-    }
+            <!-- AVAILABLE EXAMS LIST -->
+            <div id="availableExams">
+                <p style="color:#64748b;">📡 Loading available subjects...</p>
+            </div>
 
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        const m = Math.floor(timeLeft/60), s = timeLeft%60;
-        timerDisplay.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-        if (timeLeft < 60) timerDisplay.style.color = '#ef4444';
-        if (timeLeft <= 0) { clearInterval(timerInterval); submitTest(); }
-      }, 1000);
-    }
+            <!-- CBT CONTAINER (Hidden until exam starts) -->
+            <div id="cbtArea" style="display:none; margin-top:20px;">
+                <!-- Timer & Controls -->
+                <div class="flex-between" style="margin-bottom:20px;">
+                    <div class="timer-box" id="timerDisplay">⏱️ 15:00</div>
+                    <button id="submitExamBtn" class="btn-success">✅ Submit Exam</button>
+                </div>
 
-    submitBtn.addEventListener('click', submitTest);
+                <!-- Question Card -->
+                <div class="card">
+                    <div id="questionContainer">
+                        <!-- Dynamic JS will fill this -->
+                    </div>
+                    <div class="flex" style="justify-content:center; margin-top:20px;">
+                        <button id="prevQBtn" class="btn-outline">⬅ Previous</button>
+                        <button id="nextQBtn" class="btn-primary">Next ➡</button>
+                    </div>
+                </div>
+            </div>
 
-    async function submitTest() {
-      if (testSubmitted) return;
-      testSubmitted = true;
-      clearInterval(timerInterval);
-      let score = 0;
-      questions.forEach((q, i) => { if (answers[i] === q.correct) score++; });
-      const total = questions.length;
-
-      await db.collection('results').add({
-        studentName, class: studentClass, answers, score, total,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      // Result overlay
-      const overlay = document.createElement('div');
-      overlay.className = 'result-overlay';
-      overlay.innerHTML = `
-        <div class="result-card">
-          <div class="congrats">🎉 Congratulations, ${studentName}!</div>
-          <div class="score">${score} / ${total}</div>
-          <p style="color:#475569;">Great job! Keep shining.</p>
-          <button class="retry-btn" onclick="location.reload()">Take Another Test</button>
+            <!-- RESULT DISPLAY (After submit) -->
+            <div id="resultDisplay" style="margin-top:20px;"></div>
         </div>
-      `;
-      document.body.appendChild(overlay);
-      confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
-      setTimeout(() => confetti({ particleCount: 50, spread: 70, origin: { y: 0.7 } }), 500);
-    }
-  </script>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔥 FIREBASE CONFIG (YOURS)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+            authDomain: "scholars-a8087.firebaseapp.com",
+            projectId: "scholars-a8087",
+            storageBucket: "scholars-a8087.firebasestorage.app",
+            messagingSenderId: "406251764422",
+            appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+            measurementId: "G-TEFG74LD7J"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ============================================================
+        // GLOBAL STATE
+        // ============================================================
+        let currentStudent = { name: '', class: '' };
+        let currentQuestions = [];
+        let currentSubject = '';
+        let answers = {};
+        let qIndex = 0;
+        let timerInterval = null;
+        let timeSeconds = 900; // 15 minutes
+        const TOTAL_TIME = 900;
+
+        // DOM Helpers
+        const $ = (id) => document.getElementById(id);
+        const showPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            $(id + 'Page').classList.add('active');
+        };
+
+        // ============================================================
+        // 1. LOGIN LOGIC
+        // ============================================================
+        $('enterExamBtn').addEventListener('click', async () => {
+            const name = $('studentName').value.trim();
+            const cls = $('studentClass').value.trim();
+            if (!name || !cls) {
+                $('loginErr').innerText = '⚠️ Please enter your Full Name and Class.';
+                return;
+            }
+            $('loginErr').innerText = '';
+            currentStudent = { name, class: cls };
+            $('sName').innerText = name;
+            $('sClass').innerText = cls;
+            showPage('exam');
+            await loadAvailableExams(cls);
+        });
+
+        $('logoutExam').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            showPage('login');
+            currentStudent = {};
+            $('cbtArea').style.display = 'none';
+            $('resultDisplay').innerHTML = '';
+        });
+
+        // ============================================================
+        // 2. LOAD AVAILABLE EXAMS
+        // ============================================================
+        async function loadAvailableExams(cls) {
+            const container = $('availableExams');
+            try {
+                const status = await db.collection('examStatus').doc(cls).get();
+                if (!status.exists || !status.data().activeSubjects || status.data().activeSubjects.length === 0) {
+                    container.innerHTML = `
+                        <div class="card" style="text-align:center; background:#fef9c3;">
+                            <h3>😴 No Active Exams</h3>
+                            <p>Please check back later or ask your teacher.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const subjects = status.data().activeSubjects;
+                container.innerHTML = `
+                    <p style="font-weight:600; color:#1e1b4b; margin-bottom:10px;">📖 Select a subject to start:</p>
+                    <div class="exam-grid">
+                        ${subjects.map(sub => `
+                            <button class="start-exam-btn" data-sub="${sub}">
+                                📝 ${sub}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+
+                document.querySelectorAll('.start-exam-btn').forEach(btn => {
+                    btn.addEventListener('click', () => startCBT(cls, btn.dataset.sub));
+                });
+
+            } catch (e) {
+                container.innerHTML = `<p class="error-text">⚠️ Error loading exams. Please refresh.</p>`;
+                console.error(e);
+            }
+        }
+
+        // ============================================================
+        // 3. START CBT (Fetch Questions + Timer)
+        // ============================================================
+        async function startCBT(cls, subject) {
+            // Reset state
+            clearInterval(timerInterval);
+            timeSeconds = TOTAL_TIME;
+            qIndex = 0;
+            answers = {};
+            currentSubject = subject;
+
+            const container = $('questionContainer');
+            container.innerHTML = '<p style="color:#64748b;">⏳ Loading your questions...</p>';
+            $('cbtArea').style.display = 'block';
+            $('resultDisplay').innerHTML = '';
+            $('timerDisplay').innerText = '⏱️ 15:00';
+            $('timerDisplay').classList.remove('warning');
+
+            try {
+                const snap = await db.collection('questions')
+                    .where('class', '==', cls)
+                    .where('subject', '==', subject)
+                    .get();
+
+                if (snap.empty) {
+                    container.innerHTML = `<p class="error-text">❌ No questions found for ${subject}. Tell your teacher!</p>`;
+                    return;
+                }
+
+                currentQuestions = [];
+                snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
+
+                // Start the timer
+                startTimer();
+
+                // Render first question
+                renderQuestion(0);
+
+            } catch (e) {
+                container.innerHTML = `<p class="error-text">❌ Failed to load questions. Check your internet.</p>`;
+                console.error(e);
+            }
+        }
+
+        // ============================================================
+        // 4. RENDER QUESTION
+        // ============================================================
+        function renderQuestion(index) {
+            const container = $('questionContainer');
+            if (index >= currentQuestions.length || index < 0) return;
+
+            const q = currentQuestions[index];
+            const total = currentQuestions.length;
+
+            let optionsHtml = '';
+            const letters = ['A', 'B', 'C', 'D'];
+            q.options.forEach((opt, i) => {
+                const letter = letters[i];
+                const checked = answers[q.id] === letter ? 'checked' : '';
+                optionsHtml += `
+                    <label>
+                        <input type="radio" name="cbt_${q.id}" value="${letter}" ${checked} 
+                               onchange="answers['${q.id}']='${letter}'" />
+                        <span style="font-size:18px;">${letter}. ${opt}</span>
+                    </label>
+                `;
+            });
+
+            container.innerHTML = `
+                <div>
+                    <span class="question-number">📌 Question ${index + 1} of ${total}</span>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options-grid">${optionsHtml}</div>
+                </div>
+            `;
+
+            // Update button states
+            $('prevQBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
+            $('nextQBtn').innerText = index === total - 1 ? '📌 Finish Review' : 'Next ➡';
+        }
+
+        // Navigation
+        $('prevQBtn').addEventListener('click', () => {
+            if (qIndex > 0) renderQuestion(--qIndex);
+        });
+
+        $('nextQBtn').addEventListener('click', () => {
+            if (qIndex < currentQuestions.length - 1) {
+                renderQuestion(++qIndex);
+            } else {
+                // If on last question, prompt submit
+                if (confirm('📌 You are at the end. Submit your exam now?')) {
+                    submitExam();
+                }
+            }
+        });
+
+        // ============================================================
+        // 5. TIMER LOGIC (Auto-submit at 0)
+        // ============================================================
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeSeconds--;
+                const mins = Math.floor(timeSeconds / 60);
+                const secs = timeSeconds % 60;
+                $('timerDisplay').innerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                if (timeSeconds <= 60) {
+                    $('timerDisplay').classList.add('warning');
+                }
+
+                if (timeSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert('⏰ Time is up! Your exam will be submitted automatically.');
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        // ============================================================
+        // 6. SUBMIT EXAM
+        // ============================================================
+        async function submitExam() {
+            clearInterval(timerInterval);
+            if (!currentQuestions.length) return;
+
+            // Check if all questions are answered (just a warning, don't force)
+            const totalQ = currentQuestions.length;
+            const answered = Object.keys(answers).length;
+            if (answered < totalQ) {
+                if (!confirm(`⚠️ You only answered ${answered} out of ${totalQ} questions. Submit anyway?`)) {
+                    // Resume timer if they cancel?
+                    startTimer();
+                    return;
+                }
+            }
+
+            // Calculate score
+            let score = 0;
+            currentQuestions.forEach(q => {
+                if (answers[q.id] === q.correct) score++;
+            });
+
+            // Save to Firebase
+            try {
+                await db.collection('results').add({
+                    studentName: currentStudent.name,
+                    class: currentStudent.class,
+                    subject: currentSubject,
+                    score: score,
+                    totalQuestions: totalQ,
+                    answers: answers,
+                    submittedAt: new Date()
+                });
+
+                // Show result
+                $('cbtArea').style.display = 'none';
+                $('resultDisplay').innerHTML = `
+                    <div class="card" style="background:#dcfce7; border:2px solid #10b981; text-align:center;">
+                        <h2 style="color:#065f46;">🎉 Exam Submitted!</h2>
+                        <p style="font-size:22px; font-weight:800; color:#0f172a;">${currentSubject}</p>
+                        <p style="font-size:28px; font-weight:800; color:#4f46e5;">${score} / ${totalQ}</p>
+                        <p style="color:#475569;">Your score has been recorded. You can now close this page.</p>
+                    </div>
+                `;
+
+                // Refresh the available exams list (so they can take another subject if available)
+                await loadAvailableExams(currentStudent.class);
+
+            } catch (e) {
+                alert('❌ Failed to submit. Check your internet connection and try again.');
+                console.error(e);
+            }
+        }
+
+        // Manual submit button
+        $('submitExamBtn').addEventListener('click', () => {
+            if (confirm('📝 Are you sure you want to submit your exam?')) {
+                submitExam();
+            }
+        });
+
+        // ============================================================
+        // 7. BOOTSTRAP
+        // ============================================================
+        showPage('login');
+        console.log('✅ Covenant Arrows\' Model CBT is ready!');
+    </script>
+
 </body>
 </html>
