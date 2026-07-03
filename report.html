@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check Report Card - Covenant Arrows' Model</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Google Fonts (Clean, readable) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ===== GLOBAL RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+        }
+
+        #app {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* ===== LOGIN CARD ===== */
+        .login-card {
+            background: white;
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            margin: 40px auto;
+            border: 1px solid #e2e8f0;
+        }
+        .login-card h2 {
+            color: #1e1b4b;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .login-card .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .login-card input {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+            background: #f8fafc;
+        }
+        .login-card input:focus {
+            border-color: #4f46e5;
+            background: white;
+        }
+        .login-card button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 14px 40px;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+        }
+        .login-card button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
+        }
+        .error-text {
+            color: #dc2626;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+
+        /* ========================================================== */
+        /* ===== REPORT CARD (A4 STYLING) ===== */
+        /* ========================================================== */
+        .report-wrapper {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+            padding: 40px 35px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* This is the actual A4 sheet style */
+        .report-card {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 8px 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ----- School Header ----- */
+        .report-header {
+            text-align: center;
+            border-bottom: 3px double #1e1b4b;
+            padding-bottom: 18px;
+            margin-bottom: 20px;
+        }
+        .report-header .school-name {
+            font-size: 32px;
+            font-weight: 900;
+            color: #1e1b4b;
+            letter-spacing: 2px;
+        }
+        .report-header .motto {
+            font-weight: 600;
+            color: #4f46e5;
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+        .report-header .location {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+        }
+        .report-header .term-info {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 6px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 2px 30px;
+            border-radius: 30px;
+        }
+
+        /* ----- Student Info & Attendance ----- */
+        .student-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .student-meta .name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .student-meta .name span {
+            color: #4f46e5;
+        }
+        .student-meta .class {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .attendance-grid {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-weight: 600;
+            font-size: 14px;
+            color: #334155;
+        }
+        .attendance-grid span {
+            background: white;
+            padding: 4px 14px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ----- Main Subject Table ----- */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 15px 0 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: center;
+        }
+        table th {
+            background: #1e1b4b;
+            color: white;
+            font-weight: 700;
+            padding: 10px 6px;
+            border: 1px solid #1e1b4b;
+        }
+        table td {
+            padding: 8px 4px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+        }
+        table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        table tr:hover {
+            background: #f1f5f9;
+        }
+
+        /* Subject column left-aligned */
+        table td:first-child,
+        table th:first-child {
+            font-weight: 700;
+        }
+        table td:nth-child(2) {
+            text-align: left;
+            font-weight: 600;
+            padding-left: 12px;
+        }
+
+        /* Sub-header for 3rd Term */
+        .sub-header th {
+            background: #334155;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 2px;
+        }
+
+        /* Grade & Remark styling */
+        .grade-a {
+            color: #059669;
+            font-weight: 800;
+        }
+        .grade-b {
+            color: #2563eb;
+            font-weight: 800;
+        }
+        .grade-c {
+            color: #d97706;
+            font-weight: 800;
+        }
+        .grade-d {
+            color: #b45309;
+            font-weight: 800;
+        }
+        .grade-f {
+            color: #dc2626;
+            font-weight: 800;
+        }
+
+        /* Grand Total Row */
+        .grand-total-row td {
+            background: #f1f5f9;
+            font-weight: 800;
+            font-size: 14px;
+            border-top: 3px solid #1e1b4b;
+            color: #0f172a;
+        }
+
+        /* ----- Bottom Signatures ----- */
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 2px dashed #cbd5e1;
+        }
+        .signature-box {
+            flex: 1;
+            min-width: 180px;
+        }
+        .signature-box .label {
+            font-weight: 700;
+            color: #475569;
+            font-size: 14px;
+        }
+        .signature-box .line {
+            border-bottom: 2px solid #1e293b;
+            width: 200px;
+            margin-top: 30px;
+            margin-bottom: 4px;
+        }
+        .signature-box .sub {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* ----- Footer ----- */
+        .report-footer {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+
+        /* ========================================================== */
+        /* ===== PRINT STYLES (A4 PERFECT) ===== */
+        /* ========================================================== */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            #app {
+                max-width: 100%;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .report-wrapper {
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+                padding: 10px 15px;
+                margin: 0;
+            }
+            .report-card {
+                max-width: 100%;
+                padding: 0;
+            }
+            table {
+                font-size: 12px;
+            }
+            table th {
+                background: #1e1b4b !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .grand-total-row td {
+                background: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .student-meta {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .report-header .term-info {
+                background: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            /* Ensure page breaks don't cut the table */
+            table {
+                page-break-inside: avoid;
+            }
+            .signature-section {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ========================================================== */
+        /* ===== UTILITY ===== */
+        /* ========================================================== */
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        .btn-print {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 14px 40px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-print:hover {
+            background: #1e293b;
+            transform: scale(1.02);
+        }
+        .btn-back {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 14px 40px;
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-back:hover {
+            border-color: #4f46e5;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+
+        <!-- ========================================================== -->
+        <!-- PAGE 1: LOGIN                                              -->
+        <!-- ========================================================== -->
+        <div id="loginPage" class="page active">
+            <div class="login-card">
+                <h2>📋 Check Report Card</h2>
+                <p>Enter the student's full name and the 8-digit PIN provided by the school.</p>
+                <div class="flex">
+                    <input id="studentName" placeholder="👤 Student Full Name" />
+                    <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" />
+                </div>
+                <button id="checkReportBtn" style="width:100%; margin-top:12px;">🔍 View Report Card</button>
+                <p id="reportErr" class="error-text"></p>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- PAGE 2: REPORT CARD DISPLAY                                -->
+        <!-- ========================================================== -->
+        <div id="reportPage" class="page">
+
+            <div class="report-wrapper">
+                <!-- Print & Back Buttons (hidden when printing) -->
+                <div class="flex-center no-print" style="margin-bottom:20px;">
+                    <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+                    <button class="btn-back" id="backBtn">⬅ Back to Search</button>
+                </div>
+
+                <!-- ===== THE ACTUAL REPORT CARD ===== -->
+                <div class="report-card" id="reportContainer">
+                    <!-- Dynamically filled by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =============================================================
+        // 🔥 FIREBASE CONFIG (YOURS)
+        // =============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+            authDomain: "scholars-a8087.firebaseapp.com",
+            projectId: "scholars-a8087",
+            storageBucket: "scholars-a8087.firebasestorage.app",
+            messagingSenderId: "406251764422",
+            appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+            measurementId: "G-TEFG74LD7J"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // =============================================================
+        // DOM REFS
+        // =============================================================
+        const $ = (id) => document.getElementById(id);
+        const showPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            $(id + 'Page').classList.add('active');
+        };
+
+        // =============================================================
+        // 1. CHECK REPORT LOGIC
+        // =============================================================
+        $('checkReportBtn').addEventListener('click', async () => {
+            const name = $('studentName').value.trim();
+            const pin = $('studentPin').value.trim();
+            const err = $('reportErr');
+
+            if (!name || !pin) {
+                err.innerText = '⚠️ Please enter both Name and PIN.';
+                return;
+            }
+
+            err.innerText = '';
+            $('checkReportBtn').innerText = '⏳ Searching...';
+            $('checkReportBtn').disabled = true;
+
+            try {
+                // Query Firebase for this specific student + pin + approved
+                const snap = await db.collection('reportCards')
+                    .where('studentName', '==', name)
+                    .where('pin', '==', pin)
+                    .where('approved', '==', true)
+                    .get();
+
+                if (snap.empty) {
+                    err.innerText = '❌ No approved report found. Check the name and PIN, or contact the school.';
+                    $('checkReportBtn').innerText = '🔍 View Report Card';
+                    $('checkReportBtn').disabled = false;
+                    return;
+                }
+
+                // Get the first matching document
+                const doc = snap.docs[0];
+                const data = doc.data();
+
+                // Fetch School Settings
+                let schoolName = 'COVENANT ARROWS\' MODEL';
+                let schoolMotto = 'Raising Future Leaders Through Christ-Centered Learning';
+                let schoolLocation = 'Abiola Way, Abeokuta, Ogun State.';
+                try {
+                    const settingsSnap = await db.collection('settings').doc('schoolInfo').get();
+                    if (settingsSnap.exists) {
+                        const s = settingsSnap.data();
+                        schoolName = s.schoolName || schoolName;
+                        schoolMotto = s.motto || schoolMotto;
+                        schoolLocation = s.location || schoolLocation;
+                    }
+                } catch (e) { /* ignore */ }
+
+                // Render the Report Card
+                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation });
+
+                // Switch view
+                showPage('report');
+                err.innerText = '';
+
+            } catch (e) {
+                err.innerText = '⚠️ Network error. Please check your connection.';
+                console.error(e);
+            }
+
+            $('checkReportBtn').innerText = '🔍 View Report Card';
+            $('checkReportBtn').disabled = false;
+        });
+
+        // =============================================================
+        // 2. RENDER REPORT CARD (A4 Traditional Style)
+        // =============================================================
+        function renderReportCard(data, school) {
+            const container = $('reportContainer');
+            const subjects = Object.keys(data.subjects);
+            const att = data.attendance || { open: 90, present: 85, absent: 5 };
+
+            // Helper to calculate metrics
+            let grandTotal = 0;
+            let totalSubjects = 0;
+            let subjectRows = '';
+
+            subjects.forEach((sub, index) => {
+                const s = data.subjects[sub];
+                const first = s.firstTerm || 0;
+                const second = s.secondTerm || 0;
+                const ca = s.thirdCA || 0;
+                const exam = s.thirdExam || 0;
+                const thirdTotal = ca + exam;
+                const overall = first + second + thirdTotal;
+                const avg = overall / 3;
+
+                grandTotal += overall;
+                totalSubjects++;
+
+                // Determine Grade & Remark
+                let grade, remark, gradeClass;
+                if (avg >= 70) { grade = 'A';
+                    remark = 'Excellent';
+                    gradeClass = 'grade-a'; } else if (avg >= 60) { grade = 'B';
+                    remark = 'Good';
+                    gradeClass = 'grade-b'; } else if (avg >= 50) { grade = 'C';
+                    remark = 'Satisfactory';
+                    gradeClass = 'grade-c'; } else if (avg >= 40) { grade = 'D';
+                    remark = 'Pass';
+                    gradeClass = 'grade-d'; } else { grade = 'F';
+                    remark = 'Needs Improvement';
+                    gradeClass = 'grade-f'; }
+
+                subjectRows += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${sub}</td>
+                            <td>${first}</td>
+                            <td>${second}</td>
+                            <td>${ca}</td>
+                            <td>${exam}</td>
+                            <td><strong>${thirdTotal}</strong></td>
+                            <td><strong>${overall}</strong></td>
+                            <td>${avg.toFixed(1)}%</td>
+                            <td class="${gradeClass}">${grade}</td>
+                            <td style="font-size:12px;">${remark}</td>
+                        </tr>
+                    `;
+            });
+
+            // Grand Total Row
+            const overallAvg = totalSubjects > 0 ? (grandTotal / totalSubjects) : 0;
+            let overallGrade, overallRemark, overallGradeClass;
+            if (overallAvg >= 70) { overallGrade = 'A';
+                overallRemark = 'Excellent';
+                overallGradeClass = 'grade-a'; } else if (overallAvg >= 60) { overallGrade = 'B';
+                overallRemark = 'Good';
+                overallGradeClass = 'grade-b'; } else if (overallAvg >= 50) { overallGrade = 'C';
+                overallRemark = 'Satisfactory';
+                overallGradeClass = 'grade-c'; } else if (overallAvg >= 40) { overallGrade = 'D';
+                overallRemark = 'Pass';
+                overallGradeClass = 'grade-d'; } else { overallGrade = 'F';
+                overallRemark = 'Needs Improvement';
+                overallGradeClass = 'grade-f'; }
+
+            const grandRow = `
+                    <tr class="grand-total-row">
+                        <td colspan="7"><strong>📊 GRAND TOTAL / AVERAGE</strong></td>
+                        <td><strong>${grandTotal}</strong></td>
+                        <td><strong>${overallAvg.toFixed(1)}%</strong></td>
+                        <td class="${overallGradeClass}"><strong>${overallGrade}</strong></td>
+                        <td style="font-size:13px;"><strong>${overallRemark}</strong></td>
+                    </tr>
+                `;
+
+            // Build the full HTML
+            const html = `
+                    <!-- Report Header -->
+                    <div class="report-header">
+                        <div class="school-name">🏫 ${school.name}</div>
+                        <div class="motto">✝️ ${school.motto}</div>
+                        <div class="location">📍 ${school.location}</div>
+                        <div class="term-info">THIRD TERM REPORT — ${data.year || new Date().getFullYear()}</div>
+                    </div>
+
+                    <!-- Student & Attendance -->
+                    <div class="student-meta">
+                        <div class="name">👤 <span>${data.studentName}</span></div>
+                        <div class="class">📚 Class: <strong>${data.class}</strong></div>
+                        <div class="attendance-grid">
+                            <span>📅 Open: ${att.open}</span>
+                            <span>✅ Present: ${att.present}</span>
+                            <span>❌ Absent: ${att.absent}</span>
+                            <span>📊 Att: ${((att.present/att.open)*100).toFixed(1)}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Subject Table -->
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">S/N</th>
+                                    <th rowspan="2">SUBJECT</th>
+                                    <th rowspan="2">1ST TERM</th>
+                                    <th rowspan="2">2ND TERM</th>
+                                    <th colspan="3">3RD TERM</th>
+                                    <th rowspan="2">OVERALL TOTAL</th>
+                                    <th rowspan="2">AVG %</th>
+                                    <th rowspan="2">GRADE</th>
+                                    <th rowspan="2">REMARK</th>
+                                </tr>
+                                <tr class="sub-header">
+                                    <th>C.A</th>
+                                    <th>EXAM</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${subjectRows}
+                                ${grandRow}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Signatures -->
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div class="label">Teacher's Remark</div>
+                            <div style="margin-top:8px; font-style:italic; color:#334155; min-height:30px; border-bottom:1px dashed #cbd5e1;">
+                                ${overallRemark}. Student showed ${overallAvg >= 60 ? 'great' : 'consistent'} effort.
+                            </div>
+                        </div>
+                        <div class="signature-box" style="text-align:right;">
+                            <div class="label">Principal's Signature</div>
+                            <div class="line" style="margin-left:auto;"></div>
+                            <div class="sub">Date: ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}</div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="report-footer">
+                        🔐 Verified & Approved | PIN: ${data.pin} | Generated by Covenant Arrows' Model School System
+                    </div>
+                `;
+
+            container.innerHTML = html;
+        }
+
+        // =============================================================
+        // 3. BACK BUTTON
+        // =============================================================
+        $('backBtn').addEventListener('click', () => {
+            showPage('login');
+            $('reportContainer').innerHTML = '';
+            $('studentName').value = '';
+            $('studentPin').value = '';
+            $('reportErr').innerText = '';
+        });
+
+        // =============================================================
+        // 4. BOOTSTRAP
+        // =============================================================
+        showPage('login');
+        console.log('✅ Report Card Viewer ready.');
+    </script>
+
+</body>
+</html>
