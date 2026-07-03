@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -354,26 +355,41 @@
     });
 
     // =============================================================
-    // SUBJECTS
+    // SUBJECTS (FIXED: State updates only on success)
     // =============================================================
     async function loadSubjects(cls) {
         try {
             const doc = await db.collection('classes').doc(cls).get();
-            currentSubjects = doc.exists ? doc.data().subjects || [] : ['English', 'Mathematics', 'Science'];
-            if (!doc.exists) await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+            if (doc.exists) {
+                currentSubjects = doc.data().subjects || [];
+            } else {
+                // Initialize with default subjects
+                currentSubjects = ['English', 'Mathematics', 'Science'];
+                await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+            }
             renderSubjects();
-            if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
-            else { selectedSubject = null; clearQuestionPanel(); }
-            // Also refresh publish toggles and results
+            if (selectedSubject && currentSubjects.includes(selectedSubject)) {
+                selectSubject(selectedSubject);
+            } else {
+                selectedSubject = null;
+                clearQuestionPanel();
+            }
+            // Refresh publish toggles and results
             loadExamToggles(cls);
             loadResults(cls);
-        } catch (e) { showToast('❌ Error loading subjects: ' + e.message, 'error'); }
+        } catch (e) {
+            showToast('❌ Error loading subjects: ' + e.message, 'error');
+            // Try to reload after a delay
+            setTimeout(() => loadSubjects(cls), 3000);
+        }
     }
 
     function renderSubjects() {
         const container = $('subjectListContainer');
         $('subjectCount').innerText = currentSubjects.length;
-        if (!currentSubjects.length) return container.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">No subjects.<br />Add one above!</div>`;
+        if (!currentSubjects.length) {
+            return container.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">No subjects.<br />Add one above!</div>`;
+        }
         container.innerHTML = currentSubjects.map(sub => `
             <div class="subject-item ${selectedSubject === sub ? 'active' : ''}" data-sub="${sub}">
                 <span>📘 ${sub}</span>
@@ -406,17 +422,33 @@
         });
     }
 
+    // =============================================================
+    // ADD SUBJECT - FIXED: Only update state AFTER successful save
+    // =============================================================
     $('addSubjectBtn').addEventListener('click', async () => {
         const val = $('newSubjectInput').value.trim();
         if (!val) return showToast('⚠️ Enter a subject name.', 'warning');
         if (currentSubjects.includes(val)) return showToast('⚠️ Already exists.', 'warning');
+
         try {
-            currentSubjects.push(val);
-            await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
+            // Create a new array with the added subject
+            const updatedSubjects = [...currentSubjects, val];
+            
+            // Save to Firebase FIRST
+            await db.collection('classes').doc(currentUser.class).update({ subjects: updatedSubjects });
+            
+            // ONLY update local state if Firebase succeeds
+            currentSubjects = updatedSubjects;
             $('newSubjectInput').value = '';
             renderSubjects();
             showToast(`✅ "${val}" added!`, 'success');
-        } catch (e) { showToast('❌ Error adding subject.', 'error'); }
+        } catch (e) {
+            // If Firebase fails, DO NOT update the local state.
+            // The old state remains intact.
+            showToast('❌ Error adding subject: ' + e.message, 'error');
+            // Reload to be absolutely sure the UI matches the database
+            await loadSubjects(currentUser.class);
+        }
     });
 
     // =============================================================
@@ -555,7 +587,6 @@
                 ${s}
             </label>
         `).join('');
-        // Update toggle styling
         container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', () => {
                 cb.closest('label').classList.toggle('active-toggle');
@@ -626,7 +657,6 @@
         area.innerHTML = html + '</table>';
     });
 
-    // Save Row
     document.addEventListener('click', async (e) => {
         if (e.target.classList.contains('saveRowBtn')) {
             const name = e.target.dataset.s;
@@ -657,7 +687,6 @@
         }
     });
 
-    // Auto Calculate
     $('calcAllBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
         const snap = await db.collection('results').where('class', '==', cls).get();
@@ -687,7 +716,6 @@
         showToast('✅ Auto-calculated!', 'success');
     });
 
-    // Push to Admin
     $('pushAdminBtn').addEventListener('click', async () => {
         if (!confirm('Push all to Admin?')) return;
         const cls = currentUser.class;
@@ -734,7 +762,7 @@
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Teacher Dashboard ready.');
+    console.log('✅ Teacher Dashboard (fixed) ready.');
 </script>
 </body>
 </html>
