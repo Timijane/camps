@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,8 +28,8 @@
         .login-box { background: white; padding: 50px 40px; border-radius: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); }
         .login-box h2 { font-size: 28px; color: #1e1b4b; margin-bottom: 6px; }
         .login-box p { color: #64748b; margin-bottom: 25px; }
-        .login-box input { width: 100%; padding: 16px 20px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .login-box input:focus { border-color: #4f46e5; background: white; }
+        .login-box input, .login-box select { width: 100%; padding: 16px 20px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif; }
+        .login-box input:focus, .login-box select:focus { border-color: #4f46e5; background: white; }
         .login-box button { width: 100%; padding: 16px; background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; border: none; border-radius: 60px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
         .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
@@ -56,8 +55,8 @@
         .sidebar .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .sidebar .logout-btn:hover { background: #fecaca; }
         .class-switcher { display: flex; gap: 8px; margin-bottom: 25px; }
-        .class-switcher input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; font-weight: 600; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .class-switcher input:focus { border-color: #4f46e5; }
+        .class-switcher select { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; font-weight: 600; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
+        .class-switcher select:focus { border-color: #4f46e5; }
         .class-switcher button { padding: 12px 20px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; white-space: nowrap; }
         .class-switcher button:hover { background: #4338ca; }
         .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -163,9 +162,11 @@
     <div id="loginPage" class="page active">
         <div class="login-box">
             <h2>👨‍🏫 Teacher Login</h2>
-            <p>Enter your details to manage your class.</p>
+            <p>Select your class from the list below.</p>
             <input id="loginName" placeholder="👤 Your Full Name" />
-            <input id="loginClass" placeholder="📚 Class (e.g. Basic 3)" />
+            <select id="loginClassSelect">
+                <option value="">-- Loading Classes --</option>
+            </select>
             <button id="loginBtn">🚀 Enter Dashboard</button>
             <p id="loginErr" class="login-error"></p>
         </div>
@@ -181,7 +182,9 @@
                 <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
             </div>
             <div class="class-switcher">
-                <input id="classInput" placeholder="Class (e.g. Basic 3)" />
+                <select id="classSelect">
+                    <option value="">-- Select Class --</option>
+                </select>
                 <button id="switchClassBtn">Switch</button>
             </div>
             <div class="sidebar-title">
@@ -308,28 +311,82 @@
     }
 
     // =============================================================
+    // HELPERS
+    // =============================================================
+    function normalizeClass(str) {
+        return str.trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    // =============================================================
     // STATE
     // =============================================================
     let currentUser = { name: '', class: '' };
     let currentSubjects = [];
     let selectedSubject = null;
     let currentQuestions = [];
+    let masterClassList = [];
     const $ = (id) => document.getElementById(id);
 
     // =============================================================
-    // LOGIN
+    // LOAD MASTER CLASS LIST & POPULATE DROPDOWNS
+    // =============================================================
+    async function loadMasterClassList() {
+        try {
+            const doc = await db.collection('classList').doc('allClasses').get();
+            if (doc.exists) {
+                masterClassList = doc.data().classes || [];
+            } else {
+                // Fallback defaults if admin hasn't set up yet
+                masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+                await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
+            }
+            populateDropdowns();
+        } catch (e) {
+            console.error("Error loading master class list:", e);
+            // Fallback to defaults
+            masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+            populateDropdowns();
+        }
+    }
+
+    function populateDropdowns() {
+        // Login dropdown
+        const loginSelect = $('loginClassSelect');
+        loginSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            loginSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+
+        // Sidebar switcher dropdown
+        const sidebarSelect = $('classSelect');
+        sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+
+        // If user is already logged in, set the sidebar dropdown to their current class
+        if (currentUser.class) {
+            $('classSelect').value = currentUser.class;
+        }
+    }
+
+    // =============================================================
+    // LOGIN (Now uses Dropdown)
     // =============================================================
     $('loginBtn').addEventListener('click', async () => {
         const name = $('loginName').value.trim();
-        const cls = $('loginClass').value.trim();
+        const cls = $('loginClassSelect').value;
         const err = $('loginErr');
-        if (!name || !cls) return err.innerText = '⚠️ Please enter Name and Class.';
+
+        if (!name) return err.innerText = '⚠️ Please enter your name.';
+        if (!cls) return err.innerText = '⚠️ Please select a class.';
+
         currentUser = { name, class: cls };
         err.innerText = '';
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         $('dashboardPage').classList.add('active');
         $('sidebarName').innerText = name + ' 👨‍🏫';
-        $('classInput').value = cls;
+        $('classSelect').value = cls;
         showToast(`👋 Welcome, ${name}!`, 'success');
         await loadSubjects(cls);
     });
@@ -343,11 +400,13 @@
     });
 
     // =============================================================
-    // CLASS SWITCH
+    // CLASS SWITCH (Now uses Dropdown)
     // =============================================================
     $('switchClassBtn').addEventListener('click', async () => {
-        const newClass = $('classInput').value.trim();
-        if (!newClass) return showToast('⚠️ Enter a class name.', 'error');
+        const newClass = $('classSelect').value;
+        if (!newClass) return showToast('⚠️ Please select a class.', 'error');
+        if (newClass === currentUser.class) return showToast('ℹ️ Already in that class.', 'warning');
+
         currentUser.class = newClass;
         selectedSubject = null;
         await loadSubjects(newClass);
@@ -355,7 +414,7 @@
     });
 
     // =============================================================
-    // SUBJECTS (FIXED: State updates only on success)
+    // SUBJECTS (Unchanged logic, but works with normalized class)
     // =============================================================
     async function loadSubjects(cls) {
         try {
@@ -374,12 +433,10 @@
                 selectedSubject = null;
                 clearQuestionPanel();
             }
-            // Refresh publish toggles and results
             loadExamToggles(cls);
             loadResults(cls);
         } catch (e) {
             showToast('❌ Error loading subjects: ' + e.message, 'error');
-            // Try to reload after a delay
             setTimeout(() => loadSubjects(cls), 3000);
         }
     }
@@ -422,37 +479,27 @@
         });
     }
 
-    // =============================================================
-    // ADD SUBJECT - FIXED: Only update state AFTER successful save
-    // =============================================================
+    // Add Subject
     $('addSubjectBtn').addEventListener('click', async () => {
         const val = $('newSubjectInput').value.trim();
         if (!val) return showToast('⚠️ Enter a subject name.', 'warning');
         if (currentSubjects.includes(val)) return showToast('⚠️ Already exists.', 'warning');
 
         try {
-            // Create a new array with the added subject
             const updatedSubjects = [...currentSubjects, val];
-            
-            // Save to Firebase FIRST
             await db.collection('classes').doc(currentUser.class).update({ subjects: updatedSubjects });
-            
-            // ONLY update local state if Firebase succeeds
             currentSubjects = updatedSubjects;
             $('newSubjectInput').value = '';
             renderSubjects();
             showToast(`✅ "${val}" added!`, 'success');
         } catch (e) {
-            // If Firebase fails, DO NOT update the local state.
-            // The old state remains intact.
             showToast('❌ Error adding subject: ' + e.message, 'error');
-            // Reload to be absolutely sure the UI matches the database
             await loadSubjects(currentUser.class);
         }
     });
 
     // =============================================================
-    // QUESTIONS
+    // QUESTIONS (Unchanged)
     // =============================================================
     async function selectSubject(subject) {
         selectedSubject = subject;
@@ -509,7 +556,6 @@
         $('addQuestionArea').style.display = 'none';
     }
 
-    // Add Question
     $('addQuestionBtn').addEventListener('click', async () => {
         if (!selectedSubject) return showToast('⚠️ Select a subject first.', 'warning');
         const question = $('qText').value.trim();
@@ -527,7 +573,6 @@
         } catch (e) { showToast('❌ Error adding.', 'error'); }
     });
 
-    // CSV Download
     $('downloadCsvBtn').addEventListener('click', () => {
         const headers = ['Subject', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
         const example = [selectedSubject || 'Mathematics', 'What is 2+2?', '3', '4', '5', '6', 'B', '5'];
@@ -541,7 +586,6 @@
         showToast('📥 Template downloaded!', 'success');
     });
 
-    // CSV Upload
     $('uploadCsvBtn').addEventListener('click', async () => {
         const file = $('csvFileInput').files[0];
         if (!file) return showToast('⚠️ Select a CSV.', 'warning');
@@ -574,7 +618,7 @@
     });
 
     // =============================================================
-    // PUBLISH TAB
+    // PUBLISH (Unchanged)
     // =============================================================
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
@@ -603,7 +647,7 @@
     });
 
     // =============================================================
-    // RESULTS TAB
+    // RESULTS (Unchanged)
     // =============================================================
     async function loadResults(cls) {
         const snap = await db.collection('results').where('class', '==', cls).get();
@@ -617,7 +661,7 @@
     }
 
     // =============================================================
-    // REPORTS TAB
+    // REPORTS (Unchanged)
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
@@ -762,7 +806,8 @@
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Teacher Dashboard (fixed) ready.');
+    loadMasterClassList();
+    console.log('✅ Teacher Dashboard with Class Droplets is ready!');
 </script>
 </body>
 </html>
