@@ -3,994 +3,738 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard | Covenant Arrows' Model</title>
+    <title>Teacher Dashboard - Covenant Arrows' Model</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Papa Parse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        :root {
-            --primary: #1E3A5F;
-            --primary-light: #2A5088;
-            --primary-dark: #0F1B2D;
-            --gold: #C8963E;
-            --gold-light: #D4AF37;
-            --gold-dark: #B8860B;
-            --teal: #2A9D8F;
-            --teal-light: #3DB8A8;
-            --bg: #F1F5F9;
-            --card-bg: #FFFFFF;
-            --text: #1E293B;
-            --text-light: #64748B;
-            --text-lighter: #94A3B8;
-            --border: #E2E8F0;
-            --danger: #EF4444;
-            --danger-light: #FEE2E2;
-            --success: #22C55E;
-            --success-light: #DCFCE7;
-            --warning: #F59E0B;
-            --warning-light: #FEF3C7;
-            --info: #3B82F6;
-            --info-light: #EFF6FF;
-            --radius-sm: 8px;
-            --radius: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-            --shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        #app { width: 100%; max-width: 1400px; height: 90vh; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .page { display: none; height: 100%; width: 100%; animation: fadeIn 0.3s ease; }
+        .page.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-        }
+        /* ===== LOGIN ===== */
+        #loginPage { align-items: center; justify-content: center; background: linear-gradient(135deg, #e0f2fe, #ede9fe); }
+        .login-box { background: white; padding: 50px 40px; border-radius: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); }
+        .login-box h2 { font-size: 28px; color: #1e1b4b; margin-bottom: 6px; }
+        .login-box p { color: #64748b; margin-bottom: 25px; }
+        .login-box input { width: 100%; padding: 16px 20px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif; }
+        .login-box input:focus { border-color: #4f46e5; background: white; }
+        .login-box button { width: 100%; padding: 16px; background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; border: none; border-radius: 60px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
+        .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
+        .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
 
-        /* Header */
-        .top-header {
-            background: linear-gradient(135deg, #0F1B2D, #1E3A5F, #1a2744);
-            color: white;
-            padding: 0 2rem;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .header-left { display: flex; align-items: center; gap: 12px; }
-        .header-crest {
-            width: 40px; height: 40px;
-            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-        .header-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-        .header-title .gold-accent { color: var(--gold-light); }
-        .header-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .header-right { display: flex; align-items: center; gap: 1rem; }
-        .btn-logout {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-logout:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
+        /* ===== TOAST ===== */
+        .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
+        .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
+        .toast.hide { animation: slideOut 0.3s ease forwards; }
+        .toast .icon { font-size: 22px; }
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #dc2626; }
+        .toast.warning { border-color: #f59e0b; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 
-        /* Layout */
-        .layout { display: flex; min-height: calc(100vh - 64px); }
-        .sidebar {
-            width: 260px;
-            background: white;
-            border-right: 1px solid var(--border);
-            padding: 1.5rem 0;
-            position: sticky;
-            top: 64px;
-            height: calc(100vh - 64px);
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 4px; padding: 0 0.8rem; }
-        .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--radius);
-            text-decoration: none;
-            color: var(--text-light);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .sidebar-nav a:hover { background: #F8FAFC; color: var(--text); }
-        .sidebar-nav a.active { background: #EFF6FF; color: var(--primary); font-weight: 700; }
-        .sidebar-nav a i { width: 20px; text-align: center; font-size: 1rem; }
-        .sidebar-divider { border-top: 1px solid var(--border); margin: 0.8rem 1rem; }
-        .sidebar-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-lighter);
-            padding: 0 1rem;
-            margin-bottom: 4px;
-        }
+        /* ===== DASHBOARD LAYOUT ===== */
+        #dashboardPage { flex-direction: row; background: #f8fafc; }
+        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
+        .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
+        .sidebar .brand span { color: #4f46e5; }
+        .sidebar .user-info { font-size: 14px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .sidebar .user-info .name { font-weight: 700; color: #0f172a; }
+        .sidebar .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
+        .sidebar .logout-btn:hover { background: #fecaca; }
+        .class-switcher { display: flex; gap: 8px; margin-bottom: 25px; }
+        .class-switcher input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; font-weight: 600; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
+        .class-switcher input:focus { border-color: #4f46e5; }
+        .class-switcher button { padding: 12px 20px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; white-space: nowrap; }
+        .class-switcher button:hover { background: #4338ca; }
+        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .add-subject-row { display: flex; gap: 6px; margin-bottom: 15px; }
+        .add-subject-row input { flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; }
+        .add-subject-row input:focus { border-color: #4f46e5; }
+        .add-subject-row button { padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .add-subject-row button:hover { background: #059669; }
+        .subject-list { flex: 1; overflow-y: auto; margin-top: 5px; }
+        .subject-item { padding: 14px 18px; border-radius: 16px; margin-bottom: 6px; cursor: pointer; transition: 0.15s; font-weight: 600; color: #334155; display: flex; justify-content: space-between; align-items: center; border: 2px solid transparent; background: #f8fafc; }
+        .subject-item:hover { background: #eef2ff; border-color: #c7d2fe; }
+        .subject-item.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .subject-item .del-sub { background: transparent; border: none; color: #94a3b8; font-weight: 800; cursor: pointer; font-size: 18px; padding: 0 5px; transition: 0.2s; }
+        .subject-item .del-sub:hover { color: #dc2626; transform: scale(1.2); }
+        .subject-item.active .del-sub { color: rgba(255,255,255,0.6); }
+        .subject-item.active .del-sub:hover { color: white; }
 
-        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
-        .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.3rem; }
-        .page-subtitle { color: var(--text-light); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        /* ===== MAIN PANEL ===== */
+        .main-panel { flex: 1; padding: 25px 30px; overflow-y: auto; height: 100%; background: #f8fafc; display: flex; flex-direction: column; }
+        .main-panel .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .panel-header h2 { font-size: 24px; color: #0f172a; font-weight: 800; }
+        .panel-header h2 span { color: #4f46e5; }
+        .panel-header .badge-points { background: #1e1b4b; color: white; padding: 6px 18px; border-radius: 60px; font-weight: 700; font-size: 14px; }
 
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 1.5rem;
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-        }
-        .card-header h3 { font-size: 1.1rem; font-weight: 700; }
+        /* Tabs in Main Panel */
+        .main-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .main-tab { padding: 10px 22px; border-radius: 60px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.15s; border: 2px solid transparent; background: transparent; color: #64748b; font-family: 'Inter', sans-serif; }
+        .main-tab:hover { background: #f1f5f9; color: #0f172a; }
+        .main-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
 
-        /* Forms */
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            font-size: 0.78rem;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            background: #FAFBFC;
-        }
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(30,58,95,0.08);
-            background: white;
-        }
-        .form-inline { display: flex; gap: 0.5rem; align-items: end; }
-        .form-inline .form-group { flex: 1; margin-bottom: 0; }
+        /* Questions Grid */
+        .question-grid { display: flex; flex-direction: column; gap: 10px; }
+        .q-item { background: white; border-radius: 16px; padding: 14px 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: 0.15s; }
+        .q-item:hover { border-color: #c7d2fe; }
+        .q-item .q-text { font-weight: 600; color: #0f172a; flex: 2; min-width: 200px; }
+        .q-item .q-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .q-item .q-meta span { background: #f1f5f9; padding: 4px 12px; border-radius: 60px; font-size: 13px; font-weight: 600; color: #475569; }
+        .q-item .q-meta .points-badge { background: #dbeafe; color: #1e3a8a; }
+        .q-item .q-del { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0 8px; }
+        .q-item .q-del:hover { color: #dc2626; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-state h3 { color: #64748b; font-size: 18px; margin-bottom: 6px; }
 
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            white-space: nowrap;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
-        .btn-gold { background: var(--gold); color: white; }
-        .btn-gold:hover { background: var(--gold-dark); transform: translateY(-1px); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #16A34A; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
-        .btn-outline:hover { background: #EFF6FF; }
-        .btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
-        .btn-xs { padding: 4px 10px; font-size: 0.7rem; border-radius: 4px; }
+        /* Add Question Form */
+        .add-q-form { background: white; border-radius: 24px; padding: 20px 25px; margin-top: 20px; border: 1px solid #e2e8f0; }
+        .add-q-form h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .form-row input, .form-row select, .form-row textarea { flex: 1; min-width: 120px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: #f8fafc; transition: 0.2s; }
+        .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #4f46e5; background: white; }
+        .form-row textarea { flex-basis: 100%; min-height: 60px; resize: vertical; }
+        .form-row .btn-add-q { padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .form-row .btn-add-q:hover { background: #4338ca; }
+        .csv-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-top: 12px; }
+        .csv-section label { font-weight: 600; color: #334155; font-size: 14px; }
+        .csv-section input[type="file"] { flex: 1; font-size: 13px; font-family: 'Inter', sans-serif; }
+        .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
+        .csv-section .btn-csv.download { background: #f59e0b; color: #1e1b4b; }
+        .csv-section .btn-csv.download:hover { background: #d97706; }
+        .csv-section .btn-csv.upload { background: #10b981; color: white; }
+        .csv-section .btn-csv.upload:hover { background: #059669; }
 
-        /* Tables */
-        .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        thead th {
-            background: #F8FAFC;
-            padding: 10px 12px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-light);
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-        }
-        tbody td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.88rem;
-        }
-        tbody tr:hover { background: #F8FAFC; }
-        tbody tr:last-child td { border-bottom: none; }
+        /* Publish / Results / Report Tabs */
+        .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .card-panel h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
+        .toggle-group { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; }
+        .toggle-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; background: #f8fafc; padding: 10px 18px; border-radius: 60px; border: 2px solid #e2e8f0; cursor: pointer; }
+        .toggle-group label.active-toggle { border-color: #4f46e5; background: #eef2ff; }
+        .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #f59e0b; color: #1e1b4b; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
 
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge-success { background: #DCFCE7; color: #166534; }
-        .badge-danger { background: #FEE2E2; color: #991B1B; }
-        .badge-warning { background: #FEF3C7; color: #92400E; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
+        th { background: #f1f5f9; font-weight: 700; }
+        .rep-input { width: 60px; padding: 6px 4px; text-align: center; border-radius: 30px; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif; }
 
-        /* Question block */
-        .question-block {
-            background: #FAFBFC;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.2rem;
-            margin-bottom: 1rem;
-            position: relative;
-        }
-        .question-block .q-num {
-            position: absolute;
-            top: -10px;
-            left: 12px;
-            background: var(--primary);
-            color: white;
-            padding: 3px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        .options-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.6rem; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Report Card */
-        .report-card {
-            background: white;
-            padding: 2rem;
-            max-width: 900px;
-            margin: 0 auto;
-            font-size: 0.82rem;
-            border: 2px solid #1E3A5F;
-        }
-        .report-card .rc-header {
-            text-align: center;
-            border-bottom: 3px double #1E3A5F;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
-        .report-card .rc-header h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.6rem;
-            color: #1E3A5F;
-        }
-        .report-card .rc-header .gold { color: #C8963E; }
-        .report-card .rc-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.8rem;
-        }
-        .report-card .rc-info div { line-height: 1.6; }
-        .report-card table { font-size: 0.72rem; }
-        .report-card table th { font-size: 0.68rem; text-align: center; padding: 6px 4px; }
-        .report-card table td { text-align: center; padding: 5px 4px; }
-        .report-card .total-row { font-weight: 700; background: #F8FAFC; }
-        .report-card .signature-area {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-top: 2rem;
-            text-align: center;
-        }
-
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .toast {
-            background: #1E293B;
-            color: white;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            animation: slideIn 0.3s ease;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-            max-width: 400px;
-        }
-        .toast.success { background: #166534; }
-        .toast.error { background: #991B1B; }
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .page-section { display: none; }
-        .page-section.active { display: block; }
-        .hidden { display: none !important; }
-
-        @media (max-width: 768px) {
-            .layout { flex-direction: column; }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                top: 0;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-                padding: 0.8rem;
-            }
-            .sidebar-nav { flex-direction: row; overflow-x: auto; gap: 2px; }
-            .sidebar-nav a { white-space: nowrap; padding: 8px 12px; font-size: 0.8rem; }
-            .sidebar-divider, .sidebar-label { display: none; }
-            .main-content { padding: 1rem; }
-            .form-grid { grid-template-columns: 1fr; }
-            .options-row { grid-template-columns: 1fr; }
-            .report-card .rc-info { grid-template-columns: 1fr; }
-        }
-
-        @media print {
-            body { background: white; }
-            .top-header, .sidebar, .btn, .toast-container, .no-print { display: none !important; }
-            .layout { display: block; }
-            .main-content { padding: 0; }
-            .card { box-shadow: none; border: none; padding: 0; }
-            .report-card { border: none; }
+        @media (max-width: 800px) {
+            .sidebar { width: 100%; min-width: unset; height: auto; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 15px; }
+            #dashboardPage { flex-direction: column; }
+            .main-panel { padding: 15px; }
         }
     </style>
 </head>
 <body>
 
-    <header class="top-header">
-        <div class="header-left">
-            <div class="header-crest">🕊️</div>
-            <span class="header-title">Covenant Arrows' <span class="gold-accent">Model</span></span>
-            <span class="header-badge">Teacher Portal</span>
-        </div>
-        <div class="header-right">
-            <span style="font-size:0.85rem; opacity:0.9;" id="teacherLabel">Teacher</span>
-            <button class="btn-logout" onclick="handleLogout()">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-        </div>
-    </header>
+<div id="app">
+    <div id="toastContainer" class="toast-container"></div>
 
-    <div class="layout">
-        <aside class="sidebar">
-            <nav class="sidebar-nav">
-                <span class="sidebar-label">Main</span>
-                <a class="active" data-page="dashboard" onclick="switchPage('dashboard')">
-                    <i class="fas fa-th-large"></i> Dashboard
-                </a>
-                <a data-page="questions" onclick="switchPage('questions')">
-                    <i class="fas fa-question-circle"></i> View Questions
-                </a>
-                <span class="sidebar-divider"></span>
-                <span class="sidebar-label">Results & Reports</span>
-                <a data-page="results" onclick="switchPage('results')">
-                    <i class="fas fa-chart-bar"></i> Exam Results
-                </a>
-                <a data-page="report-card" onclick="switchPage('report-card')">
-                    <i class="fas fa-file-alt"></i> Generate Report Card
-                </a>
-                <span class="sidebar-divider"></span>
-                <span class="sidebar-label">Settings</span>
-                <a data-page="grading-info" onclick="switchPage('grading-info')">
-                    <i class="fas fa-star"></i> Grading Info
-                </a>
-            </nav>
-        </aside>
-
-        <main class="main-content" id="mainContent"></main>
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="page active">
+        <div class="login-box">
+            <h2>👨‍🏫 Teacher Login</h2>
+            <p>Enter your details to manage your class.</p>
+            <input id="loginName" placeholder="👤 Your Full Name" />
+            <input id="loginClass" placeholder="📚 Class (e.g. Basic 3)" />
+            <button id="loginBtn">🚀 Enter Dashboard</button>
+            <p id="loginErr" class="login-error"></p>
+        </div>
     </div>
 
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- DASHBOARD -->
+    <div id="dashboardPage" class="page">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="brand">🏫 <span>Covenant</span> Arrows</div>
+            <div class="user-info">
+                <span class="name" id="sidebarName">Teacher</span>
+                <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+            </div>
+            <div class="class-switcher">
+                <input id="classInput" placeholder="Class (e.g. Basic 3)" />
+                <button id="switchClassBtn">Switch</button>
+            </div>
+            <div class="sidebar-title">
+                <span>📚 Subjects</span>
+                <span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span>
+            </div>
+            <div class="add-subject-row">
+                <input id="newSubjectInput" placeholder="New Subject..." />
+                <button id="addSubjectBtn">➕</button>
+            </div>
+            <div class="subject-list" id="subjectListContainer">
+                <div style="color:#94a3b8; text-align:center; padding:20px; font-size:14px;">No subjects yet.<br />Add one above!</div>
+            </div>
+        </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <div class="panel-header">
+                <h2>📖 <span id="selectedSubjectName">Select a Subject</span></h2>
+                <div class="badge-points" id="totalPointsBadge">⭐ Total Points: 0</div>
+            </div>
 
-    <script>
-        // ==================== FIREBASE ====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
-            authDomain: "edumeta-c5588.firebaseapp.com",
-            projectId: "edumeta-c5588",
-            storageBucket: "edumeta-c5588.firebasestorage.app",
-            messagingSenderId: "332853259697",
-            appId: "1:332853259697:web:92e0c07e43d1c3bf432190"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+            <!-- Main Tabs -->
+            <div class="main-tabs">
+                <button class="main-tab active" data-tab="tabQuestions">📝 Questions</button>
+                <button class="main-tab" data-tab="tabPublish">📢 Publish</button>
+                <button class="main-tab" data-tab="tabResults">📊 Results</button>
+                <button class="main-tab" data-tab="tabReports">📋 Reports</button>
+            </div>
 
-        // ==================== AUTH ====================
-        let teacherData = null;
-        let teacherClass = '';
+            <!-- TAB 1: QUESTIONS -->
+            <div id="tabQuestions" class="tab-content active">
+                <div id="questionsContainer">
+                    <div class="empty-state"><h3>👈 Select a subject</h3><p>Click on a subject from the left sidebar.</p></div>
+                </div>
+                <div id="addQuestionArea" style="display:none;" class="add-q-form">
+                    <h4>✏️ Add New Question</h4>
+                    <div class="form-row"><textarea id="qText" placeholder="Type your question here..."></textarea></div>
+                    <div class="form-row">
+                        <input id="optA" placeholder="Option A" /><input id="optB" placeholder="Option B" />
+                        <input id="optC" placeholder="Option C" /><input id="optD" placeholder="Option D" />
+                    </div>
+                    <div class="form-row">
+                        <select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+                        <input id="qPoints" type="number" placeholder="Points" value="5" min="1" />
+                        <button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button>
+                    </div>
+                    <div class="csv-section">
+                        <label>📄 CSV:</label>
+                        <input type="file" id="csvFileInput" accept=".csv" />
+                        <button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button>
+                        <button class="btn-csv download" id="downloadCsvBtn">📥 Download Template</button>
+                        <span style="font-size:12px; color:#64748b;">(Subject, Question, A, B, C, D, Correct, Points)</span>
+                    </div>
+                </div>
+            </div>
 
-        function checkAuth() {
-            const data = sessionStorage.getItem('cam_teacher');
-            if (!data) { window.location.href = 'index.html'; return false; }
-            try {
-                teacherData = JSON.parse(data);
-                teacherClass = teacherData.class;
-                document.getElementById('teacherLabel').textContent = `${teacherData.name} | ${teacherClass}`;
-                return true;
-            } catch (e) { window.location.href = 'index.html'; return false; }
-        }
+            <!-- TAB 2: PUBLISH -->
+            <div id="tabPublish" class="tab-content">
+                <div class="card-panel">
+                    <h4>📢 Publish Exams for Students</h4>
+                    <p style="color:#64748b; margin-bottom:10px;">Select which subjects are active for students.</p>
+                    <div id="examToggles" class="toggle-group">Loading subjects...</div>
+                    <button class="btn-action btn-success" id="publishBtn">📤 Publish Selected</button>
+                    <p id="publishStatus" style="margin-top:10px; font-weight:600; color:#059669;"></p>
+                </div>
+            </div>
 
-        function handleLogout() {
-            sessionStorage.removeItem('cam_teacher');
-            window.location.href = 'index.html';
-        }
+            <!-- TAB 3: RESULTS -->
+            <div id="tabResults" class="tab-content">
+                <div class="card-panel">
+                    <h4>📊 Student Results</h4>
+                    <div id="resultsContainer" class="table-wrap">No results yet.</div>
+                </div>
+            </div>
 
-        // ==================== TOAST ====================
-        function showToast(msg, type = '') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = msg;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
-        }
+            <!-- TAB 4: REPORTS -->
+            <div id="tabReports" class="tab-content">
+                <div class="card-panel">
+                    <h4>📋 Report Cards</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                        <button class="btn-action btn-primary" id="buildReportBtn">📋 Build / Edit Report</button>
+                        <button class="btn-action btn-success" id="calcAllBtn">🔢 Auto-Calculate</button>
+                        <button class="btn-action btn-warning" id="pushAdminBtn">📤 Push to Admin</button>
+                    </div>
+                    <div id="reportBuilderArea" class="table-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // ==================== GLOBAL STATE ====================
-        let schoolSettings = {
-            name: "Covenant Arrows' Model",
-            motto: 'Christ-Centered Learning • Modern Excellence',
-            address: 'Abiola Way, Abeokuta, Ogun State, Nigeria',
-            schoolOpens: '8:00 AM',
-            schoolCloses: '2:00 PM',
-            schoolDaysOpen: 65
-        };
-        let allSubjects = [];
-        let gradingSystem = { A: { min: 80, remark: 'Excellent' }, B: { min: 65, remark: 'Very Good' }, C: { min: 50, remark: 'Good' }, D: { min: 40, remark: 'Fair' }, F: { remark: 'Poor' } };
+<script>
+    // =============================================================
+    // FIREBASE CONFIG
+    // =============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+        authDomain: "scholars-a8087.firebaseapp.com",
+        projectId: "scholars-a8087",
+        storageBucket: "scholars-a8087.firebasestorage.app",
+        messagingSenderId: "406251764422",
+        appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+        measurementId: "G-TEFG74LD7J"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // ==================== UTILS ====================
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+    // Auth
+    auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
 
-        function calculateGrade(pct) {
-            if (pct >= gradingSystem.A.min) return 'A';
-            if (pct >= gradingSystem.B.min) return 'B';
-            if (pct >= gradingSystem.C.min) return 'C';
-            if (pct >= gradingSystem.D.min) return 'D';
-            return 'F';
-        }
+    // =============================================================
+    // TOAST SYSTEM
+    // =============================================================
+    function showToast(message, type = "success") {
+        const container = document.getElementById('toastContainer');
+        const icons = { success: '✅', error: '❌', warning: '⚠️' };
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 4000);
+    }
 
-        async function loadSettings() {
-            try {
-                const settingsDoc = await db.collection('settings').doc('school').get();
-                if (settingsDoc.exists) {
-                    const data = settingsDoc.data();
-                    if (data.name) schoolSettings = { ...schoolSettings, ...data };
-                    if (data.subjects) allSubjects = data.subjects;
+    // =============================================================
+    // STATE
+    // =============================================================
+    let currentUser = { name: '', class: '' };
+    let currentSubjects = [];
+    let selectedSubject = null;
+    let currentQuestions = [];
+    const $ = (id) => document.getElementById(id);
+
+    // =============================================================
+    // LOGIN
+    // =============================================================
+    $('loginBtn').addEventListener('click', async () => {
+        const name = $('loginName').value.trim();
+        const cls = $('loginClass').value.trim();
+        const err = $('loginErr');
+        if (!name || !cls) return err.innerText = '⚠️ Please enter Name and Class.';
+        currentUser = { name, class: cls };
+        err.innerText = '';
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        $('dashboardPage').classList.add('active');
+        $('sidebarName').innerText = name + ' 👨‍🏫';
+        $('classInput').value = cls;
+        showToast(`👋 Welcome, ${name}!`, 'success');
+        await loadSubjects(cls);
+    });
+
+    $('logoutBtn').addEventListener('click', () => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        $('loginPage').classList.add('active');
+        currentUser = {};
+        selectedSubject = null;
+        showToast('👋 Logged out.', 'warning');
+    });
+
+    // =============================================================
+    // CLASS SWITCH
+    // =============================================================
+    $('switchClassBtn').addEventListener('click', async () => {
+        const newClass = $('classInput').value.trim();
+        if (!newClass) return showToast('⚠️ Enter a class name.', 'error');
+        currentUser.class = newClass;
+        selectedSubject = null;
+        await loadSubjects(newClass);
+        showToast(`🔄 Switched to ${newClass}`, 'success');
+    });
+
+    // =============================================================
+    // SUBJECTS
+    // =============================================================
+    async function loadSubjects(cls) {
+        try {
+            const doc = await db.collection('classes').doc(cls).get();
+            currentSubjects = doc.exists ? doc.data().subjects || [] : ['English', 'Mathematics', 'Science'];
+            if (!doc.exists) await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+            renderSubjects();
+            if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
+            else { selectedSubject = null; clearQuestionPanel(); }
+            // Also refresh publish toggles and results
+            loadExamToggles(cls);
+            loadResults(cls);
+        } catch (e) { showToast('❌ Error loading subjects: ' + e.message, 'error'); }
+    }
+
+    function renderSubjects() {
+        const container = $('subjectListContainer');
+        $('subjectCount').innerText = currentSubjects.length;
+        if (!currentSubjects.length) return container.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">No subjects.<br />Add one above!</div>`;
+        container.innerHTML = currentSubjects.map(sub => `
+            <div class="subject-item ${selectedSubject === sub ? 'active' : ''}" data-sub="${sub}">
+                <span>📘 ${sub}</span>
+                <button class="del-sub" data-sub="${sub}">✕</button>
+            </div>
+        `).join('');
+        container.querySelectorAll('.subject-item').forEach(el => {
+            el.addEventListener('click', (e) => { if (e.target.classList.contains('del-sub')) return;
+                selectSubject(el.dataset.sub); });
+        });
+        container.querySelectorAll('.del-sub').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const sub = btn.dataset.sub;
+                if (!confirm(`Delete "${sub}" and all its questions?`)) return;
+                try {
+                    const snap = await db.collection('questions').where('class', '==', currentUser.class).where(
+                        'subject', '==', sub).get();
+                    const batch = db.batch();
+                    snap.forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                    currentSubjects = currentSubjects.filter(s => s !== sub);
+                    await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
+                    if (selectedSubject === sub) { selectedSubject = null;
+                        clearQuestionPanel(); }
+                    renderSubjects();
+                    showToast(`🗑️ "${sub}" deleted.`, 'warning');
+                } catch (e) { showToast('❌ Error deleting subject.', 'error'); }
+            });
+        });
+    }
+
+    $('addSubjectBtn').addEventListener('click', async () => {
+        const val = $('newSubjectInput').value.trim();
+        if (!val) return showToast('⚠️ Enter a subject name.', 'warning');
+        if (currentSubjects.includes(val)) return showToast('⚠️ Already exists.', 'warning');
+        try {
+            currentSubjects.push(val);
+            await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
+            $('newSubjectInput').value = '';
+            renderSubjects();
+            showToast(`✅ "${val}" added!`, 'success');
+        } catch (e) { showToast('❌ Error adding subject.', 'error'); }
+    });
+
+    // =============================================================
+    // QUESTIONS
+    // =============================================================
+    async function selectSubject(subject) {
+        selectedSubject = subject;
+        renderSubjects();
+        $('selectedSubjectName').innerText = subject;
+        $('addQuestionArea').style.display = 'block';
+        $('questionsContainer').innerHTML = '<p style="color:#94a3b8;">⏳ Loading...</p>';
+        try {
+            const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==',
+                subject).get();
+            currentQuestions = [];
+            snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
+            renderQuestions();
+        } catch (e) { showToast('❌ Error loading questions.', 'error'); }
+    }
+
+    function renderQuestions() {
+        const container = $('questionsContainer');
+        const totalPoints = currentQuestions.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
+        $('totalPointsBadge').innerHTML = `⭐ Total Points: ${totalPoints}`;
+        if (!currentQuestions.length) return container.innerHTML =
+            `<div class="empty-state"><h3>📭 No questions</h3><p>Add questions below for <strong>${selectedSubject}</strong>.</p></div>`;
+        let html = `<div class="question-grid">`;
+        currentQuestions.forEach((q, idx) => {
+            html += `<div class="q-item">
+                <div class="q-text">${idx+1}. ${q.question}</div>
+                <div class="q-meta">
+                    <span>${q.options.join(' | ')}</span>
+                    <span class="points-badge">⭐ ${q.points || 5}</span>
+                    <span>✅ ${q.correct}</span>
+                    <button class="q-del" data-id="${q.id}">✕</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html + '</div>';
+        container.querySelectorAll('.q-del').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Delete this question?')) return;
+                try {
+                    await db.collection('questions').doc(btn.dataset.id).delete();
+                    currentQuestions = currentQuestions.filter(q => q.id !== btn.dataset.id);
+                    renderQuestions();
+                    showToast('🗑️ Question deleted.', 'warning');
+                } catch (e) { showToast('❌ Error deleting.', 'error'); }
+            });
+        });
+    }
+
+    function clearQuestionPanel() {
+        $('selectedSubjectName').innerText = 'Select a Subject';
+        $('totalPointsBadge').innerHTML = '⭐ Total Points: 0';
+        $('questionsContainer').innerHTML =
+            `<div class="empty-state"><h3>👈 Select a subject</h3><p>Click on a subject from the left sidebar.</p></div>`;
+        $('addQuestionArea').style.display = 'none';
+    }
+
+    // Add Question
+    $('addQuestionBtn').addEventListener('click', async () => {
+        if (!selectedSubject) return showToast('⚠️ Select a subject first.', 'warning');
+        const question = $('qText').value.trim();
+        const options = [$('optA').value.trim(), $('optB').value.trim(), $('optC').value.trim(), $('optD').value.trim()];
+        const correct = $('correctAns').value;
+        const points = parseInt($('qPoints').value) || 5;
+        if (!question || options.some(o => !o)) return showToast('⚠️ Fill all fields.', 'error');
+        try {
+            await db.collection('questions').add({ class: currentUser.class, subject: selectedSubject, question,
+                options, correct, points, createdAt: new Date() });
+            $('qText').value = '';
+            ['optA','optB','optC','optD'].forEach(id => $(id).value = '');
+            await selectSubject(selectedSubject);
+            showToast('✅ Question added!', 'success');
+        } catch (e) { showToast('❌ Error adding.', 'error'); }
+    });
+
+    // CSV Download
+    $('downloadCsvBtn').addEventListener('click', () => {
+        const headers = ['Subject', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
+        const example = [selectedSubject || 'Mathematics', 'What is 2+2?', '3', '4', '5', '6', 'B', '5'];
+        const csv = headers.join(',') + '\n' + example.join(',');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `questions_${currentUser.class}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showToast('📥 Template downloaded!', 'success');
+    });
+
+    // CSV Upload
+    $('uploadCsvBtn').addEventListener('click', async () => {
+        const file = $('csvFileInput').files[0];
+        if (!file) return showToast('⚠️ Select a CSV.', 'warning');
+        if (!selectedSubject) return showToast('⚠️ Select a subject.', 'warning');
+        Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
+                let batch = db.batch(),
+                    added = 0,
+                    errors = 0;
+                for (let row of res.data) {
+                    const sub = row.Subject?.trim() || selectedSubject;
+                    const q = row.Question?.trim();
+                    const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD
+                        ?.trim()];
+                    const correct = row.CorrectAnswer?.trim().toUpperCase();
+                    const pts = parseInt(row.Points) || 5;
+                    if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { errors++; continue; }
+                    const ref = db.collection('questions').doc();
+                    batch.set(ref, { class: currentUser.class, subject: sub, question: q, options: opts,
+                        correct, points: pts, createdAt: new Date() });
+                    added++;
+                    if (added % 400 === 0) { await batch.commit();
+                        batch = db.batch(); }
                 }
-                const gradingDoc = await db.collection('settings').doc('grading').get();
-                if (gradingDoc.exists) gradingSystem = { ...gradingSystem, ...gradingDoc.data() };
-            } catch (e) { console.log('Using default settings'); }
-            if (allSubjects.length === 0) {
-                allSubjects = ['Mathematics', 'English Language', 'Basic Science', 'Social Studies', 'Christian Religious Studies', 'Computer Studies', 'Home Economics', 'Agricultural Science', 'Civic Education', 'Creative Arts', 'French', 'Yoruba', 'Quantitative Reasoning', 'Verbal Reasoning'];
-            }
-        }
+                await batch.commit();
+                $('csvFileInput').value = '';
+                await selectSubject(selectedSubject);
+                if (errors) showToast(`⚠️ ${added} uploaded, ${errors} skipped.`, 'warning');
+                else showToast(`✅ ${added} questions uploaded!`, 'success');
+            } });
+    });
 
-        // ==================== PAGE NAVIGATION ====================
-        function switchPage(pageName) {
-            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
-            const link = document.querySelector(`[data-page="${pageName}"]`);
-            if (link) link.classList.add('active');
-            document.getElementById('mainContent').innerHTML = '';
-            switch(pageName) {
-                case 'dashboard': renderDashboard(); break;
-                case 'questions': renderQuestions(); break;
-                case 'results': renderResults(); break;
-                case 'report-card': renderReportCardPage(); break;
-                case 'grading-info': renderGradingInfo(); break;
-            }
-        }
-
-        // ==================== DASHBOARD ====================
-        async function renderDashboard() {
-            const qSnapshot = await db.collection('questions').where('class', '==', teacherClass).get();
-            const totalQuestions = qSnapshot.size;
-            const subjectSet = new Set();
-            qSnapshot.forEach(doc => subjectSet.add(doc.data().subject));
-
-            const rSnapshot = await db.collection('results').where('class', '==', teacherClass).get();
-            const totalExams = rSnapshot.size;
-            const studentSet = new Set();
-            let totalScore = 0, totalMax = 0;
-            rSnapshot.forEach(doc => {
-                const r = doc.data();
-                studentSet.add(r.studentName);
-                totalScore += r.score || 0;
-                totalMax += r.total || 0;
+    // =============================================================
+    // PUBLISH TAB
+    // =============================================================
+    async function loadExamToggles(cls) {
+        const status = await db.collection('examStatus').doc(cls).get();
+        const active = status.exists ? status.data().activeSubjects || [] : [];
+        const container = $('examToggles');
+        if (!currentSubjects.length) return container.innerHTML = '<p>Add subjects first.</p>';
+        container.innerHTML = currentSubjects.map(s => `
+            <label class="${active.includes(s) ? 'active-toggle' : ''}">
+                <input type="checkbox" class="examCb" value="${s}" ${active.includes(s) ? 'checked' : ''} />
+                ${s}
+            </label>
+        `).join('');
+        // Update toggle styling
+        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', () => {
+                cb.closest('label').classList.toggle('active-toggle');
             });
-            const avgPct = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+        });
+    }
 
-            const html = `
-                <h2 class="page-title">👨‍🏫 Teacher Dashboard</h2>
-                <p class="page-subtitle">Welcome, ${teacherData.name} | Managing <strong>${teacherClass}</strong></p>
-                
-                <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:2rem;">
-                    <div class="card" style="text-align:center; border-left:4px solid var(--primary);">
-                        <h3 style="font-size:2rem; color:var(--primary);">${subjectSet.size}</h3>
-                        <p style="color:var(--text-light); font-size:0.85rem;">Subjects with Questions</p>
-                    </div>
-                    <div class="card" style="text-align:center; border-left:4px solid var(--gold);">
-                        <h3 style="font-size:2rem; color:var(--gold-dark);">${totalQuestions}</h3>
-                        <p style="color:var(--text-light); font-size:0.85rem;">Total Questions</p>
-                    </div>
-                    <div class="card" style="text-align:center; border-left:4px solid var(--teal);">
-                        <h3 style="font-size:2rem; color:var(--teal);">${studentSet.size}</h3>
-                        <p style="color:var(--text-light); font-size:0.85rem;">Students Examined</p>
-                    </div>
-                    <div class="card" style="text-align:center; border-left:4px solid var(--warning);">
-                        <h3 style="font-size:2rem; color:#D97706;">${avgPct}%</h3>
-                        <p style="color:var(--text-light); font-size:0.85rem;">Class Average</p>
-                    </div>
-                </div>
+    $('publishBtn').addEventListener('click', async () => {
+        const active = [...document.querySelectorAll('.examCb:checked')].map(cb => cb.value);
+        await db.collection('examStatus').doc(currentUser.class).set({ activeSubjects: active, updatedAt: new Date() });
+        $('publishStatus').innerText = `✅ Published! Students see: ${active.join(', ') || 'none'}`;
+        showToast('📢 Exams published!', 'success');
+        loadExamToggles(currentUser.class);
+    });
 
-                <div class="card">
-                    <h3>📋 Quick Actions</h3>
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                        <button class="btn btn-primary" onclick="switchPage('questions')"><i class="fas fa-eye"></i> View Questions</button>
-                        <button class="btn btn-gold" onclick="switchPage('report-card')"><i class="fas fa-file-alt"></i> Generate Report Card</button>
-                        <button class="btn btn-outline" onclick="switchPage('results')"><i class="fas fa-chart-bar"></i> View Results</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-        }
+    // =============================================================
+    // RESULTS TAB
+    // =============================================================
+    async function loadResults(cls) {
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        const container = $('resultsContainer');
+        if (snap.empty) return container.innerHTML = '<p style="color:#64748b;">No results yet.</p>';
+        let html = '<table><tr><th>Student</th><th>Subject</th><th>Score</th><th>Total</th><th>Date</th></tr>';
+        snap.forEach(d => { const data = d.data();
+            html +=
+                `<tr><td><strong>${data.studentName}</strong></td><td>${data.subject}</td><td>${data.score}</td><td>${data.totalQuestions}</td><td>${data.submittedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}</td></tr>`; });
+        container.innerHTML = html + '</table>';
+    }
 
-        // ==================== VIEW QUESTIONS ====================
-        async function renderQuestions() {
-            const subjectOptions = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
-            const html = `
-                <h2 class="page-title">📝 Questions for ${teacherClass}</h2>
-                <p class="page-subtitle">View questions created by admin for your class</p>
-                <div class="card">
-                    <div class="form-group">
-                        <label>Filter by Subject</label>
-                        <select id="qSubjectFilter" onchange="loadQuestionsForTeacher()">
-                            <option value="">All Subjects</option>
-                            ${subjectOptions}
-                        </select>
-                    </div>
-                    <div id="questionsDisplay">
-                        <p style="color:var(--text-lighter); text-align:center; padding:2rem;">Select a subject to view questions.</p>
-                    </div>
-                </div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-        }
+    // =============================================================
+    // REPORTS TAB
+    // =============================================================
+    $('buildReportBtn').addEventListener('click', async () => {
+        const cls = currentUser.class;
+        const area = $('reportBuilderArea');
+        area.innerHTML = '⏳ Loading...';
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        let students = new Set();
+        snap.forEach(d => students.add(d.data().studentName));
+        if (!students.size) return area.innerHTML = '<p>No students found.</p>';
 
-        async function loadQuestionsForTeacher() {
-            const subject = document.getElementById('qSubjectFilter').value;
-            const display = document.getElementById('questionsDisplay');
-            if (!subject) {
-                display.innerHTML = '<p style="color:var(--text-lighter); text-align:center; padding:2rem;">Select a subject to view questions.</p>';
-                return;
-            }
-            
-            const snapshot = await db.collection('questions')
-                .where('class', '==', teacherClass)
-                .where('subject', '==', subject)
-                .get();
+        let html =
+            `<div style="margin-bottom:10px;"><label>Days Open: <input id="attO" type="number" value="90" style="width:70px;"></label> <label>Present: <input id="attP" type="number" value="85" style="width:70px;"></label> <label>Absent: <input id="attA" type="number" value="5" style="width:70px;"></label></div><table><tr><th>Student</th>`;
+        currentSubjects.forEach(s => html += `<th colspan="5">${s}</th>`);
+        html += `<th>Save</th></tr><tr><th></th>`;
+        currentSubjects.forEach(() => html += `<th>1st</th><th>2nd</th><th>CA</th><th>Exam</th><th>Total</th>`);
+        html += `<th></th></tr>`;
 
-            if (snapshot.empty) {
-                display.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-lighter);">
-                    <p>No questions found for ${subject} in ${teacherClass}.</p>
-                    <p style="font-size:0.85rem;">Contact the admin to add questions.</p>
-                </div>`;
-                return;
-            }
+        const existing = await db.collection('reportCards').where('class', '==', cls).where('term', '==', 'Third').get();
+        const prefill = {};
+        existing.forEach(d => { const data = d.data();
+            prefill[data.studentName] = data.subjects; });
 
-            let html = `<p style="margin-bottom:1rem; color:var(--text-light);"><strong>${snapshot.size} questions</strong> found for ${subject}</p>`;
-            snapshot.forEach((doc, idx) => {
-                const q = doc.data();
-                html += `
-                    <div class="question-block">
-                        <span class="q-num">Q${idx + 1}</span>
-                        <p style="margin-top:0.5rem;"><strong>${escapeHtml(q.question)}</strong> <span style="color:var(--text-lighter); font-size:0.8rem;">(${q.points || 5} pts)</span></p>
-                        <div class="options-row" style="margin-top:0.5rem;">
-                            ${['A','B','C','D'].map(opt => `
-                                <div style="padding:6px 10px; border-radius:6px; ${q.correctAnswer === opt ? 'background:#DCFCE7; border:1px solid #22C55E;' : 'background:#F8FAFC; border:1px solid var(--border);'}">
-                                    <strong>${opt}.</strong> ${escapeHtml(q['option'+opt] || '')}
-                                    ${q.correctAnswer === opt ? ' <span style="color:#16A34A; font-weight:700;">✓</span>' : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+        students.forEach(name => {
+            const p = prefill[name] || {};
+            html += `<tr><td><strong>${name}</strong></td>`;
+            currentSubjects.forEach(sub => {
+                const d = p[sub] || {};
+                html +=
+                    `<td><input class="rep-input rep1" data-s="${name}" data-sub="${sub}" value="${d.firstTerm||60}"></td>
+                             <td><input class="rep-input rep2" data-s="${name}" data-sub="${sub}" value="${d.secondTerm||70}"></td>
+                             <td><input class="rep-input repca" data-s="${name}" data-sub="${sub}" value="${d.thirdCA||20}"></td>
+                             <td class="rexam" data-s="${name}" data-sub="${sub}">--</td>
+                             <td class="rtotal" data-s="${name}" data-sub="${sub}">--</td>`;
             });
-            display.innerHTML = html;
-        }
+            html += `<td><button class="saveRowBtn btn-action btn-success" style="padding:6px 12px; font-size:12px;" data-s="${name}">💾</button></td></tr>`;
+        });
+        area.innerHTML = html + '</table>';
+    });
 
-        // ==================== RESULTS ====================
-        async function renderResults() {
-            const html = `
-                <h2 class="page-title">📊 Exam Results — ${teacherClass}</h2>
-                <p class="page-subtitle">View all student exam results for your class</p>
-                <div class="card">
-                    <div class="form-inline" style="margin-bottom:1rem;">
-                        <div class="form-group"><label>Search Student</label><input type="text" id="resultSearch" placeholder="Search name..." oninput="loadTeacherResults()" /></div>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Student</th><th>Score</th><th>Total</th><th>%</th><th>Grade</th><th>Date</th><th>Actions</th></tr></thead>
-                            <tbody id="resultsTableBody"><tr><td colspan="7" style="text-align:center; color:var(--text-lighter);">Loading...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div id="resultDetailModal" style="display:none;">
-                    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;">
-                        <div style="background:white; border-radius:16px; padding:2rem; width:90%; max-width:700px; max-height:85vh; overflow-y:auto;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                                <h3>📋 Detailed Result</h3>
-                                <button onclick="document.getElementById('resultDetailModal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
-                            </div>
-                            <div id="resultDetailContent"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            await loadTeacherResults();
-        }
-
-        async function loadTeacherResults() {
-            const search = document.getElementById('resultSearch')?.value.toLowerCase() || '';
-            const snapshot = await db.collection('results')
-                .where('class', '==', teacherClass)
-                .orderBy('timestamp', 'desc')
-                .get();
-            const tbody = document.getElementById('resultsTableBody');
-            if (!tbody) return;
-            if (snapshot.empty) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-lighter);">No results yet.</td></tr>'; return; }
-            tbody.innerHTML = '';
-            snapshot.forEach(doc => {
-                const r = doc.data();
-                if (search && !r.studentName?.toLowerCase().includes(search)) return;
-                const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
-                const grade = calculateGrade(pct);
-                const date = r.timestamp ? r.timestamp.toDate().toLocaleDateString() : 'N/A';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${r.studentName || 'N/A'}</strong></td>
-                        <td>${r.score}</td><td>${r.total}</td>
-                        <td><strong>${pct}%</strong></td>
-                        <td><span style="font-weight:700; color:${pct >= 50 ? '#16A34A' : '#DC2626'};">${grade}</span></td>
-                        <td>${date}</td>
-                        <td><button class="btn btn-outline btn-xs" onclick="viewTeacherResultDetail('${doc.id}')">👁️ View</button></td>
-                    </tr>
-                `;
+    // Save Row
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('saveRowBtn')) {
+            const name = e.target.dataset.s;
+            const cls = currentUser.class;
+            const att = { open: parseInt($('attO')?.value) || 90, present: parseInt($('attP')?.value) || 85,
+                absent: parseInt($('attA')?.value) || 5 };
+            const data = {};
+            const rows = document.querySelectorAll('#reportBuilderArea tr');
+            let targetRow = null;
+            rows.forEach(row => { if (row.innerText.includes(name)) targetRow = row; });
+            if (!targetRow) return;
+            let idx = 0;
+            currentSubjects.forEach(sub => {
+                const inputs = targetRow.querySelectorAll('input[type="number"]');
+                if (inputs.length < idx + 3) return;
+                const first = parseFloat(inputs[idx]?.value) || 0;
+                const second = parseFloat(inputs[idx + 1]?.value) || 0;
+                const ca = parseFloat(inputs[idx + 2]?.value) || 0;
+                const examCell = targetRow.querySelector(`.rexam[data-s="${name}"][data-sub="${sub}"]`);
+                const exam = parseFloat(examCell?.innerText) || 0;
+                data[sub] = { firstTerm: first, secondTerm: second, thirdCA: ca, thirdExam: exam };
+                idx += 3;
             });
+            await db.collection('reportCards').doc(`${cls}_${name}`).set({ class: cls, studentName: name,
+                term: 'Third', year: 2026, subjects: data, attendance: att, approved: false, pin: null,
+                pushedAt: new Date() }, { merge: true });
+            showToast(`💾 Saved ${name}`, 'success');
         }
+    });
 
-        async function viewTeacherResultDetail(resultId) {
-            const doc = await db.collection('results').doc(resultId).get();
-            if (!doc.exists) return;
-            const r = doc.data();
-            const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
-            const grade = calculateGrade(pct);
-            let qHtml = '';
-            if (r.answers && r.questions) {
-                qHtml = r.questions.map((q, idx) => {
-                    const ua = r.answers[q.id] || '—';
-                    const ok = ua === q.correctAnswer;
-                    return `<tr style="background:${ok ? '#F0FDF4' : '#FEF2F2'};"><td>${idx+1}</td><td>${q.question?.substring(0,40)}...</td><td><strong>${ua}</strong></td><td style="color:#16A34A;"><strong>${q.correctAnswer}</strong></td><td>${ok?'✅':'❌'}</td></tr>`;
-                }).join('');
-            }
-            document.getElementById('resultDetailContent').innerHTML = `
-                <p><strong>${r.studentName}</strong> | ${r.class} | ${r.timestamp?.toDate().toLocaleString()}</p>
-                <p>Score: ${r.score}/${r.total} | ${pct}% | Grade: <strong>${grade}</strong></p>
-                <div class="table-wrap"><table><thead><tr><th>#</th><th>Question</th><th>Answer</th><th>Correct</th><th>Result</th></tr></thead><tbody>${qHtml}</tbody></table></div>
-            `;
-            document.getElementById('resultDetailModal').style.display = 'block';
-        }
-
-        // ==================== REPORT CARD ====================
-        function renderReportCardPage() {
-            const html = `
-                <h2 class="page-title">📄 Generate Report Card — ${teacherClass}</h2>
-                <p class="page-subtitle">Third Term Report Card with Nigerian Standard Format</p>
-                
-                <div class="card no-print">
-                    <h3>⚙️ Report Card Settings</h3>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Number of Students in Class</label><input type="number" id="rcNumStudents" value="0" min="1" /></div>
-                        <div class="form-group"><label>Days School Open</label><input type="number" id="rcDaysOpen" value="${schoolSettings.schoolDaysOpen}" min="1" /></div>
-                    </div>
-                    <button class="btn btn-primary" onclick="loadReportCardData()"><i class="fas fa-sync"></i> Load Student Data</button>
-                    <button class="btn btn-gold" onclick="generateFullReportCard()" style="margin-left:0.5rem;"><i class="fas fa-file-alt"></i> Generate Report Card</button>
-                    <button class="btn btn-outline" onclick="window.print()" style="margin-left:0.5rem;"><i class="fas fa-print"></i> Print</button>
-                </div>
-
-                <div id="reportCardArea">
-                    <div class="card" style="text-align:center; color:var(--text-lighter); padding:3rem;">
-                        <p>Click <strong>"Load Student Data"</strong> to fetch students who have taken the exam.</p>
-                        <p style="font-size:0.85rem;">Then click <strong>"Generate Report Card"</strong> to create the full report.</p>
-                    </div>
-                </div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-        }
-
-        let reportCardStudents = [];
-
-        async function loadReportCardData() {
-            const snapshot = await db.collection('results')
-                .where('class', '==', teacherClass)
-                .orderBy('timestamp', 'desc')
-                .get();
-
-            if (snapshot.empty) {
-                showToast('No exam results found for this class.', 'error');
-                return;
-            }
-
-            // Group by student name
-            const studentMap = {};
-            snapshot.forEach(doc => {
-                const r = doc.data();
-                if (!studentMap[r.studentName]) studentMap[r.studentName] = [];
-                studentMap[r.studentName].push(r);
+    // Auto Calculate
+    $('calcAllBtn').addEventListener('click', async () => {
+        const cls = currentUser.class;
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        const map = {};
+        snap.forEach(d => { const data = d.data(); if (!map[data.studentName]) map[data.studentName] = {};
+            map[data.studentName][data.subject] = data.score; });
+        const rows = document.querySelectorAll('#reportBuilderArea tr:not(:first-child):not(:nth-child(2))');
+        rows.forEach(row => {
+            const name = row.querySelector('td strong')?.innerText;
+            if (!name) return;
+            let idx = 0;
+            currentSubjects.forEach(sub => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                if (inputs.length < idx + 3) return;
+                const first = parseFloat(inputs[idx]?.value) || 0;
+                const second = parseFloat(inputs[idx + 1]?.value) || 0;
+                const ca = parseFloat(inputs[idx + 2]?.value) || 0;
+                const exam = map[name]?.[sub] ?? 0;
+                const total = ca + exam;
+                const examCell = row.querySelector(`.rexam[data-s="${name}"][data-sub="${sub}"]`);
+                const totalCell = row.querySelector(`.rtotal[data-s="${name}"][data-sub="${sub}"]`);
+                if (examCell) examCell.innerText = exam;
+                if (totalCell) totalCell.innerText = total;
+                idx += 3;
             });
+        });
+        showToast('✅ Auto-calculated!', 'success');
+    });
 
-            reportCardStudents = Object.entries(studentMap).map(([name, results]) => ({
-                name,
-                results,
-                class: teacherClass
-            }));
-
-            document.getElementById('rcNumStudents').value = reportCardStudents.length;
-            showToast(`${reportCardStudents.length} students loaded!`, 'success');
-        }
-
-        function generateFullReportCard() {
-            if (reportCardStudents.length === 0) {
-                showToast('Please load student data first.', 'error');
-                return;
-            }
-
-            const numStudents = document.getElementById('rcNumStudents').value;
-            const daysOpen = document.getElementById('rcDaysOpen').value;
-
-            let html = '';
-            reportCardStudents.forEach((student, studentIdx) => {
-                // Group results by subject
-                const subjectResults = {};
-                student.results.forEach(r => {
-                    // Extract subject from questions if available
-                    let subject = 'General';
-                    if (r.questions && r.questions.length > 0 && r.questions[0].subject) {
-                        subject = r.questions[0].subject;
-                    }
-                    if (!subjectResults[subject]) {
-                        subjectResults[subject] = { score: 0, total: 0 };
-                    }
-                    subjectResults[subject].score += r.score || 0;
-                    subjectResults[subject].total += r.total || 0;
-                });
-
-                let sn = 1;
-                let grandTotal = 0;
-                let subjectCount = 0;
-
-                let subjectsHtml = '';
-                for (const [subject, data] of Object.entries(subjectResults)) {
-                    const firstTermTotal = 0; // To be filled by teacher
-                    const secondTermTotal = 0; // To be filled by teacher
-                    const thirdTermCA = Math.round(data.score * 0.3);
-                    const thirdTermExam = Math.round(data.score * 0.7);
-                    const thirdTermTotal = data.score;
-                    const pct = data.total > 0 ? Math.round((data.score / data.total) * 100) : 0;
-                    const grade = calculateGrade(pct);
-                    const remark = pct >= gradingSystem.A.min ? gradingSystem.A.remark :
-                                   pct >= gradingSystem.B.min ? gradingSystem.B.remark :
-                                   pct >= gradingSystem.C.min ? gradingSystem.C.remark :
-                                   pct >= gradingSystem.D.min ? gradingSystem.D.remark : gradingSystem.F.remark;
-                    grandTotal += thirdTermTotal;
-                    subjectCount++;
-
-                    subjectsHtml += `
-                        <tr>
-                            <td>${sn++}</td>
-                            <td style="text-align:left;">${subject}</td>
-                            <td><input type="number" value="${firstTermTotal}" style="width:45px; text-align:center;" class="rc-input" data-student="${studentIdx}" data-subject="${subject}" data-field="firstTerm" /></td>
-                            <td><input type="number" value="${secondTermTotal}" style="width:45px; text-align:center;" class="rc-input" data-student="${studentIdx}" data-subject="${subject}" data-field="secondTerm" /></td>
-                            <td><input type="number" value="${thirdTermCA}" style="width:45px; text-align:center;" class="rc-input" data-student="${studentIdx}" data-subject="${subject}" data-field="thirdTermCA" /></td>
-                            <td><strong>${thirdTermExam}</strong></td>
-                            <td><strong>${thirdTermTotal}</strong></td>
-                            <td><strong>${grade}</strong></td>
-                            <td><strong>${pct}%</strong></td>
-                            <td><input type="text" value="${remark}" style="width:80px; text-align:center;" class="rc-input" data-student="${studentIdx}" data-subject="${subject}" data-field="remark" /></td>
-                        </tr>
-                    `;
-                }
-
-                const average = subjectCount > 0 ? Math.round(grandTotal / subjectCount) : 0;
-                const avgGrade = calculateGrade(average);
-
-                html += `
-                    <div class="report-card" style="margin-bottom:2rem; page-break-after:always;">
-                        <div class="rc-header">
-                            <h2>${schoolSettings.name}</h2>
-                            <p style="color:var(--text-light);">${schoolSettings.address}</p>
-                            <p style="font-style:italic; color:var(--gold-dark);">✝️ ${schoolSettings.motto}</p>
-                            <p><strong>THIRD TERM REPORT CARD — 2025/2026 SESSION</strong></p>
-                        </div>
-                        <div class="rc-info">
-                            <div><strong>Student Name:</strong> ${student.name}</div>
-                            <div><strong>Class:</strong> ${student.class}</div>
-                            <div><strong>No. in Class:</strong> ${numStudents}</div>
-                            <div><strong>Term:</strong> Third Term</div>
-                            <div><strong>School Opens:</strong> ${schoolSettings.schoolOpens}</div>
-                            <div><strong>School Closes:</strong> ${schoolSettings.schoolCloses}</div>
-                            <div><strong>Days School Open:</strong> ${daysOpen}</div>
-                            <div>
-                                <strong>Days Present:</strong> <input type="number" value="${daysOpen - 5}" style="width:50px;" class="rc-attendance" data-student="${studentIdx}" data-field="daysPresent" />
-                                &nbsp; <strong>Days Absent:</strong> <input type="number" value="5" style="width:50px;" class="rc-attendance" data-student="${studentIdx}" data-field="daysAbsent" />
-                            </div>
-                        </div>
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2">S/N</th>
-                                        <th rowspan="2">Subject</th>
-                                        <th colspan="1">1st Term</th>
-                                        <th colspan="1">2nd Term</th>
-                                        <th colspan="3">Third Term</th>
-                                        <th rowspan="2">Grade</th>
-                                        <th rowspan="2">%</th>
-                                        <th rowspan="2">Remark</th>
-                                    </tr>
-                                    <tr>
-                                        <th>Total</th>
-                                        <th>Total</th>
-                                        <th>C.A</th>
-                                        <th>Exam</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${subjectsHtml}
-                                </tbody>
-                                <tfoot>
-                                    <tr class="total-row">
-                                        <td colspan="6"><strong>TOTAL</strong></td>
-                                        <td><strong>${grandTotal}</strong></td>
-                                        <td><strong>${avgGrade}</strong></td>
-                                        <td><strong>${average}%</strong></td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <div style="margin-top:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                            <div><strong>Class Teacher's Remark:</strong> <input type="text" style="width:100%; border:none; border-bottom:1px solid #000;" placeholder="Enter remark..." /></div>
-                            <div><strong>Principal's Comment:</strong> <input type="text" style="width:100%; border:none; border-bottom:1px solid #000;" placeholder="Enter comment..." /></div>
-                        </div>
-                        <div class="signature-area">
-                            <div>
-                                <p>_________________________</p>
-                                <p><strong>Class Teacher's Signature</strong></p>
-                            </div>
-                            <div>
-                                <p>_________________________</p>
-                                <p><strong>Principal's Signature</strong></p>
-                            </div>
-                        </div>
-                        <p style="text-align:center; margin-top:1rem; font-style:italic; color:var(--text-light); font-size:0.75rem;">
-                            Next Term Begins: ___________________
-                        </p>
-                    </div>
-                `;
+    // Push to Admin
+    $('pushAdminBtn').addEventListener('click', async () => {
+        if (!confirm('Push all to Admin?')) return;
+        const cls = currentUser.class;
+        const att = { open: parseInt($('attO')?.value) || 90, present: parseInt($('attP')?.value) || 85,
+            absent: parseInt($('attA')?.value) || 5 };
+        const rows = document.querySelectorAll('#reportBuilderArea tr:not(:first-child):not(:nth-child(2))');
+        for (let row of rows) {
+            const name = row.querySelector('td strong')?.innerText;
+            if (!name) continue;
+            const data = {};
+            let idx = 0;
+            currentSubjects.forEach(sub => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                if (inputs.length < idx + 3) return;
+                const first = parseFloat(inputs[idx]?.value) || 0;
+                const second = parseFloat(inputs[idx + 1]?.value) || 0;
+                const ca = parseFloat(inputs[idx + 2]?.value) || 0;
+                const examCell = row.querySelector(`.rexam[data-s="${name}"][data-sub="${sub}"]`);
+                const exam = parseFloat(examCell?.innerText) || 0;
+                data[sub] = { firstTerm: first, secondTerm: second, thirdCA: ca, thirdExam: exam };
+                idx += 3;
             });
-
-            document.getElementById('reportCardArea').innerHTML = html;
-            showToast('Report card generated! You can now print. 🖨️', 'success');
+            await db.collection('reportCards').doc(`${cls}_${name}`).set({ class: cls, studentName: name,
+                term: 'Third', year: 2026, subjects: data, attendance: att, approved: false, pin: null,
+                pushedAt: new Date() }, { merge: true });
         }
+        showToast('📤 Pushed all to Admin!', 'success');
+    });
 
-        // ==================== GRADING INFO ====================
-        function renderGradingInfo() {
-            const html = `
-                <h2 class="page-title">⭐ Grading System</h2>
-                <p class="page-subtitle">Current grading scale set by admin</p>
-                <div class="card">
-                    <table>
-                        <thead><tr><th>Grade</th><th>Minimum %</th><th>Remark</th></tr></thead>
-                        <tbody>
-                            <tr><td><strong>A</strong></td><td>${gradingSystem.A.min}% and above</td><td>${gradingSystem.A.remark}</td></tr>
-                            <tr><td><strong>B</strong></td><td>${gradingSystem.B.min}% — ${gradingSystem.A.min - 1}%</td><td>${gradingSystem.B.remark}</td></tr>
-                            <tr><td><strong>C</strong></td><td>${gradingSystem.C.min}% — ${gradingSystem.B.min - 1}%</td><td>${gradingSystem.C.remark}</td></tr>
-                            <tr><td><strong>D</strong></td><td>${gradingSystem.D.min}% — ${gradingSystem.C.min - 1}%</td><td>${gradingSystem.D.remark}</td></tr>
-                            <tr><td><strong>F</strong></td><td>Below ${gradingSystem.D.min}%</td><td>${gradingSystem.F.remark}</td></tr>
-                        </tbody>
-                    </table>
-                    <p style="margin-top:1rem; color:var(--text-light); font-size:0.85rem;">
-                        ⚠️ Contact the admin to modify the grading system.
-                    </p>
-                </div>
-                <div class="card">
-                    <h3>🏫 School Information</h3>
-                    <p><strong>Name:</strong> ${schoolSettings.name}</p>
-                    <p><strong>Motto:</strong> ${schoolSettings.motto}</p>
-                    <p><strong>Address:</strong> ${schoolSettings.address}</p>
-                    <p><strong>Hours:</strong> ${schoolSettings.schoolOpens} — ${schoolSettings.schoolCloses}</p>
-                    <p><strong>Days Open:</strong> ${schoolSettings.schoolDaysOpen} days per term</p>
-                </div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-        }
+    // =============================================================
+    // TAB SWITCHING
+    // =============================================================
+    document.querySelectorAll('.main-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
 
-        // ==================== INIT ====================
-        async function init() {
-            if (!checkAuth()) return;
-            await loadSettings();
-            renderDashboard();
-            console.log('✅ Covenant Arrows Model — Teacher Dashboard Ready');
-            console.log(`👨‍🏫 Teacher: ${teacherData.name} | Class: ${teacherClass}`);
-        }
-
-        init();
-    </script>
+    // =============================================================
+    // INIT
+    // =============================================================
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    $('loginPage').classList.add('active');
+    console.log('✅ Teacher Dashboard ready.');
+</script>
 </body>
 </html>
