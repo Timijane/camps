@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📋 Dashboard - Covenant Arrows' Model</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Papa Parse for CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        #app {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            margin-top: 10px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== HEADER ===== */
+        .school-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px dashed #c7d2fe;
+        }
+        .school-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e1b4b;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .school-header .motto {
+            font-weight: 600;
+            color: #475569;
+            font-size: 15px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 4px 20px;
+            border-radius: 30px;
+            margin-top: 4px;
+        }
+        .school-header .location {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* ===== CARDS & INPUTS ===== */
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 32px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            margin-top: 15px;
+        }
+
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        input, select, textarea {
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 15px;
+            background: #f8fafc;
+            transition: 0.2s;
+            outline: none;
+            flex: 1;
+            min-width: 140px;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        textarea {
+            border-radius: 20px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        button {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 60px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e2e8f0;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            white-space: nowrap;
+        }
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+        button:active { transform: scale(0.97); }
+
+        .btn-primary { background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; }
+        .btn-success { background: linear-gradient(to right, #059669, #10b981); color: white; }
+        .btn-danger { background: linear-gradient(to right, #dc2626, #ef4444); color: white; }
+        .btn-warning { background: linear-gradient(to right, #d97706, #f59e0b); color: white; }
+        .btn-outline { background: white; border: 2px solid #e2e8f0; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+
+        /* ===== TABS ===== */
+        .tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0 20px 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: transparent;
+            color: #64748b;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 60px;
+            box-shadow: none;
+            border: 2px solid transparent;
+        }
+        .tab-btn:hover { background: #f1f5f9; transform: none; box-shadow: none; }
+        .tab-btn.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+
+        /* ===== SUBJECT TAGS ===== */
+        .subject-tag {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 6px 4px 0;
+            font-size: 15px;
+        }
+        .subject-tag button {
+            background: transparent;
+            color: #dc2626;
+            padding: 0 4px;
+            font-size: 18px;
+            box-shadow: none;
+            font-weight: 800;
+        }
+        .subject-tag button:hover { transform: scale(1.2); background: transparent; }
+
+        /* ===== TABLES ===== */
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        tr:hover { background: #f8fafc; }
+
+        /* ===== REPORT BUILDER ===== */
+        .rep-input {
+            width: 60px;
+            padding: 6px 4px;
+            text-align: center;
+            border-radius: 30px;
+            font-size: 13px;
+            min-width: 50px;
+        }
+        .rep-exam, .rep-total {
+            font-weight: 800;
+            color: #4f46e5;
+        }
+
+        /* ===== ADMIN GRID ===== */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* ===== MISC ===== */
+        .error-text { color: #dc2626; font-weight: 700; margin-top: 8px; }
+        .success-text { color: #059669; font-weight: 700; margin-top: 8px; }
+        .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 60px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-yellow { background: #fef9c3; color: #854d0e; }
+
+        hr { border: 1px dashed #e2e8f0; margin: 20px 0; }
+
+        /* Hide admin tab by default */
+        #adminTabBtn { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+
+    <!-- ===== SCHOOL HEADER ===== -->
+    <div class="school-header">
+        <h1>🏫 COVENANT ARROWS' MODEL</h1>
+        <div class="motto">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
+        <div class="location">📍 Abiola way, ABEOKUTA, Ogun State.</div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PAGE 1: LOGIN                                              -->
+    <!-- ========================================================== -->
+    <div id="loginPage" class="page active">
+        <div class="card" style="max-width:600px; margin:0 auto;">
+            <h2 style="color:#1e1b4b;">🔐 Teacher / Admin Login</h2>
+            <p style="color:#64748b; margin-bottom:16px;">Enter your details to access the dashboard.</p>
+
+            <div class="flex">
+                <select id="loginRole" style="flex:1;">
+                    <option value="teacher">👨‍🏫 Teacher</option>
+                    <option value="admin">🔑 Admin</option>
+                </select>
+                <input id="loginName" placeholder="👤 Your Full Name" />
+                <input id="loginClass" placeholder="📚 Class (e.g. Basic 3)" />
+                <button id="loginBtn" class="btn-primary" style="flex:1; justify-content:center;">🚀 Enter</button>
+            </div>
+            <p id="loginErr" class="error-text"></p>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PAGE 2: DASHBOARD                                          -->
+    <!-- ========================================================== -->
+    <div id="dashboardPage" class="page">
+
+        <!-- Top Bar -->
+        <div class="flex-between">
+            <div>
+                <h2 style="color:#1e1b4b;">📋 <span id="dashName"></span></h2>
+                <p style="color:#64748b; margin-top:-4px;">Class: <strong id="dashClass"></strong></p>
+            </div>
+            <button id="logoutBtn" class="btn-danger" style="padding:10px 24px;">🚪 Logout</button>
+        </div>
+
+        <hr />
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tabSubjects">📚 Subjects</button>
+            <button class="tab-btn" data-tab="tabQuestions">❓ Questions</button>
+            <button class="tab-btn" data-tab="tabExam">📝 Publish</button>
+            <button class="tab-btn" data-tab="tabResults">📊 Results</button>
+            <button class="tab-btn" data-tab="tabReport">📋 Report Cards</button>
+            <button class="tab-btn" data-tab="tabAdmin" id="adminTabBtn">🔑 Admin</button>
+        </div>
+
+        <!-- ======= TAB 1: SUBJECTS ======= -->
+        <div id="tabSubjects" class="tab-content active">
+            <div class="card">
+                <div class="flex">
+                    <input id="newSubject" placeholder="➕ New Subject (e.g. Civic)" />
+                    <button id="addSubjectBtn" class="btn-success">➕ Add</button>
+                </div>
+                <div id="subjectList" style="margin-top:16px; display:flex; flex-wrap:wrap;"></div>
+            </div>
+        </div>
+
+        <!-- ======= TAB 2: QUESTIONS ======= -->
+        <div id="tabQuestions" class="tab-content">
+            <p style="font-weight:600; color:#1e1b4b;">📚 Questions for: <span id="qClassDisplay" style="color:#4f46e5;"></span></p>
+
+            <div class="grid-2">
+                <!-- Bulk CSV -->
+                <div class="card">
+                    <h4 style="color:#1e1b4b;">📄 Bulk Upload (CSV)</h4>
+                    <p style="font-size:13px; color:#64748b;">CSV: Subject, Question, OptionA, OptionB, OptionC, OptionD, CorrectAnswer</p>
+                    <input type="file" id="csvFile" accept=".csv" style="margin:10px 0;" />
+                    <button id="uploadCsvBtn" class="btn-success">⬆️ Upload CSV</button>
+                    <div id="csvStatus" class="success-text"></div>
+                </div>
+
+                <!-- Manual Entry -->
+                <div class="card">
+                    <h4 style="color:#1e1b4b;">✏️ Manual Entry</h4>
+                    <select id="manualSubject"></select>
+                    <textarea id="manualQ" placeholder="Type your question here..."></textarea>
+                    <div class="flex">
+                        <input id="optA" placeholder="A" />
+                        <input id="optB" placeholder="B" />
+                        <input id="optC" placeholder="C" />
+                        <input id="optD" placeholder="D" />
+                    </div>
+                    <div class="flex">
+                        <select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+                        <button id="addQBtn" class="btn-primary">➕ Add Question</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question List -->
+            <div class="card">
+                <h4 style="color:#1e1b4b;">📖 All Questions</h4>
+                <div id="questionList" class="table-wrap"></div>
+            </div>
+        </div>
+
+        <!-- ======= TAB 3: PUBLISH EXAM ======= -->
+        <div id="tabExam" class="tab-content">
+            <div class="card">
+                <h4 style="color:#1e1b4b;">📢 Publish Exams for Students</h4>
+                <p style="color:#64748b;">Select which subjects students can see and take.</p>
+                <div id="examToggles" style="margin:16px 0; display:flex; flex-wrap:wrap; gap:16px;"></div>
+                <button id="publishBtn" class="btn-success">📤 Publish Selected</button>
+                <p id="publishStatus" class="success-text" style="margin-top:10px;"></p>
+            </div>
+        </div>
+
+        <!-- ======= TAB 4: RESULTS ======= -->
+        <div id="tabResults" class="tab-content">
+            <div class="card">
+                <h4 style="color:#1e1b4b;">📊 Student Results</h4>
+                <div id="resultsContainer" class="table-wrap"></div>
+            </div>
+        </div>
+
+        <!-- ======= TAB 5: REPORT CARDS ======= -->
+        <div id="tabReport" class="tab-content">
+            <div class="flex" style="margin-bottom:10px;">
+                <button id="buildReportBtn" class="btn-primary">📋 Build / Edit Report Card</button>
+                <button id="pushAdminBtn" class="btn-warning">📤 Push to Admin</button>
+                <button id="calcAllBtn" class="btn-success">🔢 Auto-Calculate All</button>
+            </div>
+            <div id="reportBuilderArea" class="table-wrap"></div>
+        </div>
+
+        <!-- ======= TAB 6: ADMIN ======= -->
+        <div id="tabAdmin" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <h4 style="color:#1e1b4b;">⏳ Pending Approvals</h4>
+                    <div id="pendingList"></div>
+                </div>
+                <div class="card">
+                    <h4 style="color:#1e1b4b;">🔑 Generate Student PIN</h4>
+                    <div class="flex">
+                        <input id="pinName" placeholder="👤 Student Name" />
+                        <input id="pinClass" placeholder="📚 Class" />
+                    </div>
+                    <button id="genPinBtn" class="btn-primary" style="margin-top:10px;">🔐 Generate PIN</button>
+                    <div id="pinDisplay" style="margin-top:12px; font-weight:800; font-size:18px; color:#4f46e5;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end dashboard -->
+</div><!-- end app -->
+
+<script>
+    // =============================================================
+    // 🔥 FIREBASE CONFIG (YOURS)
+    // =============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+        authDomain: "scholars-a8087.firebaseapp.com",
+        projectId: "scholars-a8087",
+        storageBucket: "scholars-a8087.firebasestorage.app",
+        messagingSenderId: "406251764422",
+        appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+        measurementId: "G-TEFG74LD7J"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // =============================================================
+    // GLOBAL STATE
+    // =============================================================
+    let currentUser = { role: '', name: '', class: '' };
+    let subjects = [];
+
+    const $ = (id) => document.getElementById(id);
+    const showPage = (id) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        $(id + 'Page').classList.add('active');
+    };
+
+    // =============================================================
+    // 1. LOGIN
+    // =============================================================
+    $('loginBtn').addEventListener('click', async () => {
+        const role = $('loginRole').value;
+        const name = $('loginName').value.trim();
+        const cls = $('loginClass').value.trim();
+        const err = $('loginErr');
+
+        if (!name) return err.innerText = '⚠️ Please enter your name.';
+
+        // Admin login (hardcoded for demo)
+        if (role === 'admin') {
+            if (name === 'admin' && cls === 'admin123') {
+                currentUser = { role: 'admin', name: 'Admin', class: '' };
+                $('dashName').innerText = 'Admin 👑';
+                $('dashClass').innerText = 'All Classes';
+                $('adminTabBtn').style.display = 'inline-block';
+                showPage('dashboard');
+                err.innerText = '';
+                loadAdminPanel();
+                return;
+            }
+            return err.innerText = '❌ Invalid admin credentials.';
+        }
+
+        // Teacher
+        if (!cls) return err.innerText = '⚠️ Please enter your class.';
+        currentUser = { role: 'teacher', name, class: cls };
+        $('dashName').innerText = name + ' 👨‍🏫';
+        $('dashClass').innerText = cls;
+        $('adminTabBtn').style.display = 'none';
+        showPage('dashboard');
+        err.innerText = '';
+        await loadDashboard(cls);
+    });
+
+    $('logoutBtn').addEventListener('click', () => {
+        showPage('login');
+        currentUser = {};
+        $('adminTabBtn').style.display = 'none';
+    });
+
+    // =============================================================
+    // 2. LOAD DASHBOARD (Teacher)
+    // =============================================================
+    async function loadDashboard(cls) {
+        $('qClassDisplay').innerText = cls;
+        await loadSubjects(cls);
+        await loadQuestions(cls);
+        await loadExamToggles(cls);
+        await loadResults(cls);
+        updateManualSubjectSelect();
+    }
+
+    // =============================================================
+    // 3. SUBJECTS (Add / Remove)
+    // =============================================================
+    async function loadSubjects(cls) {
+        const doc = await db.collection('classes').doc(cls).get();
+        subjects = doc.exists ? doc.data().subjects || [] : ['English', 'Mathematics', 'Science'];
+        if (!doc.exists) await db.collection('classes').doc(cls).set({ subjects });
+        renderSubjects();
+    }
+
+    function renderSubjects() {
+        const container = $('subjectList');
+        if (!subjects.length) return container.innerHTML = '<p style="color:#64748b;">No subjects added yet. Add one above!</p>';
+        container.innerHTML = subjects.map(s => `
+            <span class="subject-tag">
+                📘 ${s}
+                <button class="remove-sub" data-sub="${s}" style="background:transparent; padding:0; font-size:20px;">✕</button>
+            </span>
+        `).join('');
+
+        container.querySelectorAll('.remove-sub').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const sub = btn.dataset.sub;
+                if (!confirm(`Remove "${sub}"?`)) return;
+                subjects = subjects.filter(s => s !== sub);
+                await db.collection('classes').doc(currentUser.class).update({ subjects });
+                await loadSubjects(currentUser.class);
+            });
+        });
+    }
+
+    $('addSubjectBtn').addEventListener('click', async () => {
+        const val = $('newSubject').value.trim();
+        if (!val) return alert('Enter a subject name.');
+        if (subjects.includes(val)) return alert('Subject already exists.');
+        subjects.push(val);
+        await db.collection('classes').doc(currentUser.class).update({ subjects });
+        $('newSubject').value = '';
+        await loadSubjects(currentUser.class);
+        updateManualSubjectSelect();
+    });
+
+    function updateManualSubjectSelect() {
+        const sel = $('manualSubject');
+        sel.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    // =============================================================
+    // 4. QUESTIONS (Manual + CSV)
+    // =============================================================
+    async function loadQuestions(cls) {
+        const snap = await db.collection('questions').where('class', '==', cls).get();
+        const container = $('questionList');
+        if (snap.empty) return container.innerHTML = '<p style="color:#64748b;">No questions uploaded yet.</p>';
+
+        let html = `<table>
+            <tr><th>Subject</th><th>Question</th><th>Options</th><th>Correct</th></tr>`;
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<tr>
+                <td><strong>${d.subject}</strong></td>
+                <td style="text-align:left;">${d.question}</td>
+                <td>${d.options.join(' | ')}</td>
+                <td><span class="badge badge-green">${d.correct}</span></td>
+            </tr>`;
+        });
+        container.innerHTML = html + '</table>';
+    }
+
+    $('addQBtn').addEventListener('click', async () => {
+        const subject = $('manualSubject').value;
+        const question = $('manualQ').value.trim();
+        const options = [$('optA').value.trim(), $('optB').value.trim(), $('optC').value.trim(), $('optD').value.trim()];
+        const correct = $('correctAns').value;
+
+        if (!question || options.some(o => !o)) return alert('⚠️ Fill all fields (Question and all 4 options).');
+
+        await db.collection('questions').add({
+            class: currentUser.class,
+            subject,
+            question,
+            options,
+            correct,
+            createdAt: new Date()
+        });
+        alert('✅ Question added!');
+        $('manualQ').value = '';
+        ['optA','optB','optC','optD'].forEach(id => $(id).value = '');
+        await loadQuestions(currentUser.class);
+    });
+
+    $('uploadCsvBtn').addEventListener('click', async () => {
+        const file = $('csvFile').files[0];
+        if (!file) return alert('Please select a CSV file.');
+        const status = $('csvStatus');
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (res) => {
+                let batch = db.batch();
+                let count = 0;
+                for (let row of res.data) {
+                    if (!row.Subject || !row.Question) continue;
+                    const ref = db.collection('questions').doc();
+                    batch.set(ref, {
+                        class: currentUser.class,
+                        subject: row.Subject.trim(),
+                        question: row.Question.trim(),
+                        options: [row.OptionA.trim(), row.OptionB.trim(), row.OptionC.trim(), row.OptionD.trim()],
+                        correct: row.CorrectAnswer.trim().toUpperCase(),
+                        createdAt: new Date()
+                    });
+                    count++;
+                    if (count % 500 === 0) { await batch.commit(); batch = db.batch(); }
+                }
+                await batch.commit();
+                status.innerText = `✅ ${count} questions uploaded successfully!`;
+                await loadQuestions(currentUser.class);
+                $('csvFile').value = '';
+            },
+            error: () => status.innerText = '❌ Failed to parse CSV.'
+        });
+    });
+
+    // =============================================================
+    // 5. PUBLISH EXAM
+    // =============================================================
+    async function loadExamToggles(cls) {
+        const status = await db.collection('examStatus').doc(cls).get();
+        const active = status.exists ? status.data().activeSubjects || [] : [];
+        const container = $('examToggles');
+        if (!subjects.length) return container.innerHTML = '<p style="color:#64748b;">Add subjects first.</p>';
+
+        container.innerHTML = subjects.map(s => `
+            <label style="display:flex; align-items:center; gap:8px; font-weight:600; background:#f8fafc; padding:10px 18px; border-radius:60px; border:2px solid ${active.includes(s) ? '#4f46e5' : '#e2e8f0'};">
+                <input type="checkbox" class="examCb" value="${s}" ${active.includes(s) ? 'checked' : ''} />
+                ${s}
+            </label>
+        `).join('');
+    }
+
+    $('publishBtn').addEventListener('click', async () => {
+        const active = [...document.querySelectorAll('.examCb:checked')].map(cb => cb.value);
+        await db.collection('examStatus').doc(currentUser.class).set({
+            activeSubjects: active,
+            updatedAt: new Date()
+        });
+        $('publishStatus').innerText = `✅ Published! Students can now see: ${active.join(', ') || 'none'}`;
+        await loadExamToggles(currentUser.class);
+    });
+
+    // =============================================================
+    // 6. VIEW RESULTS
+    // =============================================================
+    async function loadResults(cls) {
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        const container = $('resultsContainer');
+        if (snap.empty) return container.innerHTML = '<p style="color:#64748b;">No student results yet.</p>';
+
+        let html = `<table><tr><th>Student</th><th>Subject</th><th>Score</th><th>Total</th><th>Date</th></tr>`;
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<tr>
+                <td><strong>${d.studentName}</strong></td>
+                <td>${d.subject}</td>
+                <td><span class="badge badge-green">${d.score}</span></td>
+                <td>${d.totalQuestions}</td>
+                <td>${d.submittedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}</td>
+            </tr>`;
+        });
+        container.innerHTML = html + '</table>';
+    }
+
+    // =============================================================
+    // 7. REPORT CARD BUILDER
+    // =============================================================
+    let reportStudents = [];
+
+    $('buildReportBtn').addEventListener('click', async () => {
+        const cls = currentUser.class;
+        const area = $('reportBuilderArea');
+        area.innerHTML = '<p style="color:#64748b;">⏳ Loading students...</p>';
+
+        // Fetch all students who have taken any exam
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        const studentSet = new Set();
+        snap.forEach(d => studentSet.add(d.data().studentName));
+
+        if (studentSet.size === 0) {
+            area.innerHTML = '<p style="color:#dc2626;">⚠️ No student results found for this class. Students must take exams first.</p>';
+            return;
+        }
+
+        reportStudents = Array.from(studentSet);
+        let html = `
+            <div class="card">
+                <h4 style="color:#1e1b4b;">📋 ${cls} - Third Term Report Card</h4>
+                <div class="flex">
+                    <label>📅 Days Open: <input id="attO" type="number" value="90" style="width:80px;" /></label>
+                    <label>✅ Present: <input id="attP" type="number" value="85" style="width:80px;" /></label>
+                    <label>❌ Absent: <input id="attA" type="number" value="5" style="width:80px;" /></label>
+                </div>
+                <div class="table-wrap">
+                    <table id="reportTable">
+                        <tr><th>Student</th>
+        `;
+
+        subjects.forEach(s => html += `<th colspan="5">${s}</th>`);
+        html += `<th>Save</th></tr>
+                <tr><th></th>`;
+        subjects.forEach(() => html += `<th>1st</th><th>2nd</th><th>CA</th><th>Exam</th><th>Total</th>`);
+        html += `<th></th></tr>`;
+
+        // Load existing report data to pre-fill
+        const existing = await db.collection('reportCards').where('class', '==', cls).where('term', '==', 'Third').get();
+        const prefillMap = {};
+        existing.forEach(d => {
+            const data = d.data();
+            prefillMap[data.studentName] = data.subjects;
+        });
+
+        // Rows
+        reportStudents.forEach(name => {
+            const prefill = prefillMap[name] || {};
+            html += `<tr><td><strong>${name}</strong></td>`;
+            subjects.forEach(sub => {
+                const p = prefill[sub] || {};
+                html += `
+                    <td><input type="number" class="rep-input rep1" data-s="${name}" data-sub="${sub}" value="${p.firstTerm || 60}" /></td>
+                    <td><input type="number" class="rep-input rep2" data-s="${name}" data-sub="${sub}" value="${p.secondTerm || 70}" /></td>
+                    <td><input type="number" class="rep-input repca" data-s="${name}" data-sub="${sub}" value="${p.thirdCA || 20}" /></td>
+                    <td class="rep-exam" data-s="${name}" data-sub="${sub}">--</td>
+                    <td class="rep-total" data-s="${name}" data-sub="${sub}">--</td>
+                `;
+            });
+            html += `<td><button class="saveRowBtn btn-sm btn-success" data-s="${name}">💾</button></td></tr>`;
+        });
+
+        html += `</table></div></div>`;
+        area.innerHTML = html;
+
+        // Attach save row events
+        document.querySelectorAll('.saveRowBtn').forEach(btn => {
+            btn.addEventListener('click', () => saveReportRow(btn.dataset.s));
+        });
+    });
+
+    // Save a single student's report card
+    async function saveReportRow(studentName) {
+        const cls = currentUser.class;
+        const att = {
+            open: parseInt($('attO')?.value) || 90,
+            present: parseInt($('attP')?.value) || 85,
+            absent: parseInt($('attA')?.value) || 5
+        };
+
+        const subjectsData = {};
+        subjects.forEach(sub => {
+            const row = document.querySelector(`tr:has(td strong:contains("${studentName}"))`);
+            if (!row) return;
+            const inputs = row.querySelectorAll(`input[data-s="${studentName}"][data-sub="${sub}"]`);
+            if (inputs.length === 3) {
+                const first = parseFloat(inputs[0].value) || 0;
+                const second = parseFloat(inputs[1].value) || 0;
+                const ca = parseFloat(inputs[2].value) || 0;
+                const examCell = row.querySelector(`.rep-exam[data-s="${studentName}"][data-sub="${sub}"]`);
+                const exam = parseFloat(examCell?.innerText) || 0;
+                subjectsData[sub] = { firstTerm: first, secondTerm: second, thirdCA: ca, thirdExam: exam };
+            }
+        });
+
+        await db.collection('reportCards').doc(`${cls}_${studentName}`).set({
+            class: cls,
+            studentName,
+            term: 'Third',
+            year: new Date().getFullYear(),
+            subjects: subjectsData,
+            attendance: att,
+            approved: false,
+            pin: null,
+            pushedAt: new Date()
+        }, { merge: true });
+
+        alert(`✅ Saved report card for ${studentName}`);
+    }
+
+    // Auto-Calculate All (pull exam scores and compute totals)
+    $('calcAllBtn').addEventListener('click', async () => {
+        const cls = currentUser.class;
+        // Fetch all exam results
+        const snap = await db.collection('results').where('class', '==', cls).get();
+        const map = {};
+        snap.forEach(d => {
+            const data = d.data();
+            if (!map[data.studentName]) map[data.studentName] = {};
+            map[data.studentName][data.subject] = data.score;
+        });
+
+        const rows = document.querySelectorAll('#reportTable tr:not(:first-child):not(:nth-child(2))');
+        rows.forEach(row => {
+            const name = row.querySelector('td strong')?.innerText;
+            if (!name) return;
+            let idx = 0;
+            subjects.forEach(sub => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                if (inputs.length < idx + 3) return;
+                const first = parseFloat(inputs[idx]?.value) || 0;
+                const second = parseFloat(inputs[idx+1]?.value) || 0;
+                const ca = parseFloat(inputs[idx+2]?.value) || 0;
+                const exam = map[name]?.[sub] ?? 0;
+                const total = ca + exam;
+
+                const examCell = row.querySelector(`.rep-exam[data-s="${name}"][data-sub="${sub}"]`);
+                const totalCell = row.querySelector(`.rep-total[data-s="${name}"][data-sub="${sub}"]`);
+                if (examCell) examCell.innerText = exam;
+                if (totalCell) totalCell.innerText = total;
+                idx += 3;
+            });
+        });
+        alert('✅ Auto-calculation complete! Exam scores pulled and totals computed.');
+    });
+
+    // Push all to Admin
+    $('pushAdminBtn').addEventListener('click', async () => {
+        if (!confirm('📤 Push all report cards to Admin for approval?')) return;
+        const cls = currentUser.class;
+        const att = {
+            open: parseInt($('attO')?.value) || 90,
+            present: parseInt($('attP')?.value) || 85,
+            absent: parseInt($('attA')?.value) || 5
+        };
+
+        const rows = document.querySelectorAll('#reportTable tr:not(:first-child):not(:nth-child(2))');
+        for (let row of rows) {
+            const name = row.querySelector('td strong')?.innerText;
+            if (!name) continue;
+            const subjectsData = {};
+            let idx = 0;
+            subjects.forEach(sub => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                if (inputs.length < idx + 3) return;
+                const first = parseFloat(inputs[idx]?.value) || 0;
+                const second = parseFloat(inputs[idx+1]?.value) || 0;
+                const ca = parseFloat(inputs[idx+2]?.value) || 0;
+                const examCell = row.querySelector(`.rep-exam[data-s="${name}"][data-sub="${sub}"]`);
+                const exam = parseFloat(examCell?.innerText) || 0;
+                subjectsData[sub] = { firstTerm: first, secondTerm: second, thirdCA: ca, thirdExam: exam };
+                idx += 3;
+            });
+
+            await db.collection('reportCards').doc(`${cls}_${name}`).set({
+                class: cls,
+                studentName: name,
+                term: 'Third',
+                year: 2026,
+                subjects: subjectsData,
+                attendance: att,
+                approved: false,
+                pin: null,
+                pushedAt: new Date()
+            }, { merge: true });
+        }
+        alert('✅ All report cards pushed to Admin for approval!');
+    });
+
+    // =============================================================
+    // 8. ADMIN PANEL
+    // =============================================================
+    async function loadAdminPanel() {
+        const snap = await db.collection('reportCards').where('approved', '==', false).get();
+        const container = $('pendingList');
+        if (snap.empty) return container.innerHTML = '<p style="color:#059669;">🎉 All report cards are approved!</p>';
+
+        let html = '<table><tr><th>Student</th><th>Class</th><th>Action</th></tr>';
+        snap.forEach(doc => {
+            const data = doc.data();
+            html += `<tr>
+                <td><strong>${data.studentName}</strong></td>
+                <td>${data.class}</td>
+                <td><button class="approveBtn btn-sm btn-success" data-id="${doc.id}">✅ Approve</button></td>
+            </tr>`;
+        });
+        container.innerHTML = html + '</table>';
+
+        container.querySelectorAll('.approveBtn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                await db.collection('reportCards').doc(btn.dataset.id).update({ approved: true });
+                loadAdminPanel();
+            });
+        });
+    }
+
+    // Generate PIN
+    $('genPinBtn').addEventListener('click', async () => {
+        const name = $('pinName').value.trim();
+        const cls = $('pinClass').value.trim();
+        if (!name || !cls) return alert('⚠️ Enter student name and class.');
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
+        let pin = '';
+        for (let i = 0; i < 8; i++) pin += chars[Math.floor(Math.random() * chars.length)];
+
+        await db.collection('reportCards').doc(`${cls}_${name}`).update({ pin });
+        $('pinDisplay').innerHTML = `✅ PIN for <strong>${name}</strong>: <code style="background:#f1f5f9; padding:6px 16px; border-radius:60px;">${pin}</code>`;
+    });
+
+    // =============================================================
+    // 9. TAB SWITCHING
+    // =============================================================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const target = document.getElementById(btn.dataset.tab);
+            if (target) target.classList.add('active');
+
+            // Reload admin panel if switching to admin tab
+            if (btn.dataset.tab === 'tabAdmin') loadAdminPanel();
+        });
+    });
+
+    // =============================================================
+    // 10. BOOTSTRAP
+    // =============================================================
+    showPage('login');
+    console.log('✅ Covenant Arrows\' Model Dashboard is ready!');
+</script>
+</body>
+</html>
