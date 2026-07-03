@@ -3,320 +3,527 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard - Covenant Arrows</title>
+  <title>Admin Dashboard | Covenant Arrows' Model</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #F0F4F8;
+      color: #1E293B;
     }
-    header {
-      background: white;
+    
+    /* Top Navigation */
+    .top-nav {
+      background: linear-gradient(135deg, #1E3A5F, #2A5088);
+      color: white;
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    header h1 {
-      color: #1e40af;
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-brand h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+    }
+    .nav-brand .gold-dot {
+      color: #D4AF37;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
     }
     .logout-btn {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 20px;
+      border-radius: 20px;
       cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
     }
-    .container {
-      max-width: 1000px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.25);
     }
+
+    /* Dashboard Grid */
+    .dashboard {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border-left: 4px solid #1E3A5F;
+    }
+    .stat-card.gold { border-left-color: #C8963E; }
+    .stat-card.teal { border-left-color: #2A9D8F; }
+    .stat-card h3 {
+      color: #64748B;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+    }
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1E3A5F;
+    }
+
+    /* Tabs */
     .tabs {
       display: flex;
       gap: 0.5rem;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
-    .tab {
-      padding: 10px 20px;
+    .tab-btn {
+      padding: 10px 24px;
+      border: none;
       background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
+      border-radius: 25px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.9rem;
+      color: #64748B;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    .tab.active {
-      background: #1e40af;
+    .tab-btn.active {
+      background: #1E3A5F;
       color: white;
-      border-color: #1e40af;
     }
-    .card {
+    .tab-btn:hover:not(.active) {
+      background: #E2E8F0;
+    }
+
+    /* Content Cards */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .content-card {
       background: white;
+      padding: 2rem;
       border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
       margin-bottom: 1.5rem;
     }
-    .form-group {
+    .content-card h3 {
+      color: #1E3A5F;
       margin-bottom: 1rem;
+      font-size: 1.2rem;
     }
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 0.3rem;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 0.95rem;
-    }
-    button {
-      padding: 10px 20px;
-      background: #1e40af;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover { background: #1e3a8a; }
+
+    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
     }
     th, td {
-      padding: 12px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 12px 16px;
       text-align: left;
+      border-bottom: 1px solid #E2E8F0;
     }
     th {
-      background: #f8fafc;
+      background: #F8FAFC;
+      color: #64748B;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
     }
-    .hidden { display: none; }
+    tr:hover td {
+      background: #F8FAFC;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #1E3A5F;
+      color: white;
+    }
+    .btn-gold {
+      background: #C8963E;
+      color: white;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid #1E3A5F;
+      color: #1E3A5F;
+    }
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 0.8rem;
+    }
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      color: #475569;
+      font-size: 0.9rem;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #E2E8F0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #1E3A5F;
+      outline: none;
+    }
+
+    .pin-display {
+      background: #F0FDF4;
+      border: 2px dashed #22C55E;
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-align: center;
+      color: #15803D;
+      margin: 1rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .top-nav { flex-direction: column; gap: 1rem; text-align: center; }
+      .dashboard { padding: 1rem; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>📊 Admin Dashboard</h1>
-    <button class="logout-btn" id="logoutBtn">Logout</button>
-  </header>
-
-  <div class="container">
-    <div class="tabs">
-      <div class="tab active" data-tab="questions">Manage Questions</div>
-      <div class="tab" data-tab="results">View Results</div>
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span style="font-size: 1.8rem;">🕊️</span>
+      <h2>Covenant Arrows' Model <span class="gold-dot">●</span> Admin</h2>
     </div>
+    <div class="nav-actions">
+      <span id="adminName" style="font-weight: 500;">Admin</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </nav>
 
-    <!-- Manage Questions Section -->
-    <div id="questionsSection">
-      <div class="card">
-        <div class="form-group">
-          <label for="classSelect">Select Class</label>
-          <select id="classSelect">
-            <option value="basic3">Basic 3</option>
-            <option value="basic4">Basic 4</option>
-            <option value="basic5">Basic 5</option>
-            <option value="basic6">Basic 6</option>
-          </select>
-        </div>
-        <div id="questionsEditor"></div>
-        <button id="saveQuestionsBtn" style="margin-top:1rem;">Save Questions</button>
+  <!-- Dashboard Content -->
+  <div class="dashboard">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Students</h3>
+        <div class="stat-value" id="totalStudents">0</div>
+      </div>
+      <div class="stat-card gold">
+        <h3>Exams Taken</h3>
+        <div class="stat-value" id="examsTaken">0</div>
+      </div>
+      <div class="stat-card teal">
+        <h3>PINs Generated</h3>
+        <div class="stat-value" id="pinsGenerated">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Active Exams</h3>
+        <div class="stat-value" id="activeExams">0</div>
       </div>
     </div>
 
-    <!-- View Results Section (hidden by default) -->
-    <div id="resultsSection" class="hidden">
-      <div class="card">
-        <div class="form-group">
-          <label for="filterClass">Filter by Class</label>
-          <select id="filterClass">
-            <option value="">All Classes</option>
-            <option value="basic3">Basic 3</option>
-            <option value="basic4">Basic 4</option>
-            <option value="basic5">Basic 5</option>
-            <option value="basic6">Basic 6</option>
-          </select>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('students')">👨‍🎓 Students</button>
+      <button class="tab-btn" onclick="switchTab('pins')">🔑 PIN Management</button>
+      <button class="tab-btn" onclick="switchTab('exams')">📝 Exams</button>
+      <button class="tab-btn" onclick="switchTab('results')">📊 Results</button>
+      <button class="tab-btn" onclick="switchTab('reportCards')">📄 Report Cards</button>
+    </div>
+
+    <!-- Students Tab -->
+    <div id="studentsTab" class="tab-content active">
+      <div class="content-card">
+        <h3>Student Management</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <button class="btn btn-primary" onclick="addStudent()">+ Add Student</button>
+            <button class="btn btn-outline" onclick="importStudents()">📥 Import CSV</button>
+          </div>
+          <input type="text" placeholder="Search students..." style="padding: 8px 16px; border-radius: 20px; border: 1px solid #E2E8F0;" id="studentSearch">
         </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Class</th>
+                <th>Exam PIN</th>
+                <th>Report PIN</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <tr><td colspan="6" style="text-align: center; color: #94A3B8;">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PINs Tab -->
+    <div id="pinsTab" class="tab-content">
+      <div class="content-card">
+        <h3>Generate Examination & Report Card PINs</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <h4 style="margin-bottom: 1rem; color: #1E3A5F;">Generate Exam PIN</h4>
+            <div class="form-group">
+              <label>Select Student</label>
+              <select id="studentSelectForPin">
+                <option value="">Choose student...</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="generateExamPin()">Generate Exam PIN</button>
+            <div id="examPinDisplay" class="pin-display" style="display: none;"></div>
+          </div>
+          <div>
+            <h4 style="margin-bottom: 1rem; color: #C8963E;">Generate Report Card PIN</h4>
+            <div class="form-group">
+              <label>Select Student</label>
+              <select id="studentSelectForReportPin">
+                <option value="">Choose student...</option>
+              </select>
+            </div>
+            <button class="btn btn-gold" onclick="generateReportPin()">Generate Report PIN</button>
+            <div id="reportPinDisplay" class="pin-display" style="display: none; border-color: #C8963E; color: #B8860B;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exams Tab -->
+    <div id="examsTab" class="tab-content">
+      <div class="content-card">
+        <h3>Exam Management</h3>
+        <button class="btn btn-primary" style="margin-bottom: 1rem;" onclick="createExam()">+ Create New Exam</button>
         <table>
           <thead>
             <tr>
-              <th>Student Name</th>
+              <th>Subject</th>
               <th>Class</th>
+              <th>Duration</th>
+              <th>Questions</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="examsTableBody">
+            <tr><td colspan="6" style="text-align: center; color: #94A3B8;">Loading exams...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Results Tab -->
+    <div id="resultsTab" class="tab-content">
+      <div class="content-card">
+        <h3>Examination Results</h3>
+        <div class="form-group" style="max-width: 300px;">
+          <label>Filter by Class</label>
+          <select id="resultClassFilter">
+            <option value="">All Classes</option>
+            <option value="JSS1">JSS 1</option>
+            <option value="JSS2">JSS 2</option>
+            <option value="JSS3">JSS 3</option>
+            <option value="SS1">SS 1</option>
+            <option value="SS2">SS 2</option>
+            <option value="SS3">SS 3</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" style="margin-bottom: 1rem;" onclick="exportResults()">📥 Export All Results</button>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Subject</th>
               <th>Score</th>
+              <th>Grade</th>
               <th>Date</th>
             </tr>
           </thead>
-          <tbody id="resultsBody"></tbody>
+          <tbody id="resultsTableBody">
+            <tr><td colspan="5" style="text-align: center; color: #94A3B8;">Loading results...</td></tr>
+          </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Report Cards Tab -->
+    <div id="reportCardsTab" class="tab-content">
+      <div class="content-card">
+        <h3>📄 Report Card Generation</h3>
+        <p style="color: #64748B; margin-bottom: 1rem;">Generate and print official report cards for students.</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <div class="form-group">
+            <label>Select Class</label>
+            <select id="reportCardClass">
+              <option value="">Choose class...</option>
+              <option value="JSS1">JSS 1</option>
+              <option value="JSS2">JSS 2</option>
+              <option value="JSS3">JSS 3</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Select Student</label>
+            <select id="reportCardStudent">
+              <option value="">Choose student...</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" style="align-self: flex-end; margin-bottom: 1rem;" onclick="generateReportCard()">
+            Generate Report Card
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Firebase & Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
   <script>
-    firebase.initializeApp({
+    // Firebase Config
+    const firebaseConfig = {
       apiKey: "AIzaSyA8BCzF4xcTAMYu5Rt1ROMRuZLVYh5iwRQ",
       authDomain: "edumeta-c5588.firebaseapp.com",
       projectId: "edumeta-c5588",
       storageBucket: "edumeta-c5588.firebasestorage.app",
       messagingSenderId: "332853259697",
-      appId: "1:332853259697:web:92e0c07e43d1c3bf432190",
-      measurementId: "G-WY24HER46Q"
-    });
+      appId: "1:332853259697:web:92e0c07e43d1c3bf432190"
+    };
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Protect this page
-    auth.onAuthStateChanged(user => {
+    // Check auth
+    auth.onAuthStateChanged((user) => {
       if (!user) {
         window.location.href = 'index.html';
-      }
-    });
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      auth.signOut().then(() => window.location.href = 'index.html');
-    });
-
-    // Tab switching
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const section = tab.dataset.tab;
-        document.getElementById('questionsSection').classList.toggle('hidden', section !== 'questions');
-        document.getElementById('resultsSection').classList.toggle('hidden', section !== 'results');
-        if (section === 'results') loadResults();
-      });
-    });
-
-    // ----------- MANAGE QUESTIONS -----------
-    const classSelect = document.getElementById('classSelect');
-    const questionsEditor = document.getElementById('questionsEditor');
-    const saveBtn = document.getElementById('saveQuestionsBtn');
-
-    const emptyQuestion = {
-      question: '',
-      optionA: '',
-      optionB: '',
-      optionC: '',
-      optionD: '',
-      correct: 'A'
-    };
-
-    let currentQuestions = Array(5).fill().map(() => ({...emptyQuestion}));
-
-    async function loadQuestions() {
-      const cls = classSelect.value;
-      const doc = await db.collection('questions').doc(cls).get();
-      if (doc.exists && doc.data().items) {
-        currentQuestions = doc.data().items;
       } else {
-        currentQuestions = Array(5).fill().map(() => ({...emptyQuestion}));
+        document.getElementById('adminName').textContent = user.email;
+        loadDashboardData();
       }
-      renderEditor();
-    }
+    });
 
-    function renderEditor() {
-      questionsEditor.innerHTML = '';
-      currentQuestions.forEach((q, idx) => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.style.marginBottom = '1rem';
-        div.innerHTML = `
-          <h3>Question ${idx+1}</h3>
-          <input type="text" class="q-text" placeholder="Question" value="${q.question}" data-idx="${idx}" />
-          ${['A','B','C','D'].map(opt => `
-            <input type="text" class="opt-${opt}" placeholder="Option ${opt}" value="${q['option'+opt]}" data-idx="${idx}" style="margin-top:0.5rem;" />
-          `).join('')}
-          <label style="margin-top:0.5rem;">Correct Answer:
-            <select class="correct-sel" data-idx="${idx}">
-              <option value="A" ${q.correct==='A'?'selected':''}>A</option>
-              <option value="B" ${q.correct==='B'?'selected':''}>B</option>
-              <option value="C" ${q.correct==='C'?'selected':''}>C</option>
-              <option value="D" ${q.correct==='D'?'selected':''}>D</option>
-            </select>
-          </label>
-        `;
-        questionsEditor.appendChild(div);
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = 'index.html';
       });
     }
 
-    // Update currentQuestions on input change
-    questionsEditor.addEventListener('input', (e) => {
-      const idx = e.target.dataset.idx;
-      if (idx === undefined) return;
-      const field = e.target.classList.contains('q-text') ? 'question' :
-                    e.target.classList.contains('opt-A') ? 'optionA' :
-                    e.target.classList.contains('opt-B') ? 'optionB' :
-                    e.target.classList.contains('opt-C') ? 'optionC' :
-                    e.target.classList.contains('opt-D') ? 'optionD' : null;
-      if (field) currentQuestions[idx][field] = e.target.value;
-    });
-    questionsEditor.addEventListener('change', (e) => {
-      if (e.target.classList.contains('correct-sel')) {
-        const idx = e.target.dataset.idx;
-        currentQuestions[idx].correct = e.target.value;
-      }
-    });
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      document.getElementById(tabName + 'Tab').classList.add('active');
+    }
 
-    saveBtn.addEventListener('click', async () => {
-      // Basic validation
-      for (let i = 0; i < currentQuestions.length; i++) {
-        const q = currentQuestions[i];
-        if (!q.question.trim() || !q.optionA.trim() || !q.optionB.trim() || !q.optionC.trim() || !q.optionD.trim()) {
-          alert(`Question ${i+1} is incomplete.`);
-          return;
-        }
-      }
-      await db.collection('questions').doc(classSelect.value).set({ items: currentQuestions });
-      alert('Questions saved successfully!');
-    });
+    function generatePin() {
+      return Math.floor(10000000 + Math.random() * 90000000).toString();
+    }
 
-    classSelect.addEventListener('change', loadQuestions);
-    loadQuestions(); // initial load
-
-    // ----------- VIEW RESULTS -----------
-    const filterClass = document.getElementById('filterClass');
-    const resultsBody = document.getElementById('resultsBody');
-
-    filterClass.addEventListener('change', loadResults);
-
-    async function loadResults() {
-      resultsBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-      let query = db.collection('results').orderBy('timestamp', 'desc');
-      const cls = filterClass.value;
-      if (cls) query = query.where('class', '==', cls);
-      const snapshot = await query.get();
-      resultsBody.innerHTML = '';
-      if (snapshot.empty) {
-        resultsBody.innerHTML = '<tr><td colspan="4">No results found.</td></tr>';
+    // Generate Exam PIN
+    async function generateExamPin() {
+      const studentId = document.getElementById('studentSelectForPin').value;
+      if (!studentId) {
+        alert('Please select a student');
         return;
       }
+      const pin = generatePin();
+      try {
+        await db.collection('students').doc(studentId).update({
+          examPin: pin
+        });
+        document.getElementById('examPinDisplay').style.display = 'block';
+        document.getElementById('examPinDisplay').textContent = pin;
+      } catch (error) {
+        alert('Error generating PIN: ' + error.message);
+      }
+    }
+
+    // Generate Report Card PIN
+    async function generateReportPin() {
+      const studentId = document.getElementById('studentSelectForReportPin').value;
+      if (!studentId) {
+        alert('Please select a student');
+        return;
+      }
+      const pin = generatePin();
+      try {
+        await db.collection('students').doc(studentId).update({
+          reportCardPin: pin
+        });
+        document.getElementById('reportPinDisplay').style.display = 'block';
+        document.getElementById('reportPinDisplay').textContent = pin;
+      } catch (error) {
+        alert('Error generating PIN: ' + error.message);
+      }
+    }
+
+    // Load students into selects
+    async function loadStudents() {
+      const snapshot = await db.collection('students').get();
+      const selects = ['studentSelectForPin', 'studentSelectForReportPin', 'reportCardStudent'];
+      
       snapshot.forEach(doc => {
         const data = doc.data();
-        const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString() : 'N/A';
-        resultsBody.innerHTML += `
-          <tr>
-            <td>${data.studentName}</td>
-            <td>${data.class.replace('basic','Basic ')}</td>
-            <td>${data.score}/${data.total}</td>
-            <td>${date}</td>
-          </tr>
-        `;
+        const option = `<option value="${doc.id}">${data.name} - ${data.class}</option>`;
+        selects.forEach(selectId => {
+          document.getElementById(selectId).innerHTML += option;
+        });
       });
+    }
+
+    function loadDashboardData() {
+      loadStudents();
+      // Load other dashboard data...
+      console.log('Dashboard loaded for Covenant Arrows Model');
     }
   </script>
 </body>
