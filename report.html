@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Check Report Card - Covenant Arrows' Model</title>
+    <title>📚 CBT Portal - Covenant Arrows' Model</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- Google Fonts (Clean, readable, perfect for print) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
     <style>
-        /* ===== GLOBAL RESET ===== */
         * {
             margin: 0;
             padding: 0;
@@ -22,161 +21,378 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f1f5f9;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%);
             min-height: 100vh;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 30px 20px;
+            align-items: center;
         }
 
         #app {
-            max-width: 1100px;
+            max-width: 800px;
             width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(79, 70, 229, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
         }
 
-        /* ===== TOAST NOTIFICATIONS ===== */
-        .toast-container {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 400px;
-            width: 100%;
-            pointer-events: none;
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+        .page.active {
+            display: block;
         }
 
-        .toast {
-            background: white;
-            padding: 16px 24px;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.12);
-            border-left: 6px solid #4f46e5;
-            pointer-events: auto;
-            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #0f172a;
-        }
-
-        .toast.hide {
-            animation: slideOut 0.3s ease forwards;
-        }
-
-        .toast .icon {
-            font-size: 22px;
-        }
-
-        .toast.success {
-            border-color: #10b981;
-        }
-        .toast.error {
-            border-color: #dc2626;
-        }
-        .toast.warning {
-            border-color: #f59e0b;
-        }
-
-        @keyframes slideIn {
-            from {
+        @keyframes fadeUp {
+            0% {
                 opacity: 0;
-                transform: translateX(60px);
+                transform: translateY(20px);
             }
-            to {
+            100% {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
 
-        @keyframes slideOut {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateX(60px);
-            }
+        /* ===== SCHOOL HEADER ===== */
+        .school-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px dashed #c7d2fe;
         }
 
-        /* ===== LOGIN CARD ===== */
-        .login-card {
-            background: white;
-            padding: 40px 35px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            max-width: 520px;
-            margin: 40px auto;
-            border: 1px solid #e2e8f0;
-        }
-
-        .login-card h2 {
-            color: #1e1b4b;
+        .school-header h1 {
             font-size: 28px;
-            margin-bottom: 8px;
+            font-weight: 900;
+            color: #1e1b4b;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .login-card p {
+        .school-header .motto {
+            font-weight: 600;
+            color: #475569;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 4px 20px;
+            border-radius: 30px;
+            margin-top: 4px;
+        }
+
+        .school-header .location {
+            font-size: 13px;
             color: #64748b;
-            margin-bottom: 20px;
+            margin-top: 4px;
         }
 
-        .login-card .flex {
+        /* ===== CARDS & INPUTS ===== */
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 32px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f1f5f9;
+            margin-top: 15px;
+        }
+
+        .flex {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
+            align-items: center;
         }
 
-        .login-card input,
-        .login-card select {
+        input,
+        select {
             flex: 1;
             min-width: 160px;
-            padding: 14px 20px;
+            padding: 16px 20px;
             border: 2px solid #e2e8f0;
             border-radius: 60px;
-            font-size: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            background: #f8fafc;
             outline: none;
             transition: 0.2s;
-            background: #f8fafc;
-            font-family: 'Inter', sans-serif;
         }
 
-        .login-card input:focus,
-        .login-card select:focus {
+        input:focus,
+        select:focus {
             border-color: #4f46e5;
             background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
 
-        .login-card button {
-            font-family: 'Inter', sans-serif;
+        button {
+            font-family: 'Nunito', sans-serif;
             font-weight: 800;
-            padding: 14px 40px;
-            background: linear-gradient(to right, #4f46e5, #7c3aed);
-            color: white;
+            padding: 16px 32px;
             border: none;
             border-radius: 60px;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.2s;
-            flex: 1;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #e2e8f0;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        .login-card button:hover {
+        button:hover {
             transform: scale(1.02);
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
         }
 
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #059669, #10b981);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, #dc2626, #ef4444);
+            color: white;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* ===== EXAM GRID ===== */
+        .exam-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .exam-grid button {
+            flex: 1 0 calc(50% - 12px);
+            justify-content: center;
+            background: #f1f5f9;
+            font-size: 18px;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid transparent;
+        }
+
+        .exam-grid button:hover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        /* ===== CBT QUESTION ===== */
+        .question-number {
+            background: #4f46e5;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 15px 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .options-grid label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 60px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+
+        .options-grid label:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+
+        .options-grid input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #4f46e5;
+            flex: 0 0 auto;
+            cursor: pointer;
+        }
+
+        /* ===== TIMER ===== */
+        .timer-box {
+            background: #1e1b4b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .timer-box.warning {
+            background: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* ===== COUNTDOWN TO START (NEW) ===== */
+        .countdown-container {
+            background: linear-gradient(135deg, #1e1b4b, #4f46e5);
+            border-radius: 32px;
+            padding: 30px 25px;
+            text-align: center;
+            margin: 15px 0;
+            box-shadow: 0 15px 40px rgba(79, 70, 229, 0.25);
+        }
+
+        .countdown-container .label {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .countdown-container .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0 8px 0;
+            flex-wrap: wrap;
+        }
+
+        .countdown-container .countdown-block {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: 10px 18px;
+            min-width: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .countdown-container .countdown-block .number {
+            font-size: 42px;
+            font-weight: 900;
+            color: white;
+            line-height: 1.1;
+            font-feature-settings: "tnum";
+        }
+
+        .countdown-container .countdown-block .unit {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .countdown-container .start-message {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .countdown-container .start-message strong {
+            color: #fcd34d;
+        }
+
+        /* ===== SCHEDULE NOTICE ===== */
+        .schedule-notice {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            border-left: 6px solid #4f46e5;
+        }
+
+        .schedule-notice .big-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .schedule-notice .title {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #1e1b4b;
+        }
+
+        .schedule-notice .desc {
+            color: #475569;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* ===== UTILITY ===== */
         .error-text {
             color: #dc2626;
             font-weight: 700;
             margin-top: 12px;
+        }
+
+        .success-text {
+            color: #059669;
+            font-weight: 700;
+            margin-top: 12px;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .status-text {
@@ -185,442 +401,99 @@
             margin-top: 8px;
         }
 
-        /* ========================================================== */
-        /* ===== REPORT CARD (A4 TRADITIONAL STYLING) ===== */
-        /* ========================================================== */
-        .report-wrapper {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
-            padding: 40px 35px;
-            margin-top: 20px;
-            border: 1px solid #e2e8f0;
-        }
-
-        /* This is the actual A4 sheet */
-        .report-card {
-            max-width: 210mm;
-            margin: 0 auto;
-            background: white;
-            padding: 8px 0;
-            font-family: 'Inter', sans-serif;
-            color: #0f172a;
-        }
-
-        /* ----- School Header ----- */
-        .report-header {
-            text-align: center;
-            border-bottom: 3px double #1e1b4b;
-            padding-bottom: 18px;
-            margin-bottom: 20px;
-        }
-
-        .report-header .school-name {
-            font-size: 32px;
-            font-weight: 900;
-            color: #1e1b4b;
-            letter-spacing: 2px;
-        }
-
-        .report-header .motto {
-            font-weight: 600;
-            color: #4f46e5;
-            font-size: 15px;
-            letter-spacing: 1px;
-        }
-
-        .report-header .location {
-            font-size: 13px;
-            color: #475569;
-            font-weight: 500;
-        }
-
-        .report-header .term-info {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f172a;
-            margin-top: 6px;
-            background: #f1f5f9;
-            display: inline-block;
-            padding: 2px 30px;
-            border-radius: 30px;
-        }
-
-        /* ----- Student Info & Attendance ----- */
-        .student-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .student-meta .name {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .student-meta .name span {
-            color: #4f46e5;
-        }
-
-        .student-meta .class {
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .attendance-grid {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            font-weight: 600;
-            font-size: 14px;
-            color: #334155;
-        }
-
-        .attendance-grid span {
-            background: white;
-            padding: 4px 14px;
-            border-radius: 40px;
-            border: 1px solid #e2e8f0;
-        }
-
-        /* ----- Main Subject Table (Full Grid) ----- */
-        .table-wrap {
-            overflow-x: auto;
-            margin: 15px 0 10px 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        table th {
-            background: #1e1b4b;
-            color: white;
-            font-weight: 700;
-            padding: 10px 6px;
-            border: 1px solid #1e1b4b;
-        }
-
-        table td {
-            padding: 8px 4px;
-            border: 1px solid #cbd5e1;
-            vertical-align: middle;
-        }
-
-        table tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        table tr:hover {
-            background: #f1f5f9;
-        }
-
-        /* Subject column left-aligned */
-        table td:first-child,
-        table th:first-child {
-            font-weight: 700;
-        }
-
-        table td:nth-child(2) {
-            text-align: left;
-            font-weight: 600;
-            padding-left: 12px;
-        }
-
-        .sub-header th {
-            background: #334155;
-            font-weight: 600;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 6px 2px;
-        }
-
-        /* Grade color coding */
-        .grade-a {
-            color: #059669;
-            font-weight: 800;
-        }
-        .grade-b {
-            color: #2563eb;
-            font-weight: 800;
-        }
-        .grade-c {
-            color: #d97706;
-            font-weight: 800;
-        }
-        .grade-d {
-            color: #b45309;
-            font-weight: 800;
-        }
-        .grade-f {
-            color: #dc2626;
-            font-weight: 800;
-        }
-
-        /* Grand Total Row */
-        .grand-total-row td {
-            background: #f1f5f9;
-            font-weight: 800;
-            font-size: 14px;
-            border-top: 3px solid #1e1b4b;
-            color: #0f172a;
-        }
-
-        /* ----- Bottom Signatures (Teacher + Admin/Principal) ----- */
-        .signature-section {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-top: 35px;
-            padding-top: 20px;
-            border-top: 2px dashed #cbd5e1;
-        }
-
-        .signature-box {
-            flex: 1;
-            min-width: 220px;
-        }
-
-        .signature-box .label {
-            font-weight: 700;
-            color: #475569;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .signature-box .content {
-            font-style: italic;
-            color: #1e293b;
-            min-height: 30px;
-            border-bottom: 1px solid #1e293b;
-            padding-bottom: 4px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-
-        .signature-box .sub {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        .signature-box .line {
-            border-bottom: 2px solid #1e293b;
-            width: 200px;
-            margin-top: 30px;
-            margin-bottom: 4px;
-        }
-
-        .signature-box.text-right {
-            text-align: right;
-        }
-        .signature-box.text-right .line {
-            margin-left: auto;
-        }
-
-        /* ----- Footer ----- */
-        .report-footer {
-            text-align: center;
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 30px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 15px;
-        }
-
-        /* ========================================================== */
-        /* ===== PRINT STYLES (A4 PERFECT) ===== */
-        /* ========================================================== */
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-
+        @media (max-width: 600px) {
             #app {
-                max-width: 100%;
-                padding: 0;
+                padding: 20px;
+                border-radius: 28px;
             }
-
-            .no-print {
-                display: none !important;
+            .school-header h1 {
+                font-size: 22px;
             }
-
-            .report-wrapper {
-                box-shadow: none;
-                border: none;
-                border-radius: 0;
-                padding: 10px 15px;
-                margin: 0;
+            .question-text {
+                font-size: 17px;
             }
-
-            .report-card {
-                max-width: 100%;
-                padding: 0;
+            .exam-grid button {
+                flex: 1 0 100%;
             }
-
-            table {
-                font-size: 12px;
+            .countdown-container .countdown-block {
+                min-width: 60px;
+                padding: 8px 12px;
             }
-
-            table th {
-                background: #1e1b4b !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            .countdown-container .countdown-block .number {
+                font-size: 28px;
             }
-
-            .grand-total-row td {
-                background: #f1f5f9 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            .countdown-container .countdown-timer {
+                gap: 10px;
             }
-
-            .student-meta {
-                background: #f8fafc !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .report-header .term-info {
-                background: #f1f5f9 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            table {
-                page-break-inside: avoid;
-            }
-
-            .signature-section {
-                page-break-inside: avoid;
-            }
-        }
-
-        /* ========================================================== */
-        /* ===== UTILITY CLASSES ===== */
-        /* ========================================================== */
-        .page {
-            display: none;
-            animation: fadeUp 0.4s ease;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeUp {
-            0% {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .flex-center {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 25px;
-        }
-
-        .btn-print {
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            padding: 14px 40px;
-            background: #0f172a;
-            color: white;
-            border: none;
-            border-radius: 60px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-print:hover {
-            background: #1e293b;
-            transform: scale(1.02);
-        }
-
-        .btn-back {
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            padding: 14px 40px;
-            background: white;
-            color: #1e293b;
-            border: 2px solid #e2e8f0;
-            border-radius: 60px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-back:hover {
-            border-color: #4f46e5;
-            background: #f8fafc;
         }
     </style>
 </head>
 <body>
 
     <div id="app">
-        <!-- TOAST CONTAINER -->
-        <div id="toastContainer" class="toast-container"></div>
+        <!-- ===== SCHOOL HEADER ===== -->
+        <div class="school-header">
+            <h1>🏫 COVENANT ARROWS' MODEL</h1>
+            <div class="motto">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
+            <div class="location">📍 Abiola way, ABEOKUTA, Ogun State.</div>
+        </div>
 
-        <!-- ========================================================== -->
-        <!-- PAGE 1: LOGIN                                              -->
-        <!-- ========================================================== -->
+        <!-- ===== LOGIN PAGE ===== -->
         <div id="loginPage" class="page active">
-            <div class="login-card">
-                <h2>📋 Check Report Card</h2>
-                <p>Enter the student's name, select their class, and enter the 8-digit PIN provided by the school.</p>
+            <div class="card">
+                <h2 style="color:#1e1b4b; margin-bottom:8px;">🎓 Student Exam Portal</h2>
+                <p style="color:#64748b; margin-bottom:20px;">Enter your name and select your class.</p>
                 <div class="flex">
-                    <input id="studentName" placeholder="👤 Student Full Name" style="flex:2;" />
-                    <select id="classSelect" style="flex:2;">
-                        <option value="">-- Select Class --</option>
+                    <input id="studentName" placeholder="👤 Your Full Name" style="flex:2;" />
+                    <select id="studentClassSelect" style="flex:2;">
+                        <option value="">-- Select Your Class --</option>
                     </select>
-                    <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" style="flex:1;" />
+                    <button id="enterExamBtn" class="btn-primary" style="flex:1; min-width:140px; justify-content:center;">
+                        🚀 Start Exam
+                    </button>
                 </div>
-                <button id="checkReportBtn" style="width:100%; margin-top:12px;">🔍 View Report Card</button>
-                <p id="reportErr" class="error-text"></p>
+                <p id="loginErr" class="error-text"></p>
                 <p id="authStatus" class="status-text">⏳ Connecting to server...</p>
             </div>
         </div>
 
-        <!-- ========================================================== -->
-        <!-- PAGE 2: REPORT CARD DISPLAY                                -->
-        <!-- ========================================================== -->
-        <div id="reportPage" class="page">
-            <div class="report-wrapper">
-                <!-- Print & Back Buttons (hidden when printing) -->
-                <div class="flex-center no-print" style="margin-bottom:20px;">
-                    <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
-                    <button class="btn-back" id="backBtn">⬅ Back to Search</button>
+        <!-- ===== EXAM PAGE ===== -->
+        <div id="examPage" class="page">
+            <div class="flex-between">
+                <div>
+                    <h3 style="color:#1e1b4b;">👋 <span id="sName"></span></h3>
+                    <p style="color:#64748b; margin-top:-4px;">Class: <strong id="sClass"></strong></p>
                 </div>
+                <button id="logoutExam" class="btn-danger" style="padding:10px 24px;">🚪 Logout</button>
+            </div>
+            <hr style="margin:20px 0; border:1px dashed #e2e8f0;" />
 
-                <!-- ===== THE ACTUAL REPORT CARD ===== -->
-                <div class="report-card" id="reportContainer">
-                    <!-- Dynamically filled by JavaScript -->
+            <!-- COUNTDOWN TO START (NEW) -->
+            <div id="countdownContainer" style="display:none;"></div>
+
+            <!-- SCHEDULE NOTICE (for ended or other statuses) -->
+            <div id="scheduleNotice" style="display:none;"></div>
+
+            <!-- AVAILABLE EXAMS LIST -->
+            <div id="availableExams"><p style="color:#64748b;">📡 Loading available subjects...</p></div>
+
+            <!-- CBT CONTAINER -->
+            <div id="cbtArea" style="display:none; margin-top:20px;">
+                <div class="flex-between" style="margin-bottom:20px;">
+                    <div class="timer-box" id="timerDisplay">⏱️ 30:00</div>
+                    <button id="submitExamBtn" class="btn-success">✅ Submit Exam</button>
+                </div>
+                <div class="card">
+                    <div id="questionContainer"></div>
+                    <div class="flex" style="justify-content:center; margin-top:20px;">
+                        <button id="prevQBtn" class="btn-outline">⬅ Previous</button>
+                        <button id="nextQBtn" class="btn-primary">Next ➡</button>
+                    </div>
                 </div>
             </div>
+
+            <!-- RESULT DISPLAY -->
+            <div id="resultDisplay" style="margin-top:20px;"></div>
         </div>
     </div>
 
@@ -642,36 +515,34 @@
         const db = firebase.firestore();
 
         // =============================================================
-        // TOAST SYSTEM
+        // GLOBAL STATE
         // =============================================================
-        function showToast(message, type = "success") {
-            const container = document.getElementById('toastContainer');
-            const icons = { success: '✅', error: '❌', warning: '⚠️' };
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.classList.add('hide');
-                setTimeout(() => toast.remove(), 400); }, 4000);
-        }
+        let currentStudent = { name: '', class: '' };
+        let currentQuestions = [];
+        let currentSubject = '';
+        let answers = {};
+        let qIndex = 0;
+        let timerInterval = null;
+        let timeSeconds = 1800; // Will be updated dynamically from teacher's duration
+        let masterClassList = [];
+        let examDurationMinutes = 30; // Default fallback
+        let countdownInterval = null;
+        let examStartTimestamp = null;
+        let isExamLive = false;
 
-        // =============================================================
-        // DOM REFS & STATE
-        // =============================================================
         const $ = (id) => document.getElementById(id);
         const showPage = (id) => {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             $(id + 'Page').classList.add('active');
         };
-        let masterClassList = [];
 
         // =============================================================
-        // 1. AUTHENTICATION
+        // AUTHENTICATION
         // =============================================================
         auth.onAuthStateChanged(user => {
             if (user) {
                 $('authStatus').innerHTML = '✅ Connected to server.';
-                console.log('✅ Report viewer authenticated.');
+                console.log('✅ Student authenticated.');
             } else {
                 $('authStatus').innerHTML = '⏳ Authenticating...';
                 auth.signInAnonymously().catch(e => {
@@ -695,7 +566,7 @@
         }
 
         // =============================================================
-        // 2. LOAD MASTER CLASS LIST & POPULATE DROPDOWN
+        // LOAD MASTER CLASS LIST
         // =============================================================
         async function loadMasterClassList() {
             try {
@@ -718,316 +589,476 @@
         }
 
         function populateClassDropdown() {
-            const select = $('classSelect');
-            select.innerHTML = '<option value="">-- Select Class --</option>';
+            const select = $('studentClassSelect');
+            select.innerHTML = '<option value="">-- Select Your Class --</option>';
             masterClassList.forEach(cls => {
                 select.innerHTML += `<option value="${cls}">${cls}</option>`;
             });
-            $('authStatus').innerHTML = '✅ Ready. Enter details to view report.';
+            $('authStatus').innerHTML = '✅ Ready. Select your class and start.';
         }
 
         // =============================================================
-        // 3. CHECK REPORT LOGIC (Claims PIN on First Use)
+        // LOGIN
         // =============================================================
-        $('checkReportBtn').addEventListener('click', async () => {
+        $('enterExamBtn').addEventListener('click', async () => {
             const name = $('studentName').value.trim();
-            const cls = $('classSelect').value;
-            const pin = $('studentPin').value.trim();
-            const err = $('reportErr');
+            const cls = $('studentClassSelect').value;
+            const err = $('loginErr');
 
             if (!name) {
-                err.innerText = '⚠️ Please enter the student\'s name.';
+                err.innerText = '⚠️ Please enter your full name.';
                 return;
             }
             if (!cls) {
-                err.innerText = '⚠️ Please select the student\'s class.';
+                err.innerText = '⚠️ Please select your class.';
                 return;
             }
-            if (!pin) {
-                err.innerText = '⚠️ Please enter the PIN.';
-                return;
-            }
-
             err.innerText = '';
-            $('checkReportBtn').innerText = '⏳ Searching...';
-            $('checkReportBtn').disabled = true;
 
-            try {
-                // 1. Wait for auth
-                const user = await waitForAuth();
-                if (!user) {
-                    err.innerText = '⚠️ Network error. Please refresh.';
-                    $('checkReportBtn').innerText = '🔍 View Report Card';
-                    $('checkReportBtn').disabled = false;
-                    return;
-                }
-
-                // 2. Check if PIN exists and its status
-                const pinDoc = await db.collection('pins').doc(pin).get();
-                if (!pinDoc.exists) {
-                    err.innerText = '❌ Invalid PIN. Please check and try again.';
-                    $('checkReportBtn').innerText = '🔍 View Report Card';
-                    $('checkReportBtn').disabled = false;
-                    return;
-                }
-
-                const pinData = pinDoc.data();
-
-                // 3. If PIN is already used by someone else, block access
-                if (pinData.used && pinData.usedBy !== name) {
-                    err.innerText =
-                        '❌ This PIN has already been used by another student. Each PIN is valid for one student only.';
-                    $('checkReportBtn').innerText = '🔍 View Report Card';
-                    $('checkReportBtn').disabled = false;
-                    return;
-                }
-
-                // 4. Fetch the report card for this student (without PIN filter)
-                const snap = await db.collection('reportCards')
-                    .where('class', '==', cls)
-                    .where('studentName', '==', name)
-                    .where('approved', '==', true)
-                    .get();
-
-                if (snap.empty) {
-                    err.innerText = '❌ No approved report card found for this student in this class.';
-                    $('checkReportBtn').innerText = '🔍 View Report Card';
-                    $('checkReportBtn').disabled = false;
-                    return;
-                }
-
-                const doc = snap.docs[0];
-                const data = doc.data();
-
-                // 5. If PIN was unused, claim it now (lock it to this student)
-                if (!pinData.used) {
-                    await db.collection('pins').doc(pin).update({
-                        used: true,
-                        usedBy: name,
-                        class: cls,
-                        usedAt: new Date()
-                    });
-                    // Also save the PIN to the report card document for display purposes
-                    await db.collection('reportCards').doc(doc.id).update({ pin: pin });
-                    showToast(`✅ PIN claimed successfully for ${name}!`, 'success');
-                } else {
-                    // PIN was already used by this same student (re-entry)
-                    showToast(`ℹ️ Welcome back, ${name}!`, 'success');
-                }
-
-                // Fetch School Settings
-                let schoolName = 'COVENANT ARROWS\' MODEL';
-                let schoolMotto = 'Raising Future Leaders Through Christ-Centered Learning';
-                let schoolLocation = 'Abiola Way, Abeokuta, Ogun State.';
-                try {
-                    const settingsSnap = await db.collection('settings').doc('schoolInfo').get();
-                    if (settingsSnap.exists) {
-                        const s = settingsSnap.data();
-                        schoolName = s.schoolName || schoolName;
-                        schoolMotto = s.motto || schoolMotto;
-                        schoolLocation = s.location || schoolLocation;
-                    }
-                } catch (e) { /* ignore */ }
-
-                // Render the Report Card
-                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation });
-
-                // Switch view
-                showPage('report');
-                err.innerText = '';
-
-            } catch (e) {
-                err.innerText = '⚠️ Network error. Please check your connection.';
-                console.error(e);
-                showToast('❌ Error loading report.', 'error');
+            const user = await waitForAuth();
+            if (!user) {
+                err.innerText = '⚠️ Network error. Please refresh the page.';
+                return;
             }
 
-            $('checkReportBtn').innerText = '🔍 View Report Card';
-            $('checkReportBtn').disabled = false;
+            currentStudent = { name, class: cls };
+            $('sName').innerText = name;
+            $('sClass').innerText = cls;
+            showPage('exam');
+
+            // Load schedule and exams
+            await loadScheduleAndExams(cls);
+        });
+
+        $('logoutExam').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            clearInterval(countdownInterval);
+            showPage('login');
+            currentStudent = {};
+            $('cbtArea').style.display = 'none';
+            $('resultDisplay').innerHTML = '';
+            $('studentClassSelect').value = '';
+            $('studentName').value = '';
+            $('scheduleNotice').style.display = 'none';
+            $('countdownContainer').style.display = 'none';
+            isExamLive = false;
         });
 
         // =============================================================
-        // 4. RENDER REPORT CARD (A4 Traditional Style)
+        // LOAD SCHEDULE & EXAMS (with Countdown Widget)
         // =============================================================
-        function renderReportCard(data, school) {
-            const container = $('reportContainer');
-            const subjects = Object.keys(data.subjects);
-            const att = data.attendance || { open: 90, present: 85, absent: 5 };
+        async function loadScheduleAndExams(cls) {
+            const container = $('availableExams');
+            const noticeContainer = $('scheduleNotice');
+            const countdownContainer = $('countdownContainer');
 
-            let grandTotal = 0;
-            let totalSubjects = 0;
-            let subjectRows = '';
+            // Reset UI
+            noticeContainer.style.display = 'none';
+            noticeContainer.innerHTML = '';
+            countdownContainer.style.display = 'none';
+            countdownContainer.innerHTML = '';
+            container.innerHTML = '<p style="color:#64748b;">📡 Loading available subjects...</p>';
+            isExamLive = false;
+            clearInterval(countdownInterval);
 
-            subjects.forEach((sub, index) => {
-                const s = data.subjects[sub];
-                const first = s.firstTerm || 0;
-                const second = s.secondTerm || 0;
-                const ca = s.thirdCA || 0;
-                const exam = s.thirdExam || 0;
-                const thirdTotal = ca + exam;
-                const overall = first + second + thirdTotal;
-                const avg = overall / 3;
+            try {
+                // 1. Fetch the schedule
+                const scheduleDoc = await db.collection('examControls').doc(cls).get();
 
-                grandTotal += overall;
-                totalSubjects++;
-
-                let grade, remark, gradeClass;
-                if (avg >= 70) { grade = 'A';
-                    remark = 'Excellent';
-                    gradeClass = 'grade-a'; } else if (avg >= 60) { grade = 'B';
-                    remark = 'Good';
-                    gradeClass = 'grade-b'; } else if (avg >= 50) { grade = 'C';
-                    remark = 'Satisfactory';
-                    gradeClass = 'grade-c'; } else if (avg >= 40) { grade = 'D';
-                    remark = 'Pass';
-                    gradeClass = 'grade-d'; } else { grade = 'F';
-                    remark = 'Needs Improvement';
-                    gradeClass = 'grade-f'; }
-
-                subjectRows += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${sub}</td>
-                                <td>${first}</td>
-                                <td>${second}</td>
-                                <td>${ca}</td>
-                                <td>${exam}</td>
-                                <td><strong>${thirdTotal}</strong></td>
-                                <td><strong>${overall}</strong></td>
-                                <td>${avg.toFixed(1)}%</td>
-                                <td class="${gradeClass}">${grade}</td>
-                                <td style="font-size:12px;">${remark}</td>
-                            </tr>
+                if (!scheduleDoc.exists) {
+                    container.innerHTML = `
+                            <div class="card" style="text-align:center; background:#fef9c3;">
+                                <h3>⏳ Exam Not Scheduled</h3>
+                                <p>Please ask your teacher to set up the exam schedule.</p>
+                            </div>
                         `;
-            });
+                    return;
+                }
 
-            const overallAvg = totalSubjects > 0 ? (grandTotal / totalSubjects) : 0;
-            let overallGrade, overallRemark, overallGradeClass;
-            if (overallAvg >= 70) { overallGrade = 'A';
-                overallRemark = 'Excellent';
-                overallGradeClass = 'grade-a'; } else if (overallAvg >= 60) { overallGrade = 'B';
-                overallRemark = 'Good';
-                overallGradeClass = 'grade-b'; } else if (overallAvg >= 50) { overallGrade = 'C';
-                overallRemark = 'Satisfactory';
-                overallGradeClass = 'grade-c'; } else if (overallAvg >= 40) { overallGrade = 'D';
-                overallRemark = 'Pass';
-                overallGradeClass = 'grade-d'; } else { overallGrade = 'F';
-                overallRemark = 'Needs Improvement';
-                overallGradeClass = 'grade-f'; }
+                const data = scheduleDoc.data();
+                const startTime = data.scheduledStart ? data.scheduledStart.toDate().getTime() : null;
+                const endTime = data.scheduledEnd ? data.scheduledEnd.toDate().getTime() : null;
+                const isActive = data.isActive || false;
+                examDurationMinutes = data.durationMinutes || 30;
+                examStartTimestamp = startTime;
 
-            const grandRow = `
-                        <tr class="grand-total-row">
-                            <td colspan="7"><strong>📊 GRAND TOTAL / AVERAGE</strong></td>
-                            <td><strong>${grandTotal}</strong></td>
-                            <td><strong>${overallAvg.toFixed(1)}%</strong></td>
-                            <td class="${overallGradeClass}"><strong>${overallGrade}</strong></td>
-                            <td style="font-size:13px;"><strong>${overallRemark}</strong></td>
-                        </tr>
+                const now = Date.now();
+
+                // 2. Check if exam is stopped
+                if (!isActive) {
+                    noticeContainer.style.display = 'block';
+                    noticeContainer.innerHTML = `
+                            <div class="schedule-notice" style="border-left-color: #dc2626;">
+                                <span class="big-icon">🛑</span>
+                                <div class="title">Exam Not Available</div>
+                                <div class="desc">The exam has been stopped by the teacher.</div>
+                            </div>
+                        `;
+                    container.innerHTML = '';
+                    return;
+                }
+
+                // 3. Check if BEFORE start time -> Show Countdown
+                if (startTime && now < startTime) {
+                    const startDate = new Date(startTime);
+                    const formattedDate = startDate.toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    const formattedTime = startDate.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    // Show countdown widget
+                    countdownContainer.style.display = 'block';
+                    countdownContainer.innerHTML = `
+                            <div class="countdown-container">
+                                <div class="label">⏳ Exam Starts In</div>
+                                <div class="countdown-timer" id="countdownTimer">
+                                    <div class="countdown-block">
+                                        <div class="number" id="cdDays">00</div>
+                                        <div class="unit">Days</div>
+                                    </div>
+                                    <div class="countdown-block">
+                                        <div class="number" id="cdHours">00</div>
+                                        <div class="unit">Hours</div>
+                                    </div>
+                                    <div class="countdown-block">
+                                        <div class="number" id="cdMinutes">00</div>
+                                        <div class="unit">Minutes</div>
+                                    </div>
+                                    <div class="countdown-block">
+                                        <div class="number" id="cdSeconds">00</div>
+                                        <div class="unit">Seconds</div>
+                                    </div>
+                                </div>
+                                <div class="start-message">
+                                    Starts on <strong>${formattedDate}</strong> at <strong>${formattedTime}</strong>
+                                    <br>
+                                    You will have <strong>${examDurationMinutes} minutes</strong> to complete it.
+                                </div>
+                            </div>
+                        `;
+
+                    // Start the countdown ticker
+                    startCountdown(startTime);
+
+                    container.innerHTML = `
+                            <div class="card" style="text-align:center; background:#f1f5f9;">
+                                <p style="color:#64748b; font-weight:600;">📅 The exam will appear here automatically when it starts.</p>
+                                <p style="color:#94a3b8; font-size:14px;">Please wait for the countdown to reach zero.</p>
+                            </div>
+                        `;
+                    return;
+                }
+
+                // 4. Check if AFTER end time -> Exam Ended
+                if (endTime && now > endTime) {
+                    const endDate = new Date(endTime);
+                    noticeContainer.style.display = 'block';
+                    noticeContainer.innerHTML = `
+                            <div class="schedule-notice" style="border-left-color: #dc2626;">
+                                <span class="big-icon">🚫</span>
+                                <div class="title">Exam Ended</div>
+                                <div class="desc">This exam ended on <strong>${endDate.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })} at ${endDate.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })}</strong></div>
+                            </div>
+                        `;
+                    container.innerHTML = '';
+                    return;
+                }
+
+                // 5. Exam is LIVE! (within window or force-started)
+                isExamLive = true;
+
+                // Show live notice
+                if (startTime && endTime) {
+                    const startDate = new Date(startTime);
+                    const endDate = new Date(endTime);
+                    noticeContainer.style.display = 'block';
+                    noticeContainer.innerHTML = `
+                            <div class="schedule-notice" style="border-left-color: #10b981;">
+                                <span class="big-icon">📝</span>
+                                <div class="title">Exam is Open!</div>
+                                <div class="desc">Available from <strong>${startDate.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })}</strong> to <strong>${endDate.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' })}</strong>. You have <strong>${examDurationMinutes} minutes</strong> once you start.</div>
+                            </div>
+                        `;
+                } else {
+                    // Force-started
+                    noticeContainer.style.display = 'block';
+                    noticeContainer.innerHTML = `
+                            <div class="schedule-notice" style="border-left-color: #f59e0b;">
+                                <span class="big-icon">⚡</span>
+                                <div class="title">Exam is LIVE!</div>
+                                <div class="desc">The teacher has started the exam. You have <strong>${examDurationMinutes} minutes</strong> to complete it.</div>
+                            </div>
+                        `;
+                }
+
+                // 6. Load the exam subjects
+                const status = await db.collection('examStatus').doc(cls).get();
+                if (!status.exists || !status.data().activeSubjects || status.data().activeSubjects.length === 0) {
+                    container.innerHTML = `
+                            <div class="card" style="text-align:center; background:#fef9c3;">
+                                <h3>😴 No Subjects Published</h3>
+                                <p>Your teacher hasn't published any subjects for this exam.</p>
+                            </div>
+                        `;
+                    return;
+                }
+
+                const subjects = status.data().activeSubjects;
+                container.innerHTML = `
+                        <p style="font-weight:600; color:#1e1b4b; margin-bottom:10px;">📖 Select a subject to start:</p>
+                        <div class="exam-grid">
+                            ${subjects.map(sub => `
+                                <button class="start-exam-btn" data-sub="${sub}">
+                                    📝 ${sub}
+                                </button>
+                            `).join('')}
+                        </div>
                     `;
 
-            // Build the full A4 HTML
-            const html = `
-                        <!-- REPORT HEADER -->
-                        <div class="report-header">
-                            <div class="school-name">🏫 ${school.name}</div>
-                            <div class="motto">✝️ ${school.motto}</div>
-                            <div class="location">📍 ${school.location}</div>
-                            <div class="term-info">THIRD TERM REPORT — ${data.year || new Date().getFullYear()}</div>
-                        </div>
+                document.querySelectorAll('.start-exam-btn').forEach(btn => {
+                    btn.addEventListener('click', () => startCBT(cls, btn.dataset.sub));
+                });
 
-                        <!-- STUDENT & ATTENDANCE -->
-                        <div class="student-meta">
-                            <div class="name">👤 <span>${data.studentName}</span></div>
-                            <div class="class">📚 Class: <strong>${data.class}</strong></div>
-                            <div class="attendance-grid">
-                                <span>📅 Open: ${att.open}</span>
-                                <span>✅ Present: ${att.present}</span>
-                                <span>❌ Absent: ${att.absent}</span>
-                                <span>📊 Att: ${((att.present/att.open)*100).toFixed(1)}%</span>
-                            </div>
-                        </div>
-
-                        <!-- SUBJECT TABLE (FULL GRID) -->
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2">S/N</th>
-                                        <th rowspan="2">SUBJECT</th>
-                                        <th rowspan="2">1ST TERM</th>
-                                        <th rowspan="2">2ND TERM</th>
-                                        <th colspan="3">3RD TERM</th>
-                                        <th rowspan="2">OVERALL TOTAL</th>
-                                        <th rowspan="2">AVG %</th>
-                                        <th rowspan="2">GRADE</th>
-                                        <th rowspan="2">REMARK</th>
-                                    </tr>
-                                    <tr class="sub-header">
-                                        <th>C.A</th>
-                                        <th>EXAM</th>
-                                        <th>TOTAL</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${subjectRows}
-                                    ${grandRow}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- SIGNATURES (TEACHER + ADMIN/PRINCIPAL with REMARKS & CONSENT) -->
-                        <div class="signature-section">
-                            <!-- Teacher's Remark -->
-                            <div class="signature-box">
-                                <div class="label">📝 Teacher's Remark</div>
-                                <div class="content">
-                                    ${overallRemark}. Student showed ${overallAvg >= 60 ? 'great' : 'consistent'} effort.
-                                </div>
-                                <div class="sub">Class Teacher's Signature: ______________________</div>
-                            </div>
-
-                            <!-- Principal / Admin Signature with Remarks & Consent -->
-                            <div class="signature-box text-right">
-                                <div class="label">📋 Principal / Admin Remarks & Consent</div>
-                                <div class="content">
-                                    ${data.adminRemarks || 'Approved by the Administration.'}
-                                </div>
-                                <div class="sub">
-                                    ✅ Admin Consent: ${data.adminConsent ? 'Granted' : 'Pending'} | 
-                                    Date: ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}
-                                </div>
-                                <div class="line"></div>
-                                <div class="sub">Principal's Signature: ______________________</div>
-                            </div>
-                        </div>
-
-                        <!-- FOOTER -->
-                        <div class="report-footer">
-                            🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
-                        </div>
-                    `;
-
-            container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = `<p class="error-text">⚠️ Error loading exams. Please refresh.</p>`;
+                console.error("loadScheduleAndExams error:", e);
+            }
         }
 
         // =============================================================
-        // 5. BACK BUTTON
+        // COUNTDOWN TIMER (LIVE TICKER)
         // =============================================================
-        $('backBtn').addEventListener('click', () => {
-            showPage('login');
-            $('reportContainer').innerHTML = '';
-            $('studentName').value = '';
-            $('classSelect').value = '';
-            $('studentPin').value = '';
-            $('reportErr').innerText = '';
+        function startCountdown(targetTimestamp) {
+            clearInterval(countdownInterval);
+
+            function updateCountdown() {
+                const now = Date.now();
+                const diff = targetTimestamp - now;
+
+                if (diff <= 0) {
+                    clearInterval(countdownInterval);
+                    // Countdown finished -> refresh the page to show the exam
+                    document.getElementById('countdownContainer').innerHTML = `
+                            <div class="countdown-container" style="background: linear-gradient(135deg, #059669, #10b981);">
+                                <div class="label">🚀 Exam is Now Open!</div>
+                                <div class="start-message" style="color:white; font-size:1.2rem; font-weight:700;">
+                                    Refreshing to start your exam...
+                                </div>
+                            </div>
+                        `;
+                    // Reload the exams after 1 second
+                    setTimeout(() => {
+                        loadScheduleAndExams(currentStudent.class);
+                    }, 1000);
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                const cdDays = document.getElementById('cdDays');
+                const cdHours = document.getElementById('cdHours');
+                const cdMinutes = document.getElementById('cdMinutes');
+                const cdSeconds = document.getElementById('cdSeconds');
+
+                if (cdDays) cdDays.innerText = String(days).padStart(2, '0');
+                if (cdHours) cdHours.innerText = String(hours).padStart(2, '0');
+                if (cdMinutes) cdMinutes.innerText = String(minutes).padStart(2, '0');
+                if (cdSeconds) cdSeconds.innerText = String(seconds).padStart(2, '0');
+            }
+
+            // Update immediately, then every second
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // =============================================================
+        // START CBT (Dynamic Timer from Teacher's Duration)
+        // =============================================================
+        async function startCBT(cls, subject) {
+            clearInterval(timerInterval);
+            clearInterval(countdownInterval);
+
+            // Set timer based on teacher's duration (in seconds)
+            timeSeconds = examDurationMinutes * 60;
+            qIndex = 0;
+            answers = {};
+            currentSubject = subject;
+
+            const container = $('questionContainer');
+            container.innerHTML = '<p style="color:#64748b;">⏳ Loading your questions...</p>';
+            $('cbtArea').style.display = 'block';
+            $('resultDisplay').innerHTML = '';
+            $('timerDisplay').innerText = `⏱️ ${String(examDurationMinutes).padStart(2, '0')}:00`;
+            $('timerDisplay').classList.remove('warning');
+
+            try {
+                const snap = await db.collection('questions')
+                    .where('class', '==', cls)
+                    .where('subject', '==', subject)
+                    .get();
+
+                if (snap.empty) {
+                    container.innerHTML =
+                        `<p class="error-text">❌ No questions found for ${subject}. Tell your teacher!</p>`;
+                    return;
+                }
+
+                currentQuestions = [];
+                snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
+
+                // Start the timer with dynamic duration
+                startTimer();
+                renderQuestion(0);
+
+            } catch (e) {
+                container.innerHTML = `<p class="error-text">❌ Failed to load questions. Check your internet.</p>`;
+                console.error("startCBT error:", e);
+            }
+        }
+
+        // =============================================================
+        // RENDER QUESTION
+        // =============================================================
+        function renderQuestion(index) {
+            const container = $('questionContainer');
+            if (index >= currentQuestions.length || index < 0) return;
+
+            const q = currentQuestions[index];
+            const total = currentQuestions.length;
+
+            let optionsHtml = '';
+            const letters = ['A', 'B', 'C', 'D'];
+            q.options.forEach((opt, i) => {
+                const letter = letters[i];
+                const checked = answers[q.id] === letter ? 'checked' : '';
+                optionsHtml += `
+                        <label>
+                            <input type="radio" name="cbt_${q.id}" value="${letter}" ${checked} 
+                                   onchange="answers['${q.id}']='${letter}'" />
+                            <span style="font-size:18px;">${letter}. ${opt}</span>
+                        </label>
+                    `;
+            });
+
+            container.innerHTML = `
+                    <div>
+                        <span class="question-number">📌 Question ${index + 1} of ${total}</span>
+                        <div class="question-text">${q.question}</div>
+                        <div class="options-grid">${optionsHtml}</div>
+                    </div>
+                `;
+
+            $('prevQBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
+            $('nextQBtn').innerText = index === total - 1 ? '📌 Finish Review' : 'Next ➡';
+        }
+
+        $('prevQBtn').addEventListener('click', () => {
+            if (qIndex > 0) renderQuestion(--qIndex);
+        });
+
+        $('nextQBtn').addEventListener('click', () => {
+            if (qIndex < currentQuestions.length - 1) {
+                renderQuestion(++qIndex);
+            } else {
+                if (confirm('📌 You are at the end. Submit your exam now?')) {
+                    submitExam();
+                }
+            }
         });
 
         // =============================================================
-        // 6. INIT
+        // TIMER
+        // =============================================================
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeSeconds--;
+                const mins = Math.floor(timeSeconds / 60);
+                const secs = timeSeconds % 60;
+                $('timerDisplay').innerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                if (timeSeconds <= 60) $('timerDisplay').classList.add('warning');
+                if (timeSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert('⏰ Time is up! Your exam will be submitted automatically.');
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        // =============================================================
+        // SUBMIT EXAM
+        // =============================================================
+        async function submitExam() {
+            clearInterval(timerInterval);
+            if (!currentQuestions.length) return;
+
+            const totalQ = currentQuestions.length;
+            const answered = Object.keys(answers).length;
+
+            if (answered < totalQ) {
+                if (!confirm(`⚠️ You only answered ${answered} out of ${totalQ} questions. Submit anyway?`)) {
+                    startTimer();
+                    return;
+                }
+            }
+
+            let score = 0;
+            currentQuestions.forEach(q => {
+                if (answers[q.id] === q.correct) score++;
+            });
+
+            try {
+                await db.collection('results').add({
+                    studentName: currentStudent.name,
+                    class: currentStudent.class,
+                    subject: currentSubject,
+                    score: score,
+                    totalQuestions: totalQ,
+                    answers: answers,
+                    submittedAt: new Date()
+                });
+
+                $('cbtArea').style.display = 'none';
+                $('resultDisplay').innerHTML = `
+                        <div class="card" style="background:#dcfce7; border:2px solid #10b981; text-align:center;">
+                            <h2 style="color:#065f46;">🎉 Exam Submitted!</h2>
+                            <p style="font-size:22px; font-weight:800; color:#0f172a;">${currentSubject}</p>
+                            <p style="font-size:28px; font-weight:800; color:#4f46e5;">${score} / ${totalQ}</p>
+                            <p style="color:#475569;">Your score has been recorded.</p>
+                            <p style="color:#475569; font-size:14px; margin-top:4px;">✅ You can now close this page.</p>
+                        </div>
+                    `;
+
+                // Refresh the available exams list so they can take another subject
+                await loadScheduleAndExams(currentStudent.class);
+
+            } catch (e) {
+                alert('❌ Failed to submit. Check your internet connection and try again.');
+                console.error("Submit error:", e);
+            }
+        }
+
+        $('submitExamBtn').addEventListener('click', () => {
+            if (confirm('📝 Are you sure you want to submit your exam?')) {
+                submitExam();
+            }
+        });
+
+        // =============================================================
+        // INIT
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer with Admin Remarks & Consent is ready!');
+        console.log('✅ Covenant Arrows\' Model CBT with Countdown is ready!');
     </script>
 </body>
 </html>
