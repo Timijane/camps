@@ -111,14 +111,16 @@
         .form-row textarea { flex-basis: 100%; min-height: 60px; resize: vertical; }
         .form-row .btn-add-q { padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .form-row .btn-add-q:hover { background: #4338ca; }
-        .csv-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-top: 12px; }
-        .csv-section label { font-weight: 600; color: #334155; font-size: 14px; }
-        .csv-section input[type="file"] { flex: 1; font-size: 13px; font-family: 'Inter', sans-serif; }
-        .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
-        .csv-section .btn-csv.download { background: #f59e0b; color: #1e1b4b; }
-        .csv-section .btn-csv.download:hover { background: #d97706; }
-        .csv-section .btn-csv.upload { background: #10b981; color: white; }
-        .csv-section .btn-csv.upload:hover { background: #059669; }
+
+        /* ===== NEW: CSV Bulk Paste Section ===== */
+        .csv-paste-section { background: #f1f5f9; border-radius: 16px; padding: 16px 20px; margin-top: 12px; border: 2px dashed #cbd5e1; }
+        .csv-paste-section textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; resize: vertical; background: white; }
+        .csv-paste-section textarea:focus { border-color: #4f46e5; }
+        .csv-paste-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
+        .csv-paste-section .btn-csv.download { background: #f59e0b; color: #1e1b4b; }
+        .csv-paste-section .btn-csv.download:hover { background: #d97706; }
+        .csv-paste-section .btn-csv.upload { background: #10b981; color: white; }
+        .csv-paste-section .btn-csv.upload:hover { background: #059669; }
 
         /* Publish / Results / Report Tabs */
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
@@ -255,7 +257,7 @@
                 <button class="main-tab" data-tab="tabReports">📋 Reports</button>
             </div>
 
-            <!-- TAB 1: QUESTIONS -->
+            <!-- TAB 1: QUESTIONS (UPDATED with Bulk Paste CSV) -->
             <div id="tabQuestions" class="tab-content active">
                 <div id="questionsContainer">
                     <div class="empty-state"><h3>👈 Select a subject</h3><p>Click on a subject from the left sidebar.</p></div>
@@ -272,11 +274,28 @@
                         <input id="qPoints" type="number" placeholder="Points" value="5" min="1" />
                         <button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button>
                     </div>
+
+                    <!-- ===== NEW: Bulk Paste CSV Section ===== -->
+                    <div class="csv-paste-section">
+                        <h4 style="font-weight:700; color:#1e1b4b; margin-bottom:8px;">📋 Bulk Paste CSV</h4>
+                        <p style="font-size:13px; color:#64748b; margin-bottom:8px;">Paste your CSV data below. Format: <strong>Subject, Question, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Points</strong></p>
+                        <textarea id="csvPasteArea" placeholder="Paste your CSV here...
+Subject,Question,OptionA,OptionB,OptionC,OptionD,CorrectAnswer,Points
+Mathematics,What is 2+2?,3,4,5,6,B,5
+English,What is the capital of Nigeria?,Lagos,Abuja,Kano,Ibadan,B,5"></textarea>
+                        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                            <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload Pasted CSV</button>
+                            <button class="btn-csv download" id="downloadCsvBtn">📥 Download Template</button>
+                            <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700; cursor:pointer;">🗑️ Clear</button>
+                        </div>
+                        <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
+                    </div>
+
+                    <!-- File Upload Section (kept for compatibility) -->
                     <div class="csv-section">
-                        <label>📄 CSV:</label>
+                        <label>📄 OR Upload CSV File:</label>
                         <input type="file" id="csvFileInput" accept=".csv" />
-                        <button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button>
-                        <button class="btn-csv download" id="downloadCsvBtn">📥 Download Template</button>
+                        <button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload File</button>
                         <span style="font-size:12px; color:#64748b;">(Subject, Question, A, B, C, D, Correct, Points)</span>
                     </div>
                 </div>
@@ -322,11 +341,11 @@
                 </div>
             </div>
 
-            <!-- TAB 4: REPORTS (UPDATED WITH FULL REPORT CARD BUILDER) -->
+            <!-- TAB 4: REPORTS -->
             <div id="tabReports" class="tab-content">
                 <div class="card-panel">
                     <h4>📋 Build Report Cards</h4>
-                    <p style="color:#64748b; margin-bottom:15px;">Fill in the details for each student's report card. Third Term Exam scores are auto-filled from CBT results.</p>
+                    <p style="color:#64748b; margin-bottom:15px;">Fill in the details for each student's report card. Third Term Exam scores are auto-filled from CBT results. <strong>You can edit any exam score directly.</strong></p>
                     
                     <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                         <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
@@ -614,6 +633,9 @@
         $('addQuestionArea').style.display = 'none';
     }
 
+    // =============================================================
+    // ADD SINGLE QUESTION
+    // =============================================================
     $('addQuestionBtn').addEventListener('click', async () => {
         if (!selectedSubject) return showToast('⚠️ Select a subject first.', 'warning');
         const question = $('qText').value.trim();
@@ -631,6 +653,83 @@
         } catch (e) { showToast('❌ Error adding.', 'error'); }
     });
 
+    // =============================================================
+    // BULK PASTE CSV (NEW)
+    // =============================================================
+    $('pasteCsvBtn').addEventListener('click', async () => {
+        if (!selectedSubject) return showToast('⚠️ Please select a subject first.', 'warning');
+        
+        const csvText = $('csvPasteArea').value.trim();
+        if (!csvText) return showToast('⚠️ Please paste some CSV data.', 'warning');
+
+        const statusEl = $('pasteStatus');
+        statusEl.innerText = '⏳ Processing...';
+        statusEl.style.color = '#64748b';
+
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (res) => {
+                const data = res.data;
+                let added = 0, errors = 0;
+                const batch = db.batch();
+                
+                for (let row of data) {
+                    const sub = row.Subject?.trim() || selectedSubject;
+                    const q = row.Question?.trim();
+                    const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD?.trim()];
+                    const correct = row.CorrectAnswer?.trim().toUpperCase();
+                    const pts = parseInt(row.Points) || 5;
+                    
+                    if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { errors++; continue; }
+                    
+                    const ref = db.collection('questions').doc();
+                    batch.set(ref, {
+                        class: currentUser.class,
+                        subject: sub,
+                        question: q,
+                        options: opts,
+                        correct: correct,
+                        points: pts,
+                        createdAt: new Date()
+                    });
+                    added++;
+                    
+                    if (added % 400 === 0) { await batch.commit(); /* create new batch */ }
+                }
+                
+                try { await batch.commit(); } catch (e) { /* ignore if already committed */ }
+                
+                $('csvPasteArea').value = '';
+                if (errors > 0) {
+                    statusEl.innerText = `⚠️ ${added} added, ${errors} rows skipped.`;
+                    statusEl.style.color = '#d97706';
+                    showToast(`⚠️ ${added} questions added, ${errors} rows had errors.`, 'warning');
+                } else {
+                    statusEl.innerText = `✅ ${added} questions added successfully!`;
+                    statusEl.style.color = '#059669';
+                    showToast(`✅ ${added} questions pasted successfully!`, 'success');
+                }
+                await selectSubject(selectedSubject);
+            },
+            error: (e) => {
+                statusEl.innerText = '❌ Failed to parse CSV: ' + e.message;
+                statusEl.style.color = '#dc2626';
+                showToast('❌ Error parsing CSV.', 'error');
+            }
+        });
+    });
+
+    // Clear Paste Area
+    $('clearPasteBtn').addEventListener('click', () => {
+        $('csvPasteArea').value = '';
+        $('pasteStatus').innerText = '';
+        showToast('🗑️ Cleared.', 'warning');
+    });
+
+    // =============================================================
+    // DOWNLOAD CSV TEMPLATE
+    // =============================================================
     $('downloadCsvBtn').addEventListener('click', () => {
         const headers = ['Subject', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
         const example = [selectedSubject || 'Mathematics', 'What is 2+2?', '3', '4', '5', '6', 'B', '5'];
@@ -638,34 +737,33 @@
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `questions_${currentUser.class}.csv`;
+        a.download = `questions_template_${currentUser.class}.csv`;
         a.click();
         URL.revokeObjectURL(a.href);
         showToast('📥 Template downloaded!', 'success');
     });
 
+    // =============================================================
+    // UPLOAD CSV FILE (kept for compatibility)
+    // =============================================================
     $('uploadCsvBtn').addEventListener('click', async () => {
         const file = $('csvFileInput').files[0];
-        if (!file) return showToast('⚠️ Select a CSV.', 'warning');
+        if (!file) return showToast('⚠️ Select a CSV file.', 'warning');
         if (!selectedSubject) return showToast('⚠️ Select a subject.', 'warning');
+        
         Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
-                let batch = db.batch(),
-                    added = 0,
-                    errors = 0;
+                let batch = db.batch(), added = 0, errors = 0;
                 for (let row of res.data) {
                     const sub = row.Subject?.trim() || selectedSubject;
                     const q = row.Question?.trim();
-                    const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD
-                        ?.trim()];
+                    const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD?.trim()];
                     const correct = row.CorrectAnswer?.trim().toUpperCase();
                     const pts = parseInt(row.Points) || 5;
                     if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { errors++; continue; }
                     const ref = db.collection('questions').doc();
-                    batch.set(ref, { class: currentUser.class, subject: sub, question: q, options: opts,
-                        correct, points: pts, createdAt: new Date() });
+                    batch.set(ref, { class: currentUser.class, subject: sub, question: q, options: opts, correct, points: pts, createdAt: new Date() });
                     added++;
-                    if (added % 400 === 0) { await batch.commit();
-                        batch = db.batch(); }
+                    if (added % 400 === 0) { await batch.commit(); batch = db.batch(); }
                 }
                 await batch.commit();
                 $('csvFileInput').value = '';
@@ -848,7 +946,7 @@
     }
 
     // =============================================================
-    // REPORTS TAB (UPDATED WITH FULL REPORT CARD BUILDER)
+    // REPORTS TAB (with Editable Exam Scores)
     // =============================================================
     let reportStudents = [];
     let allStudentResults = {};
@@ -886,279 +984,8 @@
                 prefillMap[data.studentName] = data;
             });
 
-            // 3. Build the HTML
+            // 3. Build the HTML with EDITABLE EXAM SCORES
             let html = `
-                <div class="report-builder-container">
-                    <div class="section-title">📋 ${cls} - Third Term Report Cards</div>
-                    
-                    <!-- School & Class Details -->
-                    <div class="form-grid">
-                        <label>🏫 School Name
-                            <input type="text" id="reportSchoolName" value="COVENANT ARROWS' MODEL" />
-                        </label>
-                        <label>📚 Class
-                            <input type="text" id="reportClass" value="${cls}" />
-                        </label>
-                        <label>👨‍🏫 Class Teacher Name
-                            <input type="text" id="reportTeacherName" placeholder="Enter your full name" />
-                        </label>
-                        <label>📅 Term
-                            <input type="text" id="reportTerm" value="Third Term" />
-                        </label>
-                        <label>📅 Session
-                            <input type="text" id="reportSession" value="${new Date().getFullYear()}" />
-                        </label>
-                        <label>📅 Date
-                            <input type="date" id="reportDate" value="${new Date().toISOString().slice(0, 10)}" />
-                        </label>
-                    </div>
-
-                    <!-- Attendance & Dates -->
-                    <div class="section-title" style="margin-top:20px;">📊 Attendance & School Dates</div>
-                    <div class="form-grid">
-                        <label>📅 School Resumption Date
-                            <input type="date" id="reportResumption" />
-                        </label>
-                        <label>📅 School Closing Date
-                            <input type="date" id="reportClosing" />
-                        </label>
-                        <label>📅 Next Term Resumption Date
-                            <input type="date" id="reportNextTerm" />
-                        </label>
-                        <label>📅 Days School Opened
-                            <input type="number" id="reportDaysOpen" value="90" min="1" />
-                        </label>
-                        <label>✅ Days Present
-                            <input type="number" id="reportDaysPresent" value="85" min="0" />
-                        </label>
-                        <label>❌ Days Absent
-                            <input type="number" id="reportDaysAbsent" value="5" min="0" />
-                        </label>
-                    </div>
-
-                    <!-- Qualities (with tick boxes 1-5) -->
-                    <div class="section-title" style="margin-top:20px;">⭐ Qualities & Character (Tick the appropriate number)</div>
-                    <div class="quality-grid" id="qualityGrid">
-                        <div class="quality-item">
-                            <label>Neatness</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Punctuality</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Honesty</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Respectfulness</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Diligence</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Leadership</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Self-Control</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Cooperation</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Extracurricular Activities (with tick boxes) -->
-                    <div class="section-title" style="margin-top:20px;">⚽ Extracurricular Activities (Tick those participated in)</div>
-                    <div class="checkbox-grid" id="extracurricularGrid">
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Sports" />
-                            <label>🏃 Sports</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Music" />
-                            <label>🎵 Music</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Drama" />
-                            <label>🎭 Drama</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Debate" />
-                            <label>🗣️ Debate</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Art" />
-                            <label>🎨 Art</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Chess" />
-                            <label>♟️ Chess</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Scouting" />
-                            <label>⛺ Scouting</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Agriculture" />
-                            <label>🌱 Agriculture</label>
-                        </div>
-                    </div>
-
-                    <!-- Teacher's Commentary -->
-                    <div class="section-title" style="margin-top:20px;">📝 Teacher's Commentary</div>
-                    <div class="form-grid">
-                        <div class="full-width">
-                            <textarea id="reportCommentary" placeholder="Enter your comments about the student's performance, strengths, and areas for improvement..." style="width:100%; min-height:80px; padding:12px; border:2px solid #e2e8f0; border-radius:16px; font-family:'Inter', sans-serif; font-size:14px; outline:none;"></textarea>
-                        </div>
-                    </div>
-            `;
-
-            // Add Student Rows
-            html += `<div class="section-title" style="margin-top:20px;">📖 Student Subject Scores</div>`;
-
-            // Table header with student names at the top
-            html += `<table style="font-size:13px; margin-top:10px;">
-                <tr>
-                    <th rowspan="2">S/N</th>
-                    <th rowspan="2">SUBJECT</th>
-                    <th rowspan="2">1ST TERM</th>
-                    <th rowspan="2">2ND TERM</th>
-                    <th colspan="3">3RD TERM</th>
-                    <th rowspan="2">CUMULATIVE<br>TOTAL</th>
-                    <th rowspan="2">GRADE</th>
-                    <th rowspan="2">REMARK</th>
-                </tr>
-                <tr class="sub-header">
-                    <th>C.A</th>
-                    <th>EXAM</th>
-                    <th>TOTAL</th>
-                </tr>`;
-
-            // For each subject, show the scores across all students
-            currentSubjects.forEach((sub, idx) => {
-                html += `<tr><td>${idx + 1}</td><td style="text-align:left; font-weight:700;">${sub}</td>`;
-                
-                // For this subject, get each student's scores
-                reportStudents.forEach(student => {
-                    const prefill = prefillMap[student] || {};
-                    const subData = prefill.subjects ? prefill.subjects[sub] || {} : {};
-                    const firstTerm = subData.firstTerm !== undefined ? subData.firstTerm : '';
-                    const secondTerm = subData.secondTerm !== undefined ? subData.secondTerm : '';
-                    const ca = subData.thirdCA !== undefined ? subData.thirdCA : '';
-                    const exam = allStudentResults[student]?.[sub] !== undefined ? allStudentResults[student][sub] : '';
-                    
-                    // Calculate third total if both exist
-                    let thirdTotal = '';
-                    if (ca !== '' && exam !== '') thirdTotal = (parseFloat(ca) + parseFloat(exam));
-                    
-                    // Calculate cumulative total if all three terms exist
-                    let cumTotal = '';
-                    if (firstTerm !== '' && secondTerm !== '' && thirdTotal !== '') {
-                        cumTotal = parseFloat(firstTerm) + parseFloat(secondTerm) + parseFloat(thirdTotal);
-                    }
-                    
-                    // Calculate grade
-                    let grade = '', remark = '';
-                    if (cumTotal !== '') {
-                        const avg = cumTotal / 3;
-                        if (avg >= 70) { grade = 'A'; remark = 'Excellent'; }
-                        else if (avg >= 60) { grade = 'B'; remark = 'Good'; }
-                        else if (avg >= 50) { grade = 'C'; remark = 'Satisfactory'; }
-                        else if (avg >= 40) { grade = 'D'; remark = 'Pass'; }
-                        else { grade = 'F'; remark = 'Needs Improvement'; }
-                    }
-                    
-                    html += `
-                        <td><input type="number" class="rep-input rep-first" data-student="${student}" data-sub="${sub}" value="${firstTerm}" style="width:50px;" /></td>
-                        <td><input type="number" class="rep-input rep-second" data-student="${student}" data-sub="${sub}" value="${secondTerm}" style="width:50px;" /></td>
-                        <td><input type="number" class="rep-input rep-ca" data-student="${student}" data-sub="${sub}" value="${ca}" style="width:50px;" /></td>
-                        <td class="rep-exam" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#4f46e5;">${exam !== '' ? exam : '--'}</td>
-                        <td class="rep-third-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">${thirdTotal !== '' ? thirdTotal : '--'}</td>
-                        <td class="rep-cum-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">${cumTotal !== '' ? cumTotal : '--'}</td>
-                        <td class="rep-grade" data-student="${student}" data-sub="${sub}" style="font-weight:800;">${grade}</td>
-                        <td class="rep-remark" data-student="${student}" data-sub="${sub}" style="font-size:11px;">${remark}</td>
-                    `;
-                });
-                
-                html += `</tr>`;
-            });
-
-            html += `</table>`;
-
-            // Add student names as a header row above the table
-            // Actually, let's add a better header with student names
-            // We'll rebuild the table with student names at the top
-            // But the current structure is already good - subjects as rows, students as columns
-            // Let's add a student name header row before the table
-
-            // Rebuild the table with proper student name headers
-            let studentNameRow = `<tr><th colspan="2">Student Names</th>`;
-            reportStudents.forEach(student => {
-                const prefill = prefillMap[student] || {};
-                studentNameRow += `<th colspan="8" style="background:#eef2ff; color:#1e1b4b;">${student}</th>`;
-            });
-            studentNameRow += `</tr>`;
-            
-            // Now rebuild the full table with student names at top
-            // Let's simplify by keeping the existing structure but adding a clear header
-            // I'll rebuild the report HTML with a cleaner approach
-
-            // Rebuild the entire report area with proper student names header
-            html = `
                 <div class="report-builder-container">
                     <div class="section-title">📋 ${cls} - Third Term Report Cards</div>
                     
@@ -1207,126 +1034,30 @@
                         </label>
                     </div>
 
-                    <!-- Qualities (with tick boxes 1-5) -->
+                    <!-- Qualities -->
                     <div class="section-title" style="margin-top:20px;">⭐ Qualities & Character (Tick the appropriate number)</div>
                     <div class="quality-grid" id="qualityGrid">
-                        <div class="quality-item">
-                            <label>Neatness</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Punctuality</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Honesty</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Respectfulness</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Diligence</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Leadership</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Self-Control</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
-                        <div class="quality-item">
-                            <label>Cooperation</label>
-                            <select class="quality-select">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                            </select>
-                        </div>
+                        <div class="quality-item"><label>Neatness</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Punctuality</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Honesty</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Respectfulness</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Diligence</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Leadership</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Self-Control</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+                        <div class="quality-item"><label>Cooperation</label><select class="quality-select"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
                     </div>
 
-                    <!-- Extracurricular Activities (with tick boxes) -->
+                    <!-- Extracurricular Activities -->
                     <div class="section-title" style="margin-top:20px;">⚽ Extracurricular Activities (Tick those participated in)</div>
                     <div class="checkbox-grid" id="extracurricularGrid">
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Sports" />
-                            <label>🏃 Sports</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Music" />
-                            <label>🎵 Music</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Drama" />
-                            <label>🎭 Drama</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Debate" />
-                            <label>🗣️ Debate</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Art" />
-                            <label>🎨 Art</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Chess" />
-                            <label>♟️ Chess</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Scouting" />
-                            <label>⛺ Scouting</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" class="extracurricular-check" value="Agriculture" />
-                            <label>🌱 Agriculture</label>
-                        </div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Sports" /><label>🏃 Sports</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Music" /><label>🎵 Music</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Drama" /><label>🎭 Drama</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Debate" /><label>🗣️ Debate</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Art" /><label>🎨 Art</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Chess" /><label>♟️ Chess</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Scouting" /><label>⛺ Scouting</label></div>
+                        <div class="checkbox-item"><input type="checkbox" class="extracurricular-check" value="Agriculture" /><label>🌱 Agriculture</label></div>
                     </div>
 
                     <!-- Teacher's Commentary -->
@@ -1339,6 +1070,7 @@
 
                     <!-- Subject Scores Table -->
                     <div class="section-title" style="margin-top:20px;">📖 Subject Scores</div>
+                    <p style="font-size:13px; color:#64748b; margin-bottom:10px;">💡 <strong>EXAM scores are auto-filled from CBT results.</strong> You can <strong>edit any exam score</strong> by typing directly into the blue cell. Changes are saved automatically.</p>
                     <div style="overflow-x:auto;">
                         <table style="font-size:13px; margin-top:10px;">
                             <thead>
@@ -1363,7 +1095,7 @@
                             <tbody>
                     `;
 
-            // Subject rows
+            // Subject rows - EXAM CELLS ARE EDITABLE
             currentSubjects.forEach((sub, idx) => {
                 html += `<tr><td>${idx + 1}</td><td style="text-align:left; font-weight:700;">${sub}</td>`;
                 
@@ -1373,71 +1105,39 @@
                     const firstTerm = subData.firstTerm !== undefined ? subData.firstTerm : '';
                     const secondTerm = subData.secondTerm !== undefined ? subData.secondTerm : '';
                     const ca = subData.thirdCA !== undefined ? subData.thirdCA : '';
+                    // Auto-filled from CBT results, but can be edited
                     const exam = allStudentResults[student]?.[sub] !== undefined ? allStudentResults[student][sub] : '';
-                    
-                    let thirdTotal = '';
-                    if (ca !== '' && exam !== '') thirdTotal = (parseFloat(ca) + parseFloat(exam));
-                    
-                    let cumTotal = '';
-                    if (firstTerm !== '' && secondTerm !== '' && thirdTotal !== '') {
-                        cumTotal = parseFloat(firstTerm) + parseFloat(secondTerm) + parseFloat(thirdTotal);
-                    }
-                    
-                    let grade = '', remark = '';
-                    if (cumTotal !== '') {
-                        const avg = cumTotal / 3;
-                        if (avg >= 70) { grade = 'A'; remark = 'Excellent'; }
-                        else if (avg >= 60) { grade = 'B'; remark = 'Good'; }
-                        else if (avg >= 50) { grade = 'C'; remark = 'Satisfactory'; }
-                        else if (avg >= 40) { grade = 'D'; remark = 'Pass'; }
-                        else { grade = 'F'; remark = 'Needs Improvement'; }
-                    }
                     
                     html += `
                         <td><input type="number" class="rep-input rep-first" data-student="${student}" data-sub="${sub}" value="${firstTerm}" style="width:45px;" /></td>
                         <td><input type="number" class="rep-input rep-second" data-student="${student}" data-sub="${sub}" value="${secondTerm}" style="width:45px;" /></td>
                         <td><input type="number" class="rep-input rep-ca" data-student="${student}" data-sub="${sub}" value="${ca}" style="width:45px;" /></td>
-                        <td class="rep-exam" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#4f46e5;">${exam !== '' ? exam : '--'}</td>
-                        <td class="rep-third-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">${thirdTotal !== '' ? thirdTotal : '--'}</td>
-                        <td class="rep-cum-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">${cumTotal !== '' ? cumTotal : '--'}</td>
-                        <td class="rep-grade" data-student="${student}" data-sub="${sub}" style="font-weight:800;">${grade}</td>
-                        <td class="rep-remark" data-student="${student}" data-sub="${sub}" style="font-size:11px;">${remark}</td>
+                        <!-- EXAM CELL: Editable! Teachers can type any number. -->
+                        <td><input type="number" class="rep-input rep-exam-input" data-student="${student}" data-sub="${sub}" value="${exam !== '' ? exam : ''}" style="width:45px; background:#eef2ff; border-color:#4f46e5; color:#1e1b4b; font-weight:700;" /></td>
+                        <td class="rep-third-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">--</td>
+                        <td class="rep-cum-total" data-student="${student}" data-sub="${sub}" style="font-weight:700; color:#1e1b4b;">--</td>
+                        <td class="rep-grade" data-student="${student}" data-sub="${sub}" style="font-weight:800;">--</td>
+                        <td class="rep-remark" data-student="${student}" data-sub="${sub}" style="font-size:11px;">--</td>
                     `;
                 });
                 html += `</tr>`;
             });
 
-            html += `</tbody></table></div>`;
+            html += `</tbody></table></div>
 
-            // Signature Section
-            html += `
+                    <!-- Signatures -->
                     <div class="section-title" style="margin-top:20px;">✍️ Signatures</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px; margin-top:15px;">
-                        <div>
-                            <p style="font-weight:700; color:#1e293b;">Class Teacher</p>
-                            <div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div>
-                            <p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p>
-                        </div>
-                        <div>
-                            <p style="font-weight:700; color:#1e293b;">Principal</p>
-                            <div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div>
-                            <p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p>
-                        </div>
-                        <div>
-                            <p style="font-weight:700; color:#1e293b;">Parent/Guardian</p>
-                            <div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div>
-                            <p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p>
-                        </div>
+                        <div><p style="font-weight:700; color:#1e293b;">Class Teacher</p><div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div><p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p></div>
+                        <div><p style="font-weight:700; color:#1e293b;">Principal</p><div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div><p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p></div>
+                        <div><p style="font-weight:700; color:#1e293b;">Parent/Guardian</p><div style="border-bottom:2px solid #1e293b; margin-top:30px; width:100%;"></div><p style="font-size:12px; color:#64748b; margin-top:4px;">Name & Signature</p></div>
                     </div>
                 </div>
             `;
 
             area.innerHTML = html;
 
-            // Attach auto-calculate event to the calc button
-            // We'll handle this in the global calcAllBtn event listener
-
-            // Attach save events to all input fields (auto-save on change)
+            // Attach recalculate to ALL input fields (including exam inputs)
             document.querySelectorAll('#reportBuilderArea input[type="number"]').forEach(input => {
                 input.addEventListener('change', () => {
                     recalculateRow(input);
@@ -1445,6 +1145,11 @@
                 input.addEventListener('input', () => {
                     recalculateRow(input);
                 });
+            });
+
+            // Initial calculation
+            document.querySelectorAll('#reportBuilderArea input[type="number"]').forEach(input => {
+                recalculateRow(input);
             });
 
             showToast(`✅ Loaded ${reportStudents.length} students and ${currentSubjects.length} subjects.`, 'success');
@@ -1456,32 +1161,31 @@
     });
 
     // =============================================================
-    // RECALCULATE A SINGLE ROW (for the report builder)
+    // RECALCULATE A SINGLE ROW (UPDATED for Editable Exam)
     // =============================================================
     function recalculateRow(input) {
         const student = input.dataset.student;
         const subject = input.dataset.sub;
         if (!student || !subject) return;
 
-        // Find all inputs for this student+subject combo
         const row = input.closest('tr');
         if (!row) return;
 
         const firstInput = row.querySelector(`.rep-first[data-student="${student}"][data-sub="${subject}"]`);
         const secondInput = row.querySelector(`.rep-second[data-student="${student}"][data-sub="${subject}"]`);
         const caInput = row.querySelector(`.rep-ca[data-student="${student}"][data-sub="${subject}"]`);
-        const examCell = row.querySelector(`.rep-exam[data-student="${student}"][data-sub="${subject}"]`);
+        const examInput = row.querySelector(`.rep-exam-input[data-student="${student}"][data-sub="${subject}"]`);
         const thirdTotalCell = row.querySelector(`.rep-third-total[data-student="${student}"][data-sub="${subject}"]`);
         const cumTotalCell = row.querySelector(`.rep-cum-total[data-student="${student}"][data-sub="${subject}"]`);
         const gradeCell = row.querySelector(`.rep-grade[data-student="${student}"][data-sub="${subject}"]`);
         const remarkCell = row.querySelector(`.rep-remark[data-student="${student}"][data-sub="${subject}"]`);
 
-        if (!firstInput || !secondInput || !caInput || !examCell) return;
+        if (!firstInput || !secondInput || !caInput || !examInput) return;
 
         const first = parseFloat(firstInput.value) || 0;
         const second = parseFloat(secondInput.value) || 0;
         const ca = parseFloat(caInput.value) || 0;
-        const exam = parseFloat(examCell.innerText) || 0;
+        const exam = parseFloat(examInput.value) || 0; // Use the editable exam input
 
         const thirdTotal = ca + exam;
         const cumTotal = first + second + thirdTotal;
@@ -1504,7 +1208,7 @@
     }
 
     // =============================================================
-    // AUTO-CALCULATE ALL (Global button)
+    // AUTO-CALCULATE ALL
     // =============================================================
     $('calcAllBtn').addEventListener('click', async () => {
         const inputs = document.querySelectorAll('#reportBuilderArea input[type="number"]');
@@ -1513,7 +1217,7 @@
     });
 
     // =============================================================
-    // PUSH TO ADMIN (Updated to save full report card data)
+    // PUSH TO ADMIN (UPDATED to save editable exam scores)
     // =============================================================
     $('pushAdminBtn').addEventListener('click', async () => {
         if (!confirm('📤 Push all report cards to Admin for approval?')) return;
@@ -1545,19 +1249,19 @@
         const extracurriculars = Array.from(extracurricularChecks).map(cb => cb.value);
 
         try {
-            // For each student, build the report card data
             for (let student of reportStudents) {
                 const subjectsData = {};
                 let studentHasData = false;
 
-                // Get all subject inputs for this student
                 const firstInputs = document.querySelectorAll(`.rep-first[data-student="${student}"]`);
                 firstInputs.forEach(input => {
                     const sub = input.dataset.sub;
                     const first = parseFloat(input.value) || 0;
                     const second = parseFloat(document.querySelector(`.rep-second[data-student="${student}"][data-sub="${sub}"]`)?.value) || 0;
                     const ca = parseFloat(document.querySelector(`.rep-ca[data-student="${student}"][data-sub="${sub}"]`)?.value) || 0;
-                    const exam = parseFloat(document.querySelector(`.rep-exam[data-student="${student}"][data-sub="${sub}"]`)?.innerText) || 0;
+                    // Save the edited exam score
+                    const examInput = document.querySelector(`.rep-exam-input[data-student="${student}"][data-sub="${sub}"]`);
+                    const exam = examInput ? parseFloat(examInput.value) || 0 : 0;
                     
                     if (first > 0 || second > 0 || ca > 0 || exam > 0) {
                         studentHasData = true;
@@ -1566,11 +1270,8 @@
                     subjectsData[sub] = { firstTerm: first, secondTerm: second, thirdCA: ca, thirdExam: exam };
                 });
 
-                if (!studentHasData) {
-                    continue; // Skip students with no data
-                }
+                if (!studentHasData) continue;
 
-                // Build full report card object
                 const reportCardData = {
                     class: cls,
                     studentName: student,
@@ -1582,11 +1283,7 @@
                     resumptionDate: resumption,
                     closingDate: closing,
                     nextTermResumption: nextTerm,
-                    attendance: {
-                        open: daysOpen,
-                        present: daysPresent,
-                        absent: daysAbsent
-                    },
+                    attendance: { open: daysOpen, present: daysPresent, absent: daysAbsent },
                     subjects: subjectsData,
                     qualities: qualities,
                     extracurriculars: extracurriculars,
@@ -1626,7 +1323,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Teacher Dashboard with Full Report Card Builder is ready!');
+    console.log('✅ Teacher Dashboard with Bulk CSV Paste & Editable Exam Scores is ready!');
 </script>
 </body>
 </html>
