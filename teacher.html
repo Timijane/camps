@@ -115,6 +115,8 @@
         .csv-paste-section .btn-csv.download:hover { background: #d97706; }
         .csv-paste-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-paste-section .btn-csv.upload:hover { background: #059669; }
+        .csv-paste-section .btn-csv.debug { background: #dc2626; color: white; }
+        .csv-paste-section .btn-csv.debug:hover { background: #b91c1c; }
 
         .csv-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-top: 12px; }
         .csv-section label { font-weight: 600; color: #334155; font-size: 14px; }
@@ -122,6 +124,13 @@
         .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-section .btn-csv.upload:hover { background: #059669; }
+
+        /* ===== DEBUG OUTPUT ===== */
+        .debug-output { background: #1e1e2e; color: #a6e22e; padding: 16px; border-radius: 16px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; margin-top: 10px; display: none; border: 2px solid #dc2626; }
+        .debug-output .error-line { color: #f92672; }
+        .debug-output .success-line { color: #a6e22e; }
+        .debug-output .info-line { color: #66d9ef; }
+        .debug-output .warn-line { color: #e6db74; }
 
         /* ===== PUBLISH ===== */
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
@@ -277,8 +286,10 @@
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload Pasted CSV</button>
                             <button class="btn-csv download" id="downloadCsvBtn">📥 Download Template</button>
                             <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700; cursor:pointer;">🗑️ Clear</button>
+                            <button class="btn-csv debug" id="debugCsvBtn">🐛 Debug CSV</button>
                         </div>
                         <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
+                        <div id="debugOutput" class="debug-output"></div>
                     </div>
                     <div class="csv-section">
                         <label>📄 OR Upload CSV File:</label>
@@ -519,7 +530,7 @@
     });
 
     // =============================================================
-    // QUESTIONS - FIXED
+    // QUESTIONS
     // =============================================================
     async function selectSubject(subject) {
         selectedSubject = subject;
@@ -528,7 +539,6 @@
         $('addQuestionArea').style.display = 'block';
         $('questionsContainer').innerHTML = '<p style="color:#94a3b8;">⏳ Loading questions...</p>';
         try {
-            // Trim the subject name to avoid mismatches
             const subjectTrimmed = subject.trim();
             const snap = await db.collection('questions')
                 .where('class', '==', currentUser.class)
@@ -565,7 +575,6 @@
         
         let html = `<div class="question-grid">`;
         currentQuestions.forEach((q, idx) => {
-            // Safely handle options array
             const opts = q.options && Array.isArray(q.options) ? q.options.join(' | ') : 'N/A';
             html += `<div class="q-item">
                 <div class="q-text">${idx+1}. ${q.question || 'No question text'}</div>
@@ -616,7 +625,7 @@
     });
 
     // =============================================================
-    // CSV BULK PASTE - FIXED
+    // CSV BULK PASTE
     // =============================================================
     $('pasteCsvBtn').addEventListener('click', async () => {
         if (!selectedSubject) return showToast('⚠️ Please select a subject first.', 'warning');
@@ -625,6 +634,8 @@
         const statusEl = $('pasteStatus');
         statusEl.innerText = '⏳ Processing...';
         statusEl.style.color = '#64748b';
+        const debugEl = $('debugOutput');
+        debugEl.style.display = 'none';
         
         Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: async (res) => {
             const data = res.data;
@@ -632,14 +643,11 @@
             const batch = db.batch();
             const errorsList = [];
             
-            // Log the parsed data for debugging
             console.log('Parsed CSV data:', data);
             
             for (let row of data) {
-                // Skip empty rows
                 if (!row.Question && !row.Subject) continue;
                 
-                // Get subject from CSV or use selected
                 let sub = row.Subject?.trim() || selectedSubject;
                 const q = row.Question?.trim();
                 const opts = [
@@ -669,7 +677,6 @@
                 });
                 added++;
                 
-                // Commit in batches of 400
                 if (added % 400 === 0) { 
                     try { await batch.commit(); } catch (e) { console.error('Batch commit error:', e); }
                 }
@@ -703,7 +710,152 @@
         }});
     });
 
-    $('clearPasteBtn').addEventListener('click', () => { $('csvPasteArea').value = ''; $('pasteStatus').innerText = ''; showToast('🗑️ Cleared.', 'warning'); });
+    // =============================================================
+    // DEBUG CSV BUTTON - NEW!
+    // =============================================================
+    $('debugCsvBtn').addEventListener('click', () => {
+        const csvText = $('csvPasteArea').value.trim();
+        const debugEl = $('debugOutput');
+        const statusEl = $('pasteStatus');
+        
+        debugEl.style.display = 'block';
+        debugEl.innerHTML = '';
+
+        function logToDebug(message, type = 'info') {
+            const colors = {
+                error: '#f92672',
+                success: '#a6e22e',
+                info: '#66d9ef',
+                warn: '#e6db74'
+            };
+            debugEl.innerHTML += `<div style="color:${colors[type] || '#ffffff'};">${message}</div>`;
+            debugEl.scrollTop = debugEl.scrollHeight;
+        }
+
+        logToDebug('🐛 ===== DEBUG START =====', 'info');
+        logToDebug(`📋 CSV Length: ${csvText.length} characters`, 'info');
+        
+        if (!csvText) {
+            logToDebug('❌ ERROR: No CSV data found! Please paste some CSV text first.', 'error');
+            statusEl.innerText = '❌ No CSV to debug.';
+            statusEl.style.color = '#dc2626';
+            return;
+        }
+
+        // Show first 200 chars
+        logToDebug(`📄 Preview: ${csvText.substring(0, 200)}...`, 'info');
+
+        // Check for headers
+        const firstLine = csvText.split('\n')[0];
+        logToDebug(`📋 First line: "${firstLine}"`, 'info');
+
+        const expectedHeaders = ['Subject', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
+        const hasHeaders = expectedHeaders.every(h => firstLine.toLowerCase().includes(h.toLowerCase()));
+        
+        if (hasHeaders) {
+            logToDebug('✅ Headers look correct!', 'success');
+        } else {
+            logToDebug('⚠️ Headers may not match expected format.', 'warn');
+            logToDebug(`Expected: ${expectedHeaders.join(', ')}`, 'warn');
+        }
+
+        // Try parsing with PapaParse
+        logToDebug('📤 Attempting to parse CSV...', 'info');
+        
+        Papa.parse(csvText, { 
+            header: true, 
+            skipEmptyLines: true, 
+            complete: (res) => {
+                const data = res.data;
+                logToDebug(`✅ Parsed ${data.length} rows.`, 'success');
+                
+                if (data.length === 0) {
+                    logToDebug('❌ No data rows found!', 'error');
+                    return;
+                }
+
+                // Show first row
+                if (data[0]) {
+                    logToDebug(`📋 First row: ${JSON.stringify(data[0])}`, 'info');
+                }
+
+                let validRows = 0;
+                let invalidRows = 0;
+                let subjectMismatch = 0;
+
+                data.forEach((row, idx) => {
+                    const sub = row.Subject?.trim() || row.subject?.trim() || '';
+                    const q = row.Question?.trim() || row.question?.trim() || '';
+                    const opts = [
+                        row.OptionA?.trim() || row.A?.trim() || '',
+                        row.OptionB?.trim() || row.B?.trim() || '',
+                        row.OptionC?.trim() || row.C?.trim() || '',
+                        row.OptionD?.trim() || row.D?.trim() || ''
+                    ];
+                    const correct = (row.CorrectAnswer?.trim() || row.Correct?.trim() || row.correct?.trim() || '').toUpperCase();
+                    const pts = parseInt(row.Points || row.points || 5) || 5;
+
+                    let rowErrors = [];
+                    if (!q) rowErrors.push('Missing Question');
+                    if (opts.some(o => !o)) rowErrors.push('Missing Option');
+                    if (!['A','B','C','D'].includes(correct)) rowErrors.push('Invalid CorrectAnswer (must be A, B, C, or D)');
+                    
+                    if (selectedSubject && sub && sub !== selectedSubject) {
+                        subjectMismatch++;
+                        rowErrors.push(`Subject "${sub}" doesn't match selected "${selectedSubject}"`);
+                    }
+
+                    if (rowErrors.length === 0) {
+                        validRows++;
+                    } else {
+                        invalidRows++;
+                        logToDebug(`❌ Row ${idx+1} errors: ${rowErrors.join(', ')}`, 'error');
+                        logToDebug(`   Data: ${JSON.stringify(row)}`, 'warn');
+                    }
+                });
+
+                logToDebug('', 'info');
+                logToDebug('📊 ===== SUMMARY =====', 'info');
+                logToDebug(`✅ Valid rows: ${validRows}`, 'success');
+                logToDebug(`❌ Invalid rows: ${invalidRows}`, invalidRows > 0 ? 'error' : 'success');
+                if (subjectMismatch > 0) {
+                    logToDebug(`⚠️ Subject mismatches: ${subjectMismatch} (fix by using "${selectedSubject}" in Subject column)`, 'warn');
+                }
+                
+                if (validRows > 0 && invalidRows === 0) {
+                    logToDebug('🎉 All rows are valid! Click "Upload Pasted CSV" to import.', 'success');
+                    statusEl.innerText = `✅ Debug complete: ${validRows} valid rows ready to upload.`;
+                    statusEl.style.color = '#059669';
+                } else if (validRows > 0 && invalidRows > 0) {
+                    logToDebug(`⚠️ ${validRows} valid, ${invalidRows} invalid rows. Fix errors above.`, 'warn');
+                    statusEl.innerText = `⚠️ ${validRows} valid, ${invalidRows} invalid rows.`;
+                    statusEl.style.color = '#d97706';
+                } else {
+                    logToDebug('❌ No valid rows found. Please check your CSV format.', 'error');
+                    statusEl.innerText = '❌ No valid rows found.';
+                    statusEl.style.color = '#dc2626';
+                }
+
+                logToDebug('🐛 ===== DEBUG END =====', 'info');
+            },
+            error: (e) => {
+                logToDebug(`❌ PapaParse Error: ${e.message}`, 'error');
+                statusEl.innerText = '❌ Parse error. Check debug output.';
+                statusEl.style.color = '#dc2626';
+            }
+        });
+    });
+
+    // =============================================================
+    // CLEAR DEBUG OUTPUT
+    // =============================================================
+    $('clearPasteBtn').addEventListener('click', () => { 
+        $('csvPasteArea').value = ''; 
+        $('pasteStatus').innerText = ''; 
+        $('debugOutput').style.display = 'none';
+        $('debugOutput').innerHTML = '';
+        showToast('🗑️ Cleared.', 'warning'); 
+    });
 
     $('downloadCsvBtn').addEventListener('click', () => {
         const headers = ['Subject', 'Question', 'OptionA', 'OptionB', 'OptionC', 'OptionD', 'CorrectAnswer', 'Points'];
@@ -1041,7 +1193,6 @@
 
         area.innerHTML = html;
 
-        // Attach auto-save to ALL input fields
         document.querySelectorAll('#reportBuilderArea input[type="number"], #reportBuilderArea input[type="text"], #reportBuilderArea input[type="date"], #reportBuilderArea select, #reportBuilderArea textarea, .extracurricular-check, .quality-select').forEach(el => {
             el.addEventListener('change', () => { autoSaveReportCard(cls); });
             el.addEventListener('input', () => { 
@@ -1054,18 +1205,14 @@
             }
         });
 
-        // Initial calculation
         document.querySelectorAll('#reportBuilderArea input[type="number"]').forEach(input => { recalculateRow(input); });
         
-        // Calculate positions and percentages
         setTimeout(() => calculatePositionsAndPercentages(cls), 300);
-
-        // Auto-save after loading
         setTimeout(() => autoSaveReportCard(cls), 500);
     }
 
     // =============================================================
-    // RECALCULATE ROW (Per Subject + Per Student)
+    // RECALCULATE ROW
     // =============================================================
     function recalculateRow(input) {
         const student = input.dataset.student;
@@ -1110,12 +1257,11 @@
         gradeCell.innerText = grade;
         remarkCell.innerText = remark;
 
-        // Recalculate positions after any change
         calculatePositionsAndPercentages(currentUser.class);
     }
 
     // =============================================================
-    // CALCULATE POSITIONS & PERCENTAGES (Across all students)
+    // CALCULATE POSITIONS
     // =============================================================
     function calculatePositionsAndPercentages(cls) {
         currentSubjects.forEach(sub => {
@@ -1287,7 +1433,7 @@
     $('loginPage').classList.add('active');
     loadMasterClassList();
     console.log('✅ Teacher Dashboard with Auto-Save & Position is ready!');
-    console.log('💡 Make sure your CSV uses the exact subject name as selected!');
+    console.log('💡 Use the 🐛 Debug CSV button to check your CSV before uploading!');
 </script>
 </body>
 </html>
