@@ -271,6 +271,7 @@
                     <div class="csv-paste-section">
                         <h4 style="font-weight:700; color:#1e1b4b; margin-bottom:8px;">📋 Bulk Paste CSV</h4>
                         <p style="font-size:13px; color:#64748b; margin-bottom:8px;">Format: <strong>Subject, Question, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, Points</strong></p>
+                        <p style="font-size:12px; color:#dc2626; margin-bottom:8px;">⚠️ Make sure the Subject column matches the selected subject name EXACTLY.</p>
                         <textarea id="csvPasteArea" placeholder="Paste your CSV here..."></textarea>
                         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload Pasted CSV</button>
@@ -518,40 +519,66 @@
     });
 
     // =============================================================
-    // QUESTIONS
+    // QUESTIONS - FIXED
     // =============================================================
     async function selectSubject(subject) {
         selectedSubject = subject;
         renderSubjects();
         $('selectedSubjectName').innerText = subject;
         $('addQuestionArea').style.display = 'block';
-        $('questionsContainer').innerHTML = '<p style="color:#94a3b8;">⏳ Loading...</p>';
+        $('questionsContainer').innerHTML = '<p style="color:#94a3b8;">⏳ Loading questions...</p>';
         try {
-            const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==', subject).get();
+            // Trim the subject name to avoid mismatches
+            const subjectTrimmed = subject.trim();
+            const snap = await db.collection('questions')
+                .where('class', '==', currentUser.class)
+                .where('subject', '==', subjectTrimmed)
+                .get();
             currentQuestions = [];
             snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
             renderQuestions();
-        } catch (e) { showToast('❌ Error loading questions.', 'error'); }
+            showToast(`✅ Loaded ${currentQuestions.length} question(s) for "${subject}"`, 'success');
+        } catch (e) { 
+            console.error('Error loading questions:', e);
+            showToast('❌ Error loading questions: ' + e.message, 'error');
+            $('questionsContainer').innerHTML = '<p style="color:#dc2626;">❌ Failed to load questions. Check console for details.</p>';
+        }
     }
 
     function renderQuestions() {
         const container = $('questionsContainer');
         const totalPoints = currentQuestions.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
         $('totalPointsBadge').innerHTML = `⭐ Total Points: ${totalPoints}`;
-        if (!currentQuestions.length) return container.innerHTML = `<div class="empty-state"><h3>📭 No questions</h3><p>Add questions below for <strong>${selectedSubject}</strong>.</p></div>`;
+        
+        if (!currentQuestions.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>📭 No questions found for "${selectedSubject}"</h3>
+                    <p>Add questions below using the form or CSV upload.</p>
+                    <p style="font-size:12px; color:#94a3b8; margin-top:10px;">
+                        💡 Make sure your CSV uses the exact subject name: <strong>"${selectedSubject}"</strong>
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
         let html = `<div class="question-grid">`;
         currentQuestions.forEach((q, idx) => {
+            // Safely handle options array
+            const opts = q.options && Array.isArray(q.options) ? q.options.join(' | ') : 'N/A';
             html += `<div class="q-item">
-                <div class="q-text">${idx+1}. ${q.question}</div>
+                <div class="q-text">${idx+1}. ${q.question || 'No question text'}</div>
                 <div class="q-meta">
-                    <span>${q.options.join(' | ')}</span>
+                    <span>${opts}</span>
                     <span class="points-badge">⭐ ${q.points || 5}</span>
-                    <span>✅ ${q.correct}</span>
+                    <span>✅ ${q.correct || '?'}</span>
                     <button class="q-del" data-id="${q.id}">✕</button>
                 </div>
             </div>`;
         });
         container.innerHTML = html + '</div>';
+        
         container.querySelectorAll('.q-del').forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!confirm('Delete this question?')) return;
@@ -580,7 +607,7 @@
         const points = parseInt($('qPoints').value) || 5;
         if (!question || options.some(o => !o)) return showToast('⚠️ Fill all fields.', 'error');
         try {
-            await db.collection('questions').add({ class: currentUser.class, subject: selectedSubject, question, options, correct, points, createdAt: new Date() });
+            await db.collection('questions').add({ class: currentUser.class, subject: selectedSubject.trim(), question, options, correct, points, createdAt: new Date() });
             $('qText').value = '';
             ['optA','optB','optC','optD'].forEach(id => $(id).value = '');
             await selectSubject(selectedSubject);
@@ -589,7 +616,7 @@
     });
 
     // =============================================================
-    // CSV BULK PASTE
+    // CSV BULK PASTE - FIXED
     // =============================================================
     $('pasteCsvBtn').addEventListener('click', async () => {
         if (!selectedSubject) return showToast('⚠️ Please select a subject first.', 'warning');
@@ -598,28 +625,70 @@
         const statusEl = $('pasteStatus');
         statusEl.innerText = '⏳ Processing...';
         statusEl.style.color = '#64748b';
+        
         Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: async (res) => {
             const data = res.data;
             let added = 0, errors = 0;
             const batch = db.batch();
+            const errorsList = [];
+            
+            // Log the parsed data for debugging
+            console.log('Parsed CSV data:', data);
+            
             for (let row of data) {
-                const sub = row.Subject?.trim() || selectedSubject;
+                // Skip empty rows
+                if (!row.Question && !row.Subject) continue;
+                
+                // Get subject from CSV or use selected
+                let sub = row.Subject?.trim() || selectedSubject;
                 const q = row.Question?.trim();
-                const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD?.trim()];
-                const correct = row.CorrectAnswer?.trim().toUpperCase();
-                const pts = parseInt(row.Points) || 5;
-                if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { errors++; continue; }
+                const opts = [
+                    row.OptionA?.trim() || row.A?.trim() || '',
+                    row.OptionB?.trim() || row.B?.trim() || '',
+                    row.OptionC?.trim() || row.C?.trim() || '',
+                    row.OptionD?.trim() || row.D?.trim() || ''
+                ];
+                const correct = (row.CorrectAnswer?.trim() || row.Correct?.trim() || '').toUpperCase();
+                const pts = parseInt(row.Points || row.points || 5) || 5;
+                
+                if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { 
+                    errors++; 
+                    errorsList.push(`Row: ${JSON.stringify(row)}`);
+                    continue; 
+                }
+                
                 const ref = db.collection('questions').doc();
-                batch.set(ref, { class: currentUser.class, subject: sub, question: q, options: opts, correct, points: pts, createdAt: new Date() });
+                batch.set(ref, { 
+                    class: currentUser.class, 
+                    subject: sub, 
+                    question: q, 
+                    options: opts, 
+                    correct, 
+                    points: pts, 
+                    createdAt: new Date() 
+                });
                 added++;
-                if (added % 400 === 0) { await batch.commit(); }
+                
+                // Commit in batches of 400
+                if (added % 400 === 0) { 
+                    try { await batch.commit(); } catch (e) { console.error('Batch commit error:', e); }
+                }
             }
-            try { await batch.commit(); } catch (e) {}
+            
+            try { await batch.commit(); } catch (e) { 
+                console.error('Final batch commit error:', e);
+                statusEl.innerText = '❌ Error saving data: ' + e.message;
+                statusEl.style.color = '#dc2626';
+                showToast('❌ Error saving: ' + e.message, 'error');
+                return;
+            }
+            
             $('csvPasteArea').value = '';
             if (errors > 0) {
-                statusEl.innerText = `⚠️ ${added} added, ${errors} rows skipped.`;
+                statusEl.innerText = `⚠️ ${added} added, ${errors} rows skipped. Check console for details.`;
                 statusEl.style.color = '#d97706';
                 showToast(`⚠️ ${added} questions added, ${errors} rows had errors.`, 'warning');
+                console.log('Errors:', errorsList);
             } else {
                 statusEl.innerText = `✅ ${added} questions added successfully!`;
                 statusEl.style.color = '#059669';
@@ -627,6 +696,7 @@
             }
             await selectSubject(selectedSubject);
         }, error: (e) => {
+            console.error('Papa Parse error:', e);
             statusEl.innerText = '❌ Failed to parse CSV: ' + e.message;
             statusEl.style.color = '#dc2626';
             showToast('❌ Error parsing CSV.', 'error');
@@ -652,14 +722,21 @@
         const file = $('csvFileInput').files[0];
         if (!file) return showToast('⚠️ Select a CSV file.', 'warning');
         if (!selectedSubject) return showToast('⚠️ Select a subject.', 'warning');
+        
         Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
             let batch = db.batch(), added = 0, errors = 0;
             for (let row of res.data) {
+                if (!row.Question && !row.Subject) continue;
                 const sub = row.Subject?.trim() || selectedSubject;
                 const q = row.Question?.trim();
-                const opts = [row.OptionA?.trim(), row.OptionB?.trim(), row.OptionC?.trim(), row.OptionD?.trim()];
-                const correct = row.CorrectAnswer?.trim().toUpperCase();
-                const pts = parseInt(row.Points) || 5;
+                const opts = [
+                    row.OptionA?.trim() || row.A?.trim() || '',
+                    row.OptionB?.trim() || row.B?.trim() || '',
+                    row.OptionC?.trim() || row.C?.trim() || '',
+                    row.OptionD?.trim() || row.D?.trim() || ''
+                ];
+                const correct = (row.CorrectAnswer?.trim() || row.Correct?.trim() || '').toUpperCase();
+                const pts = parseInt(row.Points || row.points || 5) || 5;
                 if (!q || opts.some(o => !o) || !['A','B','C','D'].includes(correct)) { errors++; continue; }
                 const ref = db.collection('questions').doc();
                 batch.set(ref, { class: currentUser.class, subject: sub, question: q, options: opts, correct, points: pts, createdAt: new Date() });
@@ -786,12 +863,17 @@
     // RESULTS
     // =============================================================
     async function loadResults(cls) {
-        const snap = await db.collection('results').where('class', '==', cls).get();
-        const container = $('resultsContainer');
-        if (snap.empty) return container.innerHTML = '<p style="color:#64748b;">No results yet.</p>';
-        let html = '<table><tr><th>Student</th><th>Subject</th><th>Score</th><th>Total</th><th>Date</th></tr>';
-        snap.forEach(d => { const data = d.data(); html += `<tr><td><strong>${data.studentName}</strong></td><td>${data.subject}</td><td>${data.score}</td><td>${data.totalQuestions}</td><td>${data.submittedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}</td></tr>`; });
-        container.innerHTML = html + '</table>';
+        try {
+            const snap = await db.collection('results').where('class', '==', cls).get();
+            const container = $('resultsContainer');
+            if (snap.empty) return container.innerHTML = '<p style="color:#64748b;">No results yet.</p>';
+            let html = '<table><tr><th>Student</th><th>Subject</th><th>Score</th><th>Total</th><th>Date</th></tr>';
+            snap.forEach(d => { const data = d.data(); html += `<tr><td><strong>${data.studentName}</strong></td><td>${data.subject}</td><td>${data.score}</td><td>${data.totalQuestions}</td><td>${data.submittedAt?.toDate?.()?.toLocaleDateString() || 'N/A'}</td></tr>`; });
+            container.innerHTML = html + '</table>';
+        } catch (e) {
+            console.error('Error loading results:', e);
+            $('resultsContainer').innerHTML = '<p style="color:#dc2626;">❌ Error loading results.</p>';
+        }
     }
 
     // =============================================================
@@ -826,11 +908,11 @@
             const prefillMap = {};
             existingSnap.forEach(d => { prefillMap[d.data().studentName] = d.data(); });
 
-            // Build the report card UI with auto-save
             await buildReportCardUI(cls, prefillMap);
             showToast(`✅ Loaded ${reportStudentsList.length} students and ${currentSubjects.length} subjects. Auto-save enabled.`, 'success');
 
         } catch (e) {
+            console.error('Error loading students:', e);
             area.innerHTML = `<p style="color:#dc2626;">❌ Error loading students: ${e.message}</p>`;
             showToast('❌ Error loading data.', 'error');
         }
@@ -920,7 +1002,6 @@
                         <tbody>
         `;
 
-        // Subject rows
         currentSubjects.forEach((sub, idx) => {
             html += `<tr><td>${idx + 1}</td><td style="text-align:left; font-weight:700;">${sub}</td>`;
             
@@ -977,7 +1058,7 @@
         document.querySelectorAll('#reportBuilderArea input[type="number"]').forEach(input => { recalculateRow(input); });
         
         // Calculate positions and percentages
-        calculatePositionsAndPercentages(cls);
+        setTimeout(() => calculatePositionsAndPercentages(cls), 300);
 
         // Auto-save after loading
         setTimeout(() => autoSaveReportCard(cls), 500);
@@ -1012,7 +1093,7 @@
 
         const thirdTotal = ca + exam;
         const cumTotal = first + second + thirdTotal;
-        const avg = cumTotal / 3; // Average of the three terms
+        const avg = cumTotal / 3;
 
         thirdTotalCell.innerText = thirdTotal;
         avgCell.innerText = avg.toFixed(1) + '%';
@@ -1028,13 +1109,15 @@
 
         gradeCell.innerText = grade;
         remarkCell.innerText = remark;
+
+        // Recalculate positions after any change
+        calculatePositionsAndPercentages(currentUser.class);
     }
 
     // =============================================================
     // CALCULATE POSITIONS & PERCENTAGES (Across all students)
     // =============================================================
     function calculatePositionsAndPercentages(cls) {
-        // For each subject, calculate the average for each student, then rank them
         currentSubjects.forEach(sub => {
             const studentScores = [];
             
@@ -1046,10 +1129,8 @@
                 }
             });
 
-            // Sort by average descending (highest first)
             studentScores.sort((a, b) => b.avg - a.avg);
 
-            // Assign positions
             let rank = 1;
             for (let i = 0; i < studentScores.length; i++) {
                 if (i > 0 && studentScores[i].avg < studentScores[i-1].avg) {
@@ -1091,7 +1172,6 @@
                 const daysAbsent = parseInt(document.getElementById('reportDaysAbsent')?.value) || 5;
                 const commentary = document.getElementById('reportCommentary')?.value || '';
 
-                // Get qualities
                 const qualitySelects = document.querySelectorAll('.quality-select');
                 const qualities = {};
                 qualitySelects.forEach(sel => {
@@ -1099,11 +1179,9 @@
                     qualities[label] = parseInt(sel.value) || 3;
                 });
 
-                // Get extracurriculars
                 const extracurricularChecks = document.querySelectorAll('.extracurricular-check:checked');
                 const extracurriculars = Array.from(extracurricularChecks).map(cb => cb.value);
 
-                // For each student, build and save the report card data
                 for (let student of reportStudentsList) {
                     const subjectsData = {};
                     let studentHasData = false;
@@ -1150,8 +1228,6 @@
                     await db.collection('reportCards').doc(`${cls}_${student}`).set(reportCardData, { merge: true });
                 }
 
-                // Show toast only occasionally (not on every keystroke)
-                // We'll show a subtle indicator instead
                 const statusEl = document.querySelector('.auto-save-badge');
                 if (statusEl) {
                     statusEl.textContent = '💾 Saved';
@@ -1178,7 +1254,7 @@
                 isSaving = false;
                 saveTimeout = null;
             }
-        }, 2000); // 2-second debounce
+        }, 2000);
     }
 
     // =============================================================
@@ -1186,7 +1262,6 @@
     // =============================================================
     $('pushAdminBtn').addEventListener('click', async () => {
         if (!confirm('📤 Push all report cards to Admin for approval?')) return;
-        // First save everything
         await autoSaveReportCard(currentUser.class);
         showToast('✅ Report cards pushed to Admin!', 'success');
     });
@@ -1201,6 +1276,7 @@
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(tab.dataset.tab).classList.add('active');
             if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
+            if (tab.dataset.tab === 'tabResults') loadResults(currentUser.class);
         });
     });
 
@@ -1211,6 +1287,7 @@
     $('loginPage').classList.add('active');
     loadMasterClassList();
     console.log('✅ Teacher Dashboard with Auto-Save & Position is ready!');
+    console.log('💡 Make sure your CSV uses the exact subject name as selected!');
 </script>
 </body>
 </html>
