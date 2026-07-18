@@ -105,21 +105,17 @@
 
         .csv-paste-section { background: #f1f5f9; border-radius: 16px; padding: 16px 20px; margin-top: 12px; border: 2px dashed #cbd5e1; }
         .csv-paste-section textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; resize: vertical; background: white; }
-        .csv-paste-section textarea:focus { border-color: #4f46e5; }
         .csv-paste-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-paste-section .btn-csv.download { background: #f59e0b; color: #1e1b4b; }
         .csv-paste-section .btn-csv.download:hover { background: #d97706; }
         .csv-paste-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-paste-section .btn-csv.upload:hover { background: #059669; }
-        .csv-paste-section .btn-csv.debug { background: #dc2626; color: white; }
-        .csv-paste-section .btn-csv.debug:hover { background: #b91c1c; }
         .csv-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-top: 12px; }
         .csv-section label { font-weight: 600; color: #334155; font-size: 14px; }
         .csv-section input[type="file"] { flex: 1; font-size: 13px; font-family: 'Inter', sans-serif; }
         .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-section .btn-csv.upload:hover { background: #059669; }
-        .debug-output { background: #1e1e2e; color: #a6e22e; padding: 16px; border-radius: 16px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; margin-top: 10px; display: none; border: 2px solid #dc2626; }
 
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         .card-panel h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
@@ -128,13 +124,9 @@
         .toggle-group label.active-toggle { border-color: #4f46e5; background: #eef2ff; }
         .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .btn-primary { background: #4f46e5; color: white; }
-        .btn-primary:hover { background: #4338ca; }
         .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; }
         .btn-warning { background: #f59e0b; color: #1e1b4b; }
-        .btn-warning:hover { background: #d97706; }
         .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
         .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
         .btn-outline:hover { background: #f8fafc; }
         .schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
@@ -145,7 +137,6 @@
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
         th { background: #f1f5f9; font-weight: 700; }
-        .rep-input { width: 55px; padding: 6px 4px; text-align: center; border-radius: 30px; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; }
 
         .report-builder-container { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; margin-top: 15px; }
         .section-label { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 8px; display: block; }
@@ -163,7 +154,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 800px) {
             body { padding: 0; }
             #app { height: 100vh; border-radius: 0; max-width: 100%; }
@@ -176,7 +166,6 @@
             .sidebar-toggle { display: inline-block; }
             .sidebar .subject-list, .sidebar .add-subject-row, .sidebar .sidebar-title { display: none; }
             .sidebar.expanded .subject-list, .sidebar.expanded .add-subject-row, .sidebar.expanded .sidebar-title { display: block; }
-            .sidebar.expanded .subject-list { display: block; }
             .main-panel { padding: 15px; }
             .schedule-grid { grid-template-columns: 1fr; }
             .report-builder-container { padding: 10px; }
@@ -185,7 +174,6 @@
             table th, table td { padding: 4px 2px; }
             .score-input { width: 40px !important; font-size: 11px !important; }
             .photo-container-small { width: 70px !important; height: 70px !important; }
-            #studentSelector { font-size: 14px; }
         }
     </style>
 </head>
@@ -241,10 +229,8 @@
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
                             <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
                             <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700;">🗑️ Clear</button>
-                            <button class="btn-csv debug" id="debugCsvBtn">🐛 Debug</button>
                         </div>
                         <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
-                        <div id="debugOutput" class="debug-output"></div>
                     </div>
                     <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
                 </div>
@@ -331,7 +317,6 @@
     let studentPositions = {};
     let isSaving = false;
 
-    // Sidebar toggle for mobile
     document.getElementById('sidebarToggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('expanded');
     });
@@ -389,8 +374,11 @@
     async function loadSubjects(cls) {
         try {
             const doc = await db.collection('classes').doc(cls).get();
-            currentSubjects = doc.exists ? doc.data().subjects || [] : ['English','Mathematics','Science'];
-            if (!doc.exists) await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+            currentSubjects = doc.exists ? doc.data().subjects || [] : [];
+            if (!doc.exists || !currentSubjects.length) {
+                currentSubjects = ['English', 'Mathematics', 'Science'];
+                await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+            }
             renderSubjects();
             if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
             else { selectedSubject = null; clearQuestionPanel(); }
@@ -528,34 +516,20 @@
     }
 
     async function loadSchedule(cls) {
-        try {
-            const doc = await db.collection('examControls').doc(cls).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16);
-                if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16);
-                $('durationMinutes').value = data.durationMinutes || 30;
-            }
-        } catch (e) {}
+        try { const doc = await db.collection('examControls').doc(cls).get(); if (doc.exists) { const data = doc.data(); if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16); if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16); $('durationMinutes').value = data.durationMinutes || 30; } } catch (e) {}
     }
 
     $('publishWithScheduleBtn').addEventListener('click', async () => {
         const startStr = $('startDateTime').value, endStr = $('endDateTime').value, duration = parseInt($('durationMinutes').value) || 30;
         if (!startStr || !endStr) return showToast('⚠️ Set dates.', 'warning');
-        const startDate = new Date(startStr), endDate = new Date(endStr);
-        if (startDate >= endDate) return showToast('⚠️ Start before End.', 'error');
-        await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(startDate), scheduledEnd: firebase.firestore.Timestamp.fromDate(endDate), durationMinutes: duration, isActive: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        if (new Date(startStr) >= new Date(endStr)) return showToast('⚠️ Start before End.', 'error');
+        await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(new Date(startStr)), scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(endStr)), durationMinutes: duration, isActive: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
         const active = [...document.querySelectorAll('.examCb:checked')].map(cb => cb.value);
         await db.collection('examStatus').doc(currentUser.class).set({ activeSubjects: active }, { merge: true });
         showToast('✅ Published!', 'success');
     });
 
-    $('forceStartBtn').addEventListener('click', async () => {
-        const now = new Date(), endDate = new Date(now.getTime() + 86400000);
-        await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(now), scheduledEnd: firebase.firestore.Timestamp.fromDate(endDate), durationMinutes: parseInt($('durationMinutes').value)||30, isActive: true, forceStarted: true }, { merge: true });
-        showToast('⚡ Started!', 'success');
-    });
-
+    $('forceStartBtn').addEventListener('click', async () => { const now = new Date(); await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(now), scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(now.getTime()+86400000)), durationMinutes: parseInt($('durationMinutes').value)||30, isActive: true, forceStarted: true }, { merge: true }); showToast('⚡ Started!', 'success'); });
     $('stopExamBtn').addEventListener('click', async () => { await db.collection('examControls').doc(currentUser.class).update({ isActive: false }); showToast('🛑 Stopped.', 'warning'); });
     $('clearScheduleBtn').addEventListener('click', async () => { await db.collection('examControls').doc(currentUser.class).delete(); $('startDateTime').value=''; $('endDateTime').value=''; showToast('🗑️ Cleared.', 'warning'); });
 
@@ -569,96 +543,53 @@
     }
 
     // =============================================================
-    // REPORTS TAB
+    // REPORTS TAB - ONLY SHOW REAL STUDENTS FROM RESULTS
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
         const area = $('reportBuilderArea');
-        area.innerHTML = `<div class="card-panel" style="text-align:center; padding:30px;"><div style="font-size:36px;">🔄</div><p style="font-weight:700;">Loading students...</p><p id="loadingStep" style="color:#64748b;">Fetching results...</p></div>`;
+        area.innerHTML = `<div class="card-panel" style="text-align:center; padding:30px;"><div style="font-size:36px;">🔄</div><p style="font-weight:700;">Loading students from results...</p><p id="loadingStep" style="color:#64748b;"></p></div>`;
 
         try {
+            // ONLY get students who actually took exams in THIS class
             const resultsSnap = await db.collection('results').where('class','==',cls).get();
-            document.getElementById('loadingStep').innerText = 'Merging names...';
-            const rawEntries = [];
-            resultsSnap.forEach(d => { const data = d.data(); rawEntries.push({ originalName: (data.studentName||'').trim(), subject: data.subject, score: data.score||0 }); });
+            
+            if (resultsSnap.empty) {
+                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No exam results found for ${cls}.</p><p style="color:#64748b;">Students must take exams first.</p></div>`;
+                return;
+            }
 
-            const nameGroups = groupSimilarNames(rawEntries);
-            const mergedResults = {};
-            const canonicalNames = [];
-            nameGroups.forEach((entries, canonicalName) => {
-                mergedResults[canonicalName] = {};
-                entries.forEach(entry => { const existing = mergedResults[canonicalName][entry.subject]; if (!existing || entry.score > existing) mergedResults[canonicalName][entry.subject] = entry.score; });
-                canonicalNames.push(canonicalName);
+            // Collect unique student names ONLY from results
+            const studentNameSet = new Set();
+            const tempResults = {};
+            
+            resultsSnap.forEach(d => {
+                const data = d.data();
+                const name = (data.studentName || '').trim();
+                // Only accept names with first AND last name
+                if (name && name.split(/\s+/).length >= 2) {
+                    studentNameSet.add(name);
+                    if (!tempResults[name]) tempResults[name] = {};
+                    tempResults[name][data.subject] = data.score || 0;
+                }
             });
-            allStudentResults = mergedResults;
 
-            // Also load from reportCards
-            const manualSnap = await db.collection('reportCards').where('class','==',cls).get();
-            const manualStudents = new Set();
-            manualSnap.forEach(d => { if (d.data().studentName) manualStudents.add(d.data().studentName); });
-
-            let uniqueStudents = [...new Set([...canonicalNames, ...manualStudents])].filter(name => {
-                const parts = name.trim().split(/\s+/);
-                return parts.length >= 2 && name.length > 5;
-            }).sort();
-
-            reportStudentsList = uniqueStudents;
-            document.getElementById('loadingStep').innerText = `${uniqueStudents.length} students loaded`;
-            await new Promise(r => setTimeout(r, 300));
+            allStudentResults = tempResults;
+            
+            // Sort alphabetically - NO duplicates
+            reportStudentsList = [...studentNameSet].sort();
+            
+            document.getElementById('loadingStep').innerText = `${reportStudentsList.length} students found in results`;
+            
+            await new Promise(r => setTimeout(r, 200));
             buildReportBuilderUI(cls);
-            showToast(`✅ ${uniqueStudents.length} students`, 'success');
+            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
+
         } catch (e) {
+            console.error('Error:', e);
             area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="color:#dc2626;">Error: ${e.message}</p><button class="btn-action btn-primary" onclick="document.getElementById('buildReportBtn').click()">🔄 Retry</button></div>`;
         }
     });
-
-    function groupSimilarNames(rawEntries) {
-        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
-        const groups = new Map();
-        const assigned = new Set();
-        allNames.forEach(name => {
-            if (assigned.has(name)) return;
-            const similarNames = allNames.filter(other => { if (assigned.has(other)) return false; return areNamesSamePerson(name, other); });
-            const canonicalName = pickBestName(similarNames);
-            const groupEntries = [];
-            similarNames.forEach(sn => { assigned.add(sn); groupEntries.push(...rawEntries.filter(e => e.originalName === sn)); });
-            groups.set(canonicalName, groupEntries);
-        });
-        return groups;
-    }
-
-    function areNamesSamePerson(name1, name2) {
-        const n1 = name1.toLowerCase().trim().replace(/\s+/g,' '), n2 = name2.toLowerCase().trim().replace(/\s+/g,' ');
-        if (n1 === n2) return true;
-        const w1 = n1.split(' ').sort(), w2 = n2.split(' ').sort();
-        if (w1.join(' ') === w2.join(' ')) return false;
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-        const set1 = new Set(w1), set2 = new Set(w2);
-        let matches = 0;
-        set1.forEach(w => { if (set2.has(w)) matches++; });
-        const overlapRatio = matches / Math.max(set1.size, set2.size);
-        if (overlapRatio >= 0.7 && Math.abs(w1.join('').length - w2.join('').length) < 3) return true;
-        if (overlapRatio >= 0.5 && matches >= 1 && levenshteinDistance(w1.join(''), w2.join('')) <= 2) return true;
-        return false;
-    }
-
-    function levenshteinDistance(a, b) {
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-        for (let i = 1; i <= b.length; i++) for (let j = 1; j <= a.length; j++) matrix[i][j] = b.charAt(i-1) === a.charAt(j-1) ? matrix[i-1][j-1] : Math.min(matrix[i-1][j-1]+1, matrix[i][j-1]+1, matrix[i-1][j]+1);
-        return matrix[b.length][a.length];
-    }
-
-    function pickBestName(names) {
-        if (names.length === 1) return names[0];
-        return names.sort((a, b) => {
-            const aSpace = a.includes(' ') ? 1 : 0, bSpace = b.includes(' ') ? 1 : 0;
-            if (aSpace !== bSpace) return bSpace - aSpace;
-            if (a.length !== b.length) return b.length - a.length;
-            return ((b.match(/[A-Z]/g)||[]).length) - ((a.match(/[A-Z]/g)||[]).length);
-        })[0];
-    }
 
     function buildReportBuilderUI(cls) {
         const area = $('reportBuilderArea');
@@ -668,16 +599,18 @@
                 <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
                 <span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span>
             </div>
-            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects</p>
+            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">
+                📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects
+            </p>
 
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                 <label class="section-label">👤 Select Student:</label>
                 <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
-                    <option value="">-- Choose --</option>
+                    <option value="">-- Choose a student --</option>
                     ${reportStudentsList.map(s => `<option value="${s}">${s}</option>`).join('')}
                 </select>
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                    <input id="newStudentInput" placeholder="➕ Add student not in list..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
+                    <input id="newStudentInput" placeholder="➕ Add student manually..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
                     <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
                 </div>
                 <div id="nameSuggestions" style="margin-top:8px;"></div>
@@ -700,7 +633,7 @@
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📖 Subject Scores</div>
+                    <div class="section-label">📖 Subject Scores (${currentSubjects.length} subjects for ${cls})</div>
                     <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;">
                         <thead><tr style="background:#f1f5f9;"><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th><th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th></tr></thead>
                         <tbody>${currentSubjects.map(sub => `<tr>
@@ -762,12 +695,11 @@
         const newStudentInput = document.getElementById('newStudentInput');
         const suggestionsDiv = document.getElementById('nameSuggestions');
 
-        // Auto-suggest as user types
+        // Auto-suggest from Firestore as teacher types
         newStudentInput.addEventListener('input', async () => {
             const query = newStudentInput.value.trim().toLowerCase();
             if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
 
-            // Search Firestore for similar names
             const snap = await db.collection('reportCards').where('class','==',cls).get();
             const matches = [];
             snap.forEach(d => {
@@ -777,12 +709,10 @@
                 }
             });
 
-            // Also check results
-            const allNames = [...new Set([...reportStudentsList, ...matches])].filter(n => n.toLowerCase().includes(query));
-
-            if (allNames.length > 0) {
-                suggestionsDiv.innerHTML = allNames.slice(0, 5).map(n => `
-                    <div class="suggestion-item" data-name="${n}">📋 ${n}</div>
+            const uniqueMatches = [...new Set(matches)];
+            if (uniqueMatches.length > 0) {
+                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n => `
+                    <div class="suggestion-item" data-name="${n}">📋 ${n} (existing record)</div>
                 `).join('');
                 document.querySelectorAll('.suggestion-item').forEach(item => {
                     item.addEventListener('click', () => {
@@ -791,48 +721,59 @@
                             reportStudentsList.push(name);
                             reportStudentsList.sort();
                         }
+                        rebuildSelector();
                         selector.value = name;
                         newStudentInput.value = '';
                         suggestionsDiv.innerHTML = '';
-                        rebuildSelector();
                         selector.dispatchEvent(new Event('change'));
                         showToast(`📋 Loaded: ${name}`, 'success');
                     });
                 });
             } else {
-                suggestionsDiv.innerHTML = '';
+                suggestionsDiv.innerHTML = query.length >= 3 ? `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 "${newStudentInput.value.trim()}" will be added as new student</div>` : '';
             }
         });
 
         document.getElementById('addStudentBtn').addEventListener('click', async () => {
             const name = newStudentInput.value.trim();
             if (!name) return showToast('⚠️ Enter a name.', 'warning');
-            if (name.split(/\s+/).length < 2) return showToast('⚠️ Enter first and last name.', 'warning');
+            if (name.split(/\s+/).length < 2) return showToast('⚠️ Enter first AND last name.', 'warning');
 
-            // Check Firestore for similar names
-            const existingSnap = await db.collection('reportCards').where('class','==',cls).get();
+            // Check if similar name exists in Firestore
+            const snap = await db.collection('reportCards').where('class','==',cls).get();
             let matchedName = null;
-            existingSnap.forEach(d => {
-                const existingName = d.data().studentName;
-                if (existingName && areNamesSamePerson(name, existingName)) matchedName = existingName;
+            snap.forEach(d => {
+                const existing = d.data().studentName;
+                if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing;
             });
 
-            if (matchedName) {
-                showToast(`📋 Found: "${matchedName}". Loading...`, 'warning');
-                if (!reportStudentsList.includes(matchedName)) { reportStudentsList.push(matchedName); reportStudentsList.sort(); }
+            if (matchedName && matchedName !== name) {
+                // Same name, different case - use existing
+                if (!reportStudentsList.includes(matchedName)) {
+                    reportStudentsList.push(matchedName);
+                    reportStudentsList.sort();
+                }
+                rebuildSelector();
                 selector.value = matchedName;
                 newStudentInput.value = '';
                 suggestionsDiv.innerHTML = '';
-                rebuildSelector();
                 selector.dispatchEvent(new Event('change'));
-            } else {
-                if (!reportStudentsList.includes(name)) { reportStudentsList.push(name); reportStudentsList.sort(); }
+                showToast(`📋 Using existing: "${matchedName}"`, 'warning');
+            } else if (!reportStudentsList.includes(name)) {
+                reportStudentsList.push(name);
+                reportStudentsList.sort();
+                rebuildSelector();
                 selector.value = name;
                 newStudentInput.value = '';
                 suggestionsDiv.innerHTML = '';
-                rebuildSelector();
                 selector.dispatchEvent(new Event('change'));
                 showToast(`✅ "${name}" added!`, 'success');
+            } else {
+                selector.value = name;
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change'));
+                showToast(`ℹ️ "${name}" already in list.`, 'warning');
             }
         });
 
@@ -897,7 +838,8 @@
 
     function rebuildSelector() {
         const selector = document.getElementById('studentSelector');
-        const currentVal = selector.value;
+        const currentVal = selector ? selector.value : '';
+        if (!selector) return;
         selector.innerHTML = '<option value="">-- Choose --</option>' + reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
     }
 
@@ -948,10 +890,15 @@
             if (data.principalRemarks && pe) pe.value = data.principalRemarks;
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
-        if (allStudentResults[student]) Object.keys(allStudentResults[student]).forEach(sub => {
-            const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-            if (ti && !ti.value) ti.value = allStudentResults[student][sub];
-        });
+        // Auto-fill 3rd term from results for THIS class's subjects only
+        if (allStudentResults[student]) {
+            currentSubjects.forEach(sub => {
+                if (allStudentResults[student][sub] !== undefined) {
+                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+                    if (ti && !ti.value) ti.value = allStudentResults[student][sub];
+                }
+            });
+        }
         calculateStudentScores();
     }
 
@@ -1026,7 +973,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Dashboard Ready - Sidebar collapse, Add Student, Positions');
+    console.log('✅ Dashboard Ready - Per-class subjects & students only');
 </script>
 </body>
 </html>
