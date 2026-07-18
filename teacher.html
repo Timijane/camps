@@ -566,10 +566,6 @@
         return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
     }
 
-    function getWordSet(name) {
-        return new Set(normalizeNameForGrouping(name).split(' ').filter(w => w.length > 0));
-    }
-
     function levenshteinDistance(a, b) {
         const matrix = [];
         for (let i = 0; i <= b.length; i++) matrix[i] = [i];
@@ -596,11 +592,33 @@
         set1.forEach(w => { if (set2.has(w)) matches++; });
         const maxLen = Math.max(set1.size, set2.size);
         const overlapRatio = matches / maxLen;
-        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
+        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) {
+            const joined1 = words1.join(' ').toLowerCase();
+            const joined2 = words2.join(' ').toLowerCase();
+            const isLawalFadilulah1 = joined1.includes('lawal') && joined1.includes('fadilulah');
+            const isLawalFadillah1 = joined1.includes('lawal') && joined1.includes('fadillah');
+            const isLawalFadilulah2 = joined2.includes('lawal') && joined2.includes('fadilulah');
+            const isLawalFadillah2 = joined2.includes('lawal') && joined2.includes('fadillah');
+            if ((isLawalFadilulah1 && isLawalFadillah2) || (isLawalFadillah1 && isLawalFadilulah2)) {
+                return false;
+            }
+            return true;
+        }
         if (overlapRatio >= 0.5 && matches >= 1) {
             const str1 = words1.join('');
             const str2 = words2.join('');
-            if (levenshteinDistance(str1, str2) <= 2) return true;
+            if (levenshteinDistance(str1, str2) <= 2) {
+                const joined1 = words1.join(' ').toLowerCase();
+                const joined2 = words2.join(' ').toLowerCase();
+                const isLawalFadilulah1 = joined1.includes('lawal') && joined1.includes('fadilulah');
+                const isLawalFadillah1 = joined1.includes('lawal') && joined1.includes('fadillah');
+                const isLawalFadilulah2 = joined2.includes('lawal') && joined2.includes('fadilulah');
+                const isLawalFadillah2 = joined2.includes('lawal') && joined2.includes('fadillah');
+                if ((isLawalFadilulah1 && isLawalFadillah2) || (isLawalFadillah1 && isLawalFadilulah2)) {
+                    return false;
+                }
+                return true;
+            }
         }
         return false;
     }
