@@ -560,7 +560,79 @@
     }
 
     // =============================================================
-    // REPORTS TAB
+    // SMART NAME DEDUPLICATION FUNCTIONS
+    // =============================================================
+    function normalizeNameForGrouping(name) {
+        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
+    }
+
+    function getWordSet(name) {
+        return new Set(normalizeNameForGrouping(name).split(' ').filter(w => w.length > 0));
+    }
+
+    function levenshteinDistance(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                matrix[i][j] = b.charAt(i-1) === a.charAt(j-1) ? matrix[i-1][j-1] : Math.min(matrix[i-1][j-1]+1, matrix[i][j-1]+1, matrix[i-1][j]+1);
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    function areNamesSamePerson(name1, name2) {
+        const n1 = normalizeNameForGrouping(name1);
+        const n2 = normalizeNameForGrouping(name2);
+        if (n1 === n2) return true;
+        const words1 = n1.split(' ').sort();
+        const words2 = n2.split(' ').sort();
+        if (words1.join(' ') === words2.join(' ')) return false;
+        if (n1.includes(n2) || n2.includes(n1)) return true;
+        const set1 = new Set(words1);
+        const set2 = new Set(words2);
+        let matches = 0;
+        set1.forEach(w => { if (set2.has(w)) matches++; });
+        const maxLen = Math.max(set1.size, set2.size);
+        const overlapRatio = matches / maxLen;
+        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
+        if (overlapRatio >= 0.5 && matches >= 1) {
+            const str1 = words1.join('');
+            const str2 = words2.join('');
+            if (levenshteinDistance(str1, str2) <= 2) return true;
+        }
+        return false;
+    }
+
+    function pickBestName(names) {
+        if (names.length === 1) return names[0];
+        return names.sort((a, b) => {
+            const aSpace = a.includes(' ') ? 1 : 0;
+            const bSpace = b.includes(' ') ? 1 : 0;
+            if (aSpace !== bSpace) return bSpace - aSpace;
+            if (a.length !== b.length) return b.length - a.length;
+            return ((b.match(/[A-Z]/g)||[]).length) - ((a.match(/[A-Z]/g)||[]).length);
+        })[0];
+    }
+
+    function groupSimilarNames(rawEntries) {
+        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
+        const groups = new Map();
+        const assigned = new Set();
+        allNames.forEach(name => {
+            if (assigned.has(name)) return;
+            const similarNames = allNames.filter(other => { if (assigned.has(other)) return false; return areNamesSamePerson(name, other); });
+            const canonicalName = pickBestName(similarNames);
+            const groupEntries = [];
+            similarNames.forEach(sn => { assigned.add(sn); groupEntries.push(...rawEntries.filter(e => e.originalName === sn)); });
+            groups.set(canonicalName, groupEntries);
+        });
+        return groups;
+    }
+
+    // =============================================================
+    // REPORTS TAB WITH SMART DEDUPLICATION
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
@@ -574,25 +646,52 @@
                 return;
             }
 
-            const studentNameSet = new Set();
-            const tempResults = {};
+            document.getElementById('loadingStep').innerText = 'Deduplicating student names...';
+
+            const rawEntries = [];
             resultsSnap.forEach(d => {
                 const data = d.data();
-                const name = (data.studentName || '').trim();
-                if (name && name.split(/\s+/).length >= 2) {
-                    studentNameSet.add(name);
-                    if (!tempResults[name]) tempResults[name] = {};
-                    tempResults[name][data.subject] = data.score || 0;
-                }
+                rawEntries.push({ originalName: (data.studentName || '').trim(), subject: data.subject, score: data.score || 0 });
             });
 
-            allStudentResults = tempResults;
-            reportStudentsList = [...studentNameSet].sort();
-            document.getElementById('loadingStep').innerText = `${reportStudentsList.length} students found`;
-            await new Promise(r => setTimeout(r, 200));
+            const nameGroups = groupSimilarNames(rawEntries);
+            const mergedResults = {};
+            const canonicalNames = [];
+
+            nameGroups.forEach((entries, canonicalName) => {
+                mergedResults[canonicalName] = {};
+                entries.forEach(entry => {
+                    const existing = mergedResults[canonicalName][entry.subject];
+                    if (!existing || entry.score > existing) {
+                        mergedResults[canonicalName][entry.subject] = entry.score;
+                    }
+                });
+                canonicalNames.push(canonicalName);
+            });
+
+            allStudentResults = mergedResults;
+
+            let uniqueStudents = canonicalNames.filter(name => {
+                const parts = name.trim().split(/\s+/);
+                return parts.length >= 2 && name.length > 5;
+            }).sort();
+
+            const totalRawNames = [...new Set(rawEntries.map(e => e.originalName))].length;
+            const mergedCount = totalRawNames - uniqueStudents.length;
+            document.getElementById('loadingStep').innerText = `${totalRawNames} raw entries → ${uniqueStudents.length} unique students (${mergedCount} duplicates merged)`;
+
+            if (uniqueStudents.length === 0) {
+                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No valid students found.</p></div>`;
+                return;
+            }
+
+            reportStudentsList = uniqueStudents;
+            await new Promise(r => setTimeout(r, 300));
             buildReportBuilderUI(cls);
-            showToast(`✅ ${reportStudentsList.length} students`, 'success');
+            showToast(`✅ ${uniqueStudents.length} students loaded (${mergedCount} duplicates merged)`, 'success');
+
         } catch (e) {
+            console.error('Error:', e);
             area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="color:#dc2626;">Error: ${e.message}</p><button class="btn-action btn-primary" onclick="document.getElementById('buildReportBtn').click()">🔄 Retry</button></div>`;
         }
     });
@@ -927,7 +1026,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Full Teacher Dashboard Ready');
+    console.log('✅ Full Teacher Dashboard Ready with Smart Deduplication');
 </script>
 </body>
 </html>
