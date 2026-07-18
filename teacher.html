@@ -116,6 +116,7 @@
         .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-section .btn-csv.upload:hover { background: #059669; }
+        .debug-output { background: #1e1e2e; color: #a6e22e; padding: 16px; border-radius: 16px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; margin-top: 10px; display: none; border: 2px solid #dc2626; }
 
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         .card-panel h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
@@ -124,9 +125,13 @@
         .toggle-group label.active-toggle { border-color: #4f46e5; background: #eef2ff; }
         .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
         .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
         .btn-warning { background: #f59e0b; color: #1e1b4b; }
+        .btn-warning:hover { background: #d97706; }
         .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
         .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
         .btn-outline:hover { background: #f8fafc; }
         .schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
@@ -137,6 +142,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
         th { background: #f1f5f9; font-weight: 700; }
+        .rep-input { width: 55px; padding: 6px 4px; text-align: center; border-radius: 30px; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; }
 
         .report-builder-container { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; margin-top: 15px; }
         .section-label { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 8px; display: block; }
@@ -166,6 +172,7 @@
             .sidebar-toggle { display: inline-block; }
             .sidebar .subject-list, .sidebar .add-subject-row, .sidebar .sidebar-title { display: none; }
             .sidebar.expanded .subject-list, .sidebar.expanded .add-subject-row, .sidebar.expanded .sidebar-title { display: block; }
+            .sidebar.expanded .subject-list { display: block; }
             .main-panel { padding: 15px; }
             .schedule-grid { grid-template-columns: 1fr; }
             .report-builder-container { padding: 10px; }
@@ -174,6 +181,7 @@
             table th, table td { padding: 4px 2px; }
             .score-input { width: 40px !important; font-size: 11px !important; }
             .photo-container-small { width: 70px !important; height: 70px !important; }
+            #studentSelector { font-size: 14px; }
         }
     </style>
 </head>
@@ -229,8 +237,10 @@
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
                             <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
                             <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700;">🗑️ Clear</button>
+                            <button class="btn-csv debug" id="debugCsvBtn">🐛 Debug</button>
                         </div>
                         <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
+                        <div id="debugOutput" class="debug-output"></div>
                     </div>
                     <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
                 </div>
@@ -317,9 +327,7 @@
     let studentPositions = {};
     let isSaving = false;
 
-    document.getElementById('sidebarToggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('expanded');
-    });
+    document.getElementById('sidebarToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('expanded'));
 
     async function loadMasterClassList() {
         try {
@@ -507,6 +515,15 @@
         }});
     });
 
+    $('debugCsvBtn').addEventListener('click', () => {
+        const csvText = $('csvPasteArea').value.trim();
+        const debugEl = $('debugOutput');
+        debugEl.style.display = 'block';
+        debugEl.innerHTML = '🐛 Debug: ' + csvText.substring(0, 500) + '\n...\n✅ Ready to parse.';
+    });
+
+    $('clearPasteBtn').addEventListener('click', () => { $('csvPasteArea').value = ''; $('debugOutput').style.display = 'none'; showToast('🗑️ Cleared.', 'warning'); });
+
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
         const active = status.exists ? status.data().activeSubjects || [] : [];
@@ -543,7 +560,7 @@
     }
 
     // =============================================================
-    // REPORTS TAB - ONLY SHOW REAL STUDENTS FROM RESULTS
+    // REPORTS TAB
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
@@ -551,22 +568,17 @@
         area.innerHTML = `<div class="card-panel" style="text-align:center; padding:30px;"><div style="font-size:36px;">🔄</div><p style="font-weight:700;">Loading students from results...</p><p id="loadingStep" style="color:#64748b;"></p></div>`;
 
         try {
-            // ONLY get students who actually took exams in THIS class
             const resultsSnap = await db.collection('results').where('class','==',cls).get();
-            
             if (resultsSnap.empty) {
-                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No exam results found for ${cls}.</p><p style="color:#64748b;">Students must take exams first.</p></div>`;
+                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No exam results found for ${cls}.</p></div>`;
                 return;
             }
 
-            // Collect unique student names ONLY from results
             const studentNameSet = new Set();
             const tempResults = {};
-            
             resultsSnap.forEach(d => {
                 const data = d.data();
                 const name = (data.studentName || '').trim();
-                // Only accept names with first AND last name
                 if (name && name.split(/\s+/).length >= 2) {
                     studentNameSet.add(name);
                     if (!tempResults[name]) tempResults[name] = {};
@@ -575,18 +587,12 @@
             });
 
             allStudentResults = tempResults;
-            
-            // Sort alphabetically - NO duplicates
             reportStudentsList = [...studentNameSet].sort();
-            
-            document.getElementById('loadingStep').innerText = `${reportStudentsList.length} students found in results`;
-            
+            document.getElementById('loadingStep').innerText = `${reportStudentsList.length} students found`;
             await new Promise(r => setTimeout(r, 200));
             buildReportBuilderUI(cls);
-            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
-
+            showToast(`✅ ${reportStudentsList.length} students`, 'success');
         } catch (e) {
-            console.error('Error:', e);
             area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="color:#dc2626;">Error: ${e.message}</p><button class="btn-action btn-primary" onclick="document.getElementById('buildReportBtn').click()">🔄 Retry</button></div>`;
         }
     });
@@ -599,9 +605,7 @@
                 <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
                 <span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span>
             </div>
-            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">
-                📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects
-            </p>
+            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects</p>
 
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                 <label class="section-label">👤 Select Student:</label>
@@ -633,7 +637,7 @@
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📖 Subject Scores (${currentSubjects.length} subjects for ${cls})</div>
+                    <div class="section-label">📖 Subject Scores</div>
                     <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;">
                         <thead><tr style="background:#f1f5f9;"><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th><th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th></tr></thead>
                         <tbody>${currentSubjects.map(sub => `<tr>
@@ -648,14 +652,14 @@
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⭐ Affective</div>
+                    <div class="section-label">⭐ Affective Domain</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
                         ${['Attentiveness','Punctuality','Neatness','Honesty','Respectfulness','Diligence','Leadership','Self-Control','Cooperation','Politeness','Obedience'].map(t => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${t}</span><select class="affective-select" data-trait="${t}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
                     </div>
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">🤸 Psychomotor</div>
+                    <div class="section-label">🤸 Psychomotor Domain</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
                         ${['Handwriting','Drawing','Sports','Crafts','Music','Verbal','Fitness','Creative'].map(s => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${s}</span><select class="psychomotor-select" data-skill="${s}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
                     </div>
@@ -695,86 +699,40 @@
         const newStudentInput = document.getElementById('newStudentInput');
         const suggestionsDiv = document.getElementById('nameSuggestions');
 
-        // Auto-suggest from Firestore as teacher types
         newStudentInput.addEventListener('input', async () => {
             const query = newStudentInput.value.trim().toLowerCase();
             if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
-
             const snap = await db.collection('reportCards').where('class','==',cls).get();
             const matches = [];
-            snap.forEach(d => {
-                const name = d.data().studentName;
-                if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) {
-                    matches.push(name);
-                }
-            });
-
+            snap.forEach(d => { const name = d.data().studentName; if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) matches.push(name); });
             const uniqueMatches = [...new Set(matches)];
             if (uniqueMatches.length > 0) {
-                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n => `
-                    <div class="suggestion-item" data-name="${n}">📋 ${n} (existing record)</div>
-                `).join('');
-                document.querySelectorAll('.suggestion-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const name = item.dataset.name;
-                        if (!reportStudentsList.includes(name)) {
-                            reportStudentsList.push(name);
-                            reportStudentsList.sort();
-                        }
-                        rebuildSelector();
-                        selector.value = name;
-                        newStudentInput.value = '';
-                        suggestionsDiv.innerHTML = '';
-                        selector.dispatchEvent(new Event('change'));
-                        showToast(`📋 Loaded: ${name}`, 'success');
-                    });
-                });
-            } else {
-                suggestionsDiv.innerHTML = query.length >= 3 ? `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 "${newStudentInput.value.trim()}" will be added as new student</div>` : '';
-            }
+                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n => `<div class="suggestion-item" data-name="${n}">📋 ${n} (existing)</div>`).join('');
+                document.querySelectorAll('.suggestion-item').forEach(item => item.addEventListener('click', () => {
+                    const name = item.dataset.name;
+                    if (!reportStudentsList.includes(name)) { reportStudentsList.push(name); reportStudentsList.sort(); }
+                    rebuildSelector(); selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                    selector.dispatchEvent(new Event('change')); showToast(`📋 Loaded: ${name}`, 'success');
+                }));
+            } else { suggestionsDiv.innerHTML = query.length >= 3 ? `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 Will add as new student</div>` : ''; }
         });
 
         document.getElementById('addStudentBtn').addEventListener('click', async () => {
             const name = newStudentInput.value.trim();
-            if (!name) return showToast('⚠️ Enter a name.', 'warning');
-            if (name.split(/\s+/).length < 2) return showToast('⚠️ Enter first AND last name.', 'warning');
-
-            // Check if similar name exists in Firestore
+            if (!name) return showToast('⚠️ Enter name.', 'warning');
+            if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
             const snap = await db.collection('reportCards').where('class','==',cls).get();
             let matchedName = null;
-            snap.forEach(d => {
-                const existing = d.data().studentName;
-                if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing;
-            });
-
+            snap.forEach(d => { const existing = d.data().studentName; if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing; });
             if (matchedName && matchedName !== name) {
-                // Same name, different case - use existing
-                if (!reportStudentsList.includes(matchedName)) {
-                    reportStudentsList.push(matchedName);
-                    reportStudentsList.sort();
-                }
-                rebuildSelector();
-                selector.value = matchedName;
-                newStudentInput.value = '';
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`📋 Using existing: "${matchedName}"`, 'warning');
+                if (!reportStudentsList.includes(matchedName)) { reportStudentsList.push(matchedName); reportStudentsList.sort(); }
+                rebuildSelector(); selector.value = matchedName; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change')); showToast(`📋 Using: "${matchedName}"`, 'warning');
             } else if (!reportStudentsList.includes(name)) {
-                reportStudentsList.push(name);
-                reportStudentsList.sort();
-                rebuildSelector();
-                selector.value = name;
-                newStudentInput.value = '';
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`✅ "${name}" added!`, 'success');
-            } else {
-                selector.value = name;
-                newStudentInput.value = '';
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`ℹ️ "${name}" already in list.`, 'warning');
-            }
+                reportStudentsList.push(name); reportStudentsList.sort();
+                rebuildSelector(); selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change')); showToast(`✅ Added!`, 'success');
+            } else { selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = ''; selector.dispatchEvent(new Event('change')); }
         });
 
         selector.addEventListener('change', async () => {
@@ -789,9 +747,7 @@
             if (studentPositions[student]) {
                 document.getElementById('positionDisplay').style.display = 'block';
                 document.getElementById('positionNumber').innerHTML = studentPositions[student].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[student].position) + '</small>';
-            } else {
-                document.getElementById('positionDisplay').style.display = 'none';
-            }
+            } else { document.getElementById('positionDisplay').style.display = 'none'; }
         });
 
         const photoContainer = document.querySelector('.photo-container-small');
@@ -829,8 +785,7 @@
             if (!confirm('Push ALL to Admin?')) return;
             const btn = document.getElementById('pushAllAdminBtn'); btn.innerText = '⏳...'; btn.disabled = true;
             for (let s of reportStudentsList) { selector.value = s; await saveCurrentStudent(cls); await db.collection('reportCards').doc(`${cls}_${s}`).update({ pushedToAdmin: true, pushedAt: new Date(), approved: false }).catch(()=>{}); }
-            btn.innerText = '📤 Push All'; btn.disabled = false;
-            showToast('✅ Pushed!', 'success');
+            btn.innerText = '📤 Push All'; btn.disabled = false; showToast('✅ Pushed!', 'success');
         });
 
         document.getElementById('printAllBtn').addEventListener('click', () => window.print());
@@ -838,8 +793,8 @@
 
     function rebuildSelector() {
         const selector = document.getElementById('studentSelector');
-        const currentVal = selector ? selector.value : '';
         if (!selector) return;
+        const currentVal = selector.value;
         selector.innerHTML = '<option value="">-- Choose --</option>' + reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
     }
 
@@ -890,7 +845,6 @@
             if (data.principalRemarks && pe) pe.value = data.principalRemarks;
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
-        // Auto-fill 3rd term from results for THIS class's subjects only
         if (allStudentResults[student]) {
             currentSubjects.forEach(sub => {
                 if (allStudentResults[student][sub] !== undefined) {
@@ -973,7 +927,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Dashboard Ready - Per-class subjects & students only');
+    console.log('✅ Full Teacher Dashboard Ready');
 </script>
 </body>
 </html>
