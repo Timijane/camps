@@ -213,6 +213,147 @@
             display: none;
         }
 
+        /* ----- UPDATE 6: New CSS Styles ----- */
+        .watermark-img { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) rotate(-25deg); 
+            width: 500px; 
+            opacity: 0.04; 
+            pointer-events: none; 
+            z-index: 0; 
+        }
+
+        .header-logo-row { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 20px; 
+            margin-bottom: 10px; 
+        }
+        .school-logo { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: contain; 
+            border-radius: 50%; 
+            border: 3px solid #1e1b4b; 
+            background: white; 
+        }
+        .header-text { 
+            text-align: center; 
+        }
+
+        .student-photo-container { 
+            width: 90px; 
+            height: 110px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 2px solid #e2e8f0; 
+            background: #f1f5f9; 
+            flex-shrink: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .student-photo-container img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .student-photo-placeholder { 
+            font-size: 48px; 
+            color: #94a3b8; 
+        }
+        .student-details { 
+            flex: 1; 
+            min-width: 200px; 
+        }
+        .student-details .name { 
+            font-size: 18px; 
+            font-weight: 800; 
+            color: #0f172a; 
+        }
+        .student-details .name span { 
+            color: #4f46e5; 
+        }
+        .student-details .class { 
+            font-weight: 700; 
+            color: #1e293b; 
+            font-size: 14px; 
+        }
+        .student-details .teacher { 
+            font-weight: 600; 
+            color: #475569; 
+            font-size: 13px; 
+        }
+        .promotion-badge { 
+            padding: 6px 16px; 
+            border-radius: 30px; 
+            font-weight: 800; 
+            font-size: 13px; 
+            white-space: nowrap; 
+        }
+        .promotion-badge.promoted { 
+            background: #d1fae5; 
+            color: #065f46; 
+        }
+        .promotion-badge.not-promoted { 
+            background: #fee2e2; 
+            color: #991b1b; 
+        }
+        .promotion-badge.probation { 
+            background: #fef3c7; 
+            color: #92400e; 
+        }
+
+        .position-summary { 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            margin: 10px 0; 
+            padding: 12px; 
+            background: #fefce8; 
+            border-radius: 12px; 
+            border: 2px solid #f59e0b; 
+            position: relative; 
+            z-index: 1; 
+        }
+        .position-summary .pos-item { 
+            text-align: center; 
+            padding: 0 20px; 
+            border-right: 1px solid #f59e0b; 
+        }
+        .position-summary .pos-item:last-child { 
+            border-right: none; 
+        }
+        .position-summary .pos-value { 
+            font-size: 32px; 
+            font-weight: 900; 
+            color: #1e1b4b; 
+        }
+        .position-summary .pos-label { 
+            font-size: 11px; 
+            color: #64748b; 
+            text-transform: uppercase; 
+        }
+
+        .rating-stars { 
+            color: #f59e0b; 
+            letter-spacing: 2px; 
+        }
+
+        .grade-distinction { color: #059669; font-weight: 800; }
+        .grade-excellent { color: #059669; font-weight: 800; }
+        .grade-verygood { color: #2563eb; font-weight: 800; }
+        .grade-good { color: #2563eb; font-weight: 700; }
+        .grade-aboveavg { color: #7c3aed; font-weight: 700; }
+        .grade-average { color: #d97706; font-weight: 700; }
+        .grade-belowavg { color: #ea580c; font-weight: 700; }
+        .grade-weak { color: #dc2626; font-weight: 700; }
+        .grade-fail { color: #dc2626; font-weight: 800; }
+
         /* ----- School Header ----- */
         .report-header {
             text-align: center;
@@ -570,112 +711,24 @@
         /* ========================================================== */
         /* ===== PRINT STYLES (A4 PERFECT) ===== */
         /* ========================================================== */
+        /* UPDATE 7: Replace @media print styles */
         @media print {
-            body {
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-
-            #app {
-                max-width: 100%;
-                padding: 0;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            .report-wrapper {
-                box-shadow: none;
-                border: none;
-                border-radius: 0;
-                padding: 10px 15px;
-                margin: 0;
-            }
-
-            .report-card {
-                max-width: 100%;
-                padding: 0;
-                overflow: visible;
-            }
-
-            .watermark {
-                display: block;
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) rotate(-30deg);
-                font-size: 80px;
-                font-weight: 900;
-                color: rgba(0, 0, 0, 0.06);
-                white-space: nowrap;
-                letter-spacing: 8px;
-                pointer-events: none;
-                z-index: 0;
-                font-family: 'Inter', sans-serif;
-                text-transform: uppercase;
-                width: 100%;
-                text-align: center;
-            }
-
-            .report-header,
-            .student-meta,
-            .dates-row,
-            .info-grid,
-            .table-wrap,
-            .commentary-box,
-            .signature-section,
-            .report-footer {
-                position: relative;
-                z-index: 1;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            table th {
-                background: #1e1b4b !important;
-                color: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .grand-total-row td {
-                background: #f1f5f9 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .student-meta,
-            .dates-row,
-            .info-grid .box,
-            .commentary-box {
-                background: #f8fafc !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .report-header .term-info {
-                background: #f1f5f9 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .extra-badges .badge {
-                background: #dbeafe !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            table {
-                page-break-inside: avoid;
-            }
-
-            .signature-section {
-                page-break-inside: avoid;
-            }
+            body { background: white; padding: 0; margin: 0; }
+            #app { max-width: 100%; padding: 0; }
+            .no-print { display: none !important; }
+            .report-wrapper { box-shadow: none; border: none; border-radius: 0; padding: 10px 15px; margin: 0; }
+            .report-card { max-width: 100%; padding: 0; overflow: visible; }
+            .watermark-img { opacity: 0.03 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-header, .student-meta, .dates-row, .info-grid, .table-wrap, .commentary-box, .signature-section, .report-footer, .position-summary { position: relative; z-index: 1; }
+            table th { background: #1e1b4b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .grand-total-row td { background: #1e1b4b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .student-meta, .dates-row, .info-grid .box, .commentary-box, .position-summary { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .report-header .term-info { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .extra-badges .badge { background: #dbeafe !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            table { page-break-inside: avoid; }
+            .signature-section { page-break-inside: avoid; }
+            .school-logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .student-photo-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
         /* ========================================================== */
@@ -809,6 +862,11 @@
         const db = firebase.firestore();
 
         // =============================================================
+        // UPDATE 1: SCHOOL LOGO URL
+        // =============================================================
+        const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
+
+        // =============================================================
         // TOAST SYSTEM
         // =============================================================
         function showToast(message, type = "success") {
@@ -862,6 +920,17 @@
         }
 
         // =============================================================
+        // UPDATE 2: Cloudinary photo fetching function
+        // =============================================================
+        async function getStudentPhoto(studentName, className) {
+            try {
+                const doc = await db.collection('studentPhotos').doc(`${className}_${studentName}`).get();
+                if (doc.exists && doc.data().photoUrl) return doc.data().photoUrl;
+                return null;
+            } catch (e) { return null; }
+        }
+
+        // =============================================================
         // 2. LOAD MASTER CLASS LIST & POPULATE DROPDOWN
         // =============================================================
         async function loadMasterClassList() {
@@ -891,6 +960,39 @@
                 select.innerHTML += `<option value="${cls}">${cls}</option>`;
             });
             $('authStatus').innerHTML = '✅ Ready. Enter details to view report.';
+        }
+
+        // =============================================================
+        // UPDATE 3: Helper functions (getRemark, getGradeClass, getOrdinalSuffix)
+        // =============================================================
+        function getRemark(avg) {
+            if (avg >= 75) return 'Distinction';
+            if (avg >= 70) return 'Excellent';
+            if (avg >= 65) return 'Very Good';
+            if (avg >= 60) return 'Good';
+            if (avg >= 55) return 'Above Average';
+            if (avg >= 50) return 'Average';
+            if (avg >= 45) return 'Below Average';
+            if (avg >= 40) return 'Weak Pass';
+            return 'Fail';
+        }
+
+        function getGradeClass(avg) {
+            if (avg >= 75) return 'grade-distinction';
+            if (avg >= 70) return 'grade-excellent';
+            if (avg >= 65) return 'grade-verygood';
+            if (avg >= 60) return 'grade-good';
+            if (avg >= 55) return 'grade-aboveavg';
+            if (avg >= 50) return 'grade-average';
+            if (avg >= 45) return 'grade-belowavg';
+            if (avg >= 40) return 'grade-weak';
+            return 'grade-fail';
+        }
+
+        function getOrdinalSuffix(n) { 
+            const s = ['th','st','nd','rd']; 
+            const v = n % 100; 
+            return s[(v-20)%10] || s[v] || s[0]; 
         }
 
         // =============================================================
@@ -994,8 +1096,9 @@
                     }
                 } catch (e) { /* ignore */ }
 
-                // Render the Report Card with all new fields
-                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation });
+                // UPDATE 4: Add photo fetching call before renderReportCard
+                const photoUrl = await getStudentPhoto(name, cls);
+                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation }, photoUrl);
 
                 showPage('report');
                 err.innerText = '';
@@ -1011,17 +1114,21 @@
         });
 
         // =============================================================
-        // 4. RENDER REPORT CARD (A4 with ALL New Fields)
+        // UPDATE 5: Replace entire renderReportCard function
         // =============================================================
-        function renderReportCard(data, school) {
+        function renderReportCard(data, school, studentPhotoUrl) {
             const container = $('reportContainer');
             const subjects = Object.keys(data.subjects || {});
-            const att = data.attendance || { open: 90, present: 85, absent: 5 };
-            const qualities = data.qualities || {};
+            const att = data.attendance || {};
+            const affective = data.affectiveDomain || {};
+            const psychomotor = data.psychomotorDomain || {};
             const extracurriculars = data.extracurriculars || [];
-            const commentary = data.commentary || 'No additional comments provided.';
+            const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
+            const principalRemarks = data.principalRemarks || '';
+            const promotionStatus = data.promotionStatus || '';
+            const overallPosition = data.overallPosition || null;
+            const overallAverage = data.overallAverage || 0;
 
-            // Format dates
             const formatDate = (str) => {
                 if (!str) return 'Not set';
                 const d = new Date(str);
@@ -1029,216 +1136,205 @@
                 return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             };
 
-            let grandTotal = 0;
-            let totalSubjects = 0;
             let subjectRows = '';
-
-            // Build Subject Rows
             subjects.forEach((sub, index) => {
                 const s = data.subjects[sub] || {};
                 const first = s.firstTerm || 0;
                 const second = s.secondTerm || 0;
-                const ca = s.thirdCA || 0;
-                const exam = s.thirdExam || 0;
-                const thirdTotal = ca + exam;
-                const cumTotal = first + second + thirdTotal;
-                const avg = cumTotal > 0 ? cumTotal / 3 : 0;
-
-                grandTotal += cumTotal;
-                totalSubjects++;
-
-                let grade, remark, gradeClass;
-                if (avg >= 70) { grade = 'A';
-                    remark = 'Excellent';
-                    gradeClass = 'grade-a'; } else if (avg >= 60) { grade = 'B';
-                    remark = 'Good';
-                    gradeClass = 'grade-b'; } else if (avg >= 50) { grade = 'C';
-                    remark = 'Satisfactory';
-                    gradeClass = 'grade-c'; } else if (avg >= 40) { grade = 'D';
-                    remark = 'Pass';
-                    gradeClass = 'grade-d'; } else { grade = 'F';
-                    remark = 'Needs Improvement';
-                    gradeClass = 'grade-f'; }
+                const third = s.thirdTerm || 0;
+                const avg = s.average || ((first + second + third) / 3);
+                const remark = s.remark || getRemark(avg);
+                const gradeClass = getGradeClass(avg);
 
                 subjectRows += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${sub}</td>
-                            <td>${first}</td>
-                            <td>${second}</td>
-                            <td>${ca}</td>
-                            <td>${exam}</td>
-                            <td><strong>${thirdTotal}</strong></td>
-                            <td><strong>${cumTotal}</strong></td>
-                            <td>${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
-                            <td class="${gradeClass}">${grade}</td>
-                            <td style="font-size:11px;">${remark}</td>
-                        </tr>
-                    `;
-            });
-
-            const overallAvg = totalSubjects > 0 ? (grandTotal / totalSubjects) : 0;
-            let overallGrade, overallRemark, overallGradeClass;
-            if (overallAvg >= 70) { overallGrade = 'A';
-                overallRemark = 'Excellent';
-                overallGradeClass = 'grade-a'; } else if (overallAvg >= 60) { overallGrade = 'B';
-                overallRemark = 'Good';
-                overallGradeClass = 'grade-b'; } else if (overallAvg >= 50) { overallGrade = 'C';
-                overallRemark = 'Satisfactory';
-                overallGradeClass = 'grade-c'; } else if (overallAvg >= 40) { overallGrade = 'D';
-                overallRemark = 'Pass';
-                overallGradeClass = 'grade-d'; } else { overallGrade = 'F';
-                overallRemark = 'Needs Improvement';
-                overallGradeClass = 'grade-f'; }
-
-            const grandRow = `
-                    <tr class="grand-total-row">
-                        <td colspan="7"><strong>📊 GRAND TOTAL / AVERAGE</strong></td>
-                        <td><strong>${grandTotal}</strong></td>
-                        <td><strong>${overallAvg > 0 ? overallAvg.toFixed(1) + '%' : '--'}</strong></td>
-                        <td class="${overallGradeClass}"><strong>${overallGrade}</strong></td>
-                        <td style="font-size:12px;"><strong>${overallRemark}</strong></td>
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${sub}</td>
+                        <td>${first || '--'}</td>
+                        <td>${second || '--'}</td>
+                        <td>${third || '--'}</td>
+                        <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
+                        <td class="${gradeClass}">${remark || '--'}</td>
                     </tr>
                 `;
+            });
 
-            // Build Qualities HTML
-            let qualitiesHtml = '';
-            const qualityNames = Object.keys(qualities);
-            if (qualityNames.length > 0) {
-                qualityNames.forEach(q => {
-                    qualitiesHtml += `
-                            <div class="item">
-                                <span>${q}</span>
-                                <span class="rating">${qualities[q]} / 5</span>
-                            </div>
-                        `;
+            let affectiveHtml = '';
+            const affectiveKeys = Object.keys(affective);
+            if (affectiveKeys.length > 0) {
+                affectiveKeys.forEach(q => {
+                    const stars = '⭐'.repeat(Math.min(affective[q], 5)) + '☆'.repeat(Math.max(0, 5 - affective[q]));
+                    affectiveHtml += `<div class="item"><span>${q}</span><span class="rating-stars">${stars}</span></div>`;
                 });
-            } else {
-                qualitiesHtml = '<p style="font-size:13px; color:#94a3b8;">No qualities recorded.</p>';
-            }
+            } else { affectiveHtml = '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'; }
 
-            // Build Extracurriculars HTML
-            let extrasHtml = '';
-            const allExtras = ['Sports', 'Music', 'Drama', 'Debate', 'Art', 'Chess', 'Scouting', 'Agriculture'];
-            if (extracurriculars.length > 0) {
-                extrasHtml = extracurriculars.map(e =>
-                    `<span class="badge">✅ ${e}</span>`
-                ).join(' ');
-                // Show missing ones as crossed out? Better to just show the ones they did.
-                // Let's show all with a checkmark or cross.
-                extrasHtml = allExtras.map(e => {
-                    const done = extracurriculars.includes(e);
-                    return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${e}</span>`;
-                }).join(' ');
-            } else {
-                extrasHtml = '<p style="font-size:13px; color:#94a3b8;">No extracurriculars recorded.</p>';
-            }
+            let psychomotorHtml = '';
+            const psychomotorKeys = Object.keys(psychomotor);
+            if (psychomotorKeys.length > 0) {
+                psychomotorKeys.forEach(q => {
+                    const stars = '⭐'.repeat(Math.min(psychomotor[q], 5)) + '☆'.repeat(Math.max(0, 5 - psychomotor[q]));
+                    psychomotorHtml += `<div class="item"><span>${q}</span><span class="rating-stars">${stars}</span></div>`;
+                });
+            } else { psychomotorHtml = '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'; }
 
-            // Build Full HTML
-            const html = `
-                    <!-- WATERMARK -->
-                    <div class="watermark">COVENANT ARROWS' MODEL SCHOOL</div>
+            const allExtrasList = ['JETS Club','Literary & Debating','Press Club','Red Cross','Boys/Girls Scout','Brass Band','Drama Society','Road Safety','Farmers Club','Home Makers','Choral Group'];
+            let extrasHtml = allExtrasList.map(e => {
+                const done = extracurriculars.includes(e);
+                return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${e}</span>`;
+            }).join(' ');
 
-                    <!-- REPORT HEADER -->
-                    <div class="report-header">
-                        <div class="school-name">🏫 ${data.schoolName || school.name}</div>
-                        <div class="motto">✝️ ${school.motto}</div>
-                        <div class="location">📍 ${school.location}</div>
-                        <div class="term-info">${data.term || 'THIRD TERM'} REPORT — ${data.year || new Date().getFullYear()}</div>
-                    </div>
-
-                    <!-- STUDENT & TEACHER INFO -->
-                    <div class="student-meta">
-                        <div class="name">👤 <span>${data.studentName}</span></div>
-                        <div class="class">📚 Class: <strong>${data.class}</strong></div>
-                        <div class="teacher">👨‍🏫 Class Teacher: <strong>${data.teacherName || 'Not specified'}</strong></div>
-                        <div style="font-size:13px; color:#64748b;">📅 Date: ${formatDate(data.date)}</div>
-                    </div>
-
-                    <!-- ATTENDANCE & SCHOOL DATES -->
-                    <div class="attendance-grid" style="margin-bottom:10px; padding:8px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
-                        <span>📅 Open: ${att.open}</span>
-                        <span>✅ Present: ${att.present}</span>
-                        <span>❌ Absent: ${att.absent}</span>
-                        <span>📊 Att: ${((att.present/att.open)*100).toFixed(1)}%</span>
-                    </div>
-
-                    <div class="dates-row">
-                        <span>📅 Resumption: <strong>${formatDate(data.resumptionDate)}</strong></span>
-                        <span>📅 Closing: <strong>${formatDate(data.closingDate)}</strong></span>
-                        <span>📅 Next Term: <strong>${formatDate(data.nextTermResumption)}</strong></span>
-                    </div>
-
-                    <!-- QUALITIES & EXTRACURRICULARS -->
-                    <div class="info-grid">
-                        <div class="box">
-                            <h4>⭐ Qualities & Character</h4>
-                            ${qualitiesHtml}
+            let positionHtml = '';
+            if (overallPosition) {
+                const suffix = getOrdinalSuffix(overallPosition);
+                let posEmoji = '';
+                if (overallPosition === 1) posEmoji = '🥇';
+                else if (overallPosition === 2) posEmoji = '🥈';
+                else if (overallPosition === 3) posEmoji = '🥉';
+                positionHtml = `
+                    <div class="position-summary">
+                        <div class="pos-item">
+                            <div class="pos-value">${posEmoji} ${overallPosition}<small>${suffix}</small></div>
+                            <div class="pos-label">Overall Position</div>
                         </div>
-                        <div class="box">
-                            <h4>⚽ Extracurricular Activities</h4>
-                            <div class="extra-badges">${extrasHtml}</div>
+                        <div class="pos-item">
+                            <div class="pos-value">${overallAverage.toFixed(1)}%</div>
+                            <div class="pos-label">Overall Average</div>
                         </div>
-                    </div>
-
-                    <!-- SUBJECT TABLE -->
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th rowspan="2">S/N</th>
-                                    <th rowspan="2">SUBJECT</th>
-                                    <th rowspan="2">1ST TERM</th>
-                                    <th rowspan="2">2ND TERM</th>
-                                    <th colspan="3">3RD TERM</th>
-                                    <th rowspan="2">CUMULATIVE<br>TOTAL</th>
-                                    <th rowspan="2">AVG %</th>
-                                    <th rowspan="2">GRADE</th>
-                                    <th rowspan="2">REMARK</th>
-                                </tr>
-                                <tr class="sub-header">
-                                    <th>C.A</th>
-                                    <th>EXAM</th>
-                                    <th>TOTAL</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${subjectRows}
-                                ${grandRow}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- TEACHER'S COMMENTARY -->
-                    <div class="commentary-box">
-                        <h4>📝 Teacher's Commentary</h4>
-                        <p>${commentary}</p>
-                    </div>
-
-                    <!-- SIGNATURES -->
-                    <div class="signature-section">
-                        <div class="signature-box">
-                            <div class="label">Class Teacher</div>
-                            <div class="line"></div>
-                            <div class="sub">Name & Signature</div>
-                        </div>
-                        <div class="signature-box text-right">
-                            <div class="label">Principal</div>
-                            <div class="line"></div>
-                            <div class="sub">Name & Signature</div>
-                        </div>
-                        <div class="signature-box text-right">
-                            <div class="label">Parent/Guardian</div>
-                            <div class="line"></div>
-                            <div class="sub">Name & Signature</div>
-                        </div>
-                    </div>
-
-                    <!-- FOOTER -->
-                    <div class="report-footer">
-                        🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
+                        ${promotionStatus ? `
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:16px;">
+                                <span class="promotion-badge ${promotionStatus.toLowerCase().replace(/\s+/g, '-')}">${promotionStatus}</span>
+                            </div>
+                            <div class="pos-label">Promotion Status</div>
+                        </div>` : ''}
                     </div>
                 `;
+            }
+
+            let photoHtml = '';
+            if (studentPhotoUrl) {
+                photoHtml = `<div class="student-photo-container"><img src="${studentPhotoUrl}" alt="${data.studentName}" /></div>`;
+            } else {
+                photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
+            }
+
+            const html = `
+                <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
+
+                <div class="report-header">
+                    <div class="header-logo-row">
+                        <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="School Logo" />
+                        <div class="header-text">
+                            <div class="school-name">${data.schoolName || school.name}</div>
+                            <div class="motto">✝️ ${school.motto}</div>
+                            <div class="location">📍 ${school.location}</div>
+                        </div>
+                    </div>
+                    <div class="term-info">${data.term || 'THIRD TERM'} REPORT — ${data.session || data.year || new Date().getFullYear()}</div>
+                </div>
+
+                <div class="student-meta">
+                    ${photoHtml}
+                    <div class="student-details">
+                        <div class="name">👤 <span>${data.studentName}</span></div>
+                        <div class="class">📚 Class: <strong>${data.class}</strong> | Category: <strong>${data.category || 'Day'}</strong></div>
+                        <div class="teacher">👨‍🏫 Teacher: <strong>${data.teacherName || 'N/A'}</strong></div>
+                        <div style="font-size:12px; color:#64748b;">📅 Date of Issue: ${formatDate(data.dateOfIssue || data.date)}</div>
+                    </div>
+                </div>
+
+                <div class="attendance-grid" style="margin-bottom:8px; padding:8px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                    <span>📅 Days Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
+                    <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
+                    <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
+                    <span>📊 Attendance: <strong>${((att.daysPresent || att.present || 0) / (att.daysOpened || att.open || 1) * 100).toFixed(1)}%</strong></span>
+                </div>
+
+                <div class="dates-row">
+                    <span>📅 Resumption: <strong>${formatDate(att.resumptionDate || data.resumptionDate)}</strong></span>
+                    <span>📅 Closing: <strong>${formatDate(att.closingDate || data.closingDate)}</strong></span>
+                    <span>📅 Next Term: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
+                </div>
+
+                ${positionHtml}
+
+                <div class="info-grid">
+                    <div class="box">
+                        <h4>⭐ Affective Domain (Character)</h4>
+                        ${affectiveHtml}
+                    </div>
+                    <div class="box">
+                        <h4>🤸 Psychomotor Domain (Skills)</h4>
+                        ${psychomotorHtml}
+                    </div>
+                </div>
+
+                <div class="info-grid" style="grid-template-columns:1fr;">
+                    <div class="box">
+                        <h4>⚽ Clubs & Societies</h4>
+                        <div class="extra-badges">${extrasHtml}</div>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">S/N</th>
+                                <th rowspan="2">SUBJECT</th>
+                                <th colspan="3">TERMLY SCORES</th>
+                                <th rowspan="2">AVERAGE %</th>
+                                <th rowspan="2">REMARK</th>
+                            </tr>
+                            <tr class="sub-header">
+                                <th>1ST TERM</th>
+                                <th>2ND TERM</th>
+                                <th>3RD TERM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${subjectRows}
+                            <tr class="grand-total-row">
+                                <td colspan="5"><strong>📊 OVERALL AVERAGE</strong></td>
+                                <td><strong>${overallAverage.toFixed(1)}%</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="commentary-box">
+                    <h4>📝 Class Teacher's Commentary</h4>
+                    <p>${commentary}</p>
+                </div>
+
+                ${principalRemarks ? `
+                <div class="commentary-box" style="background:#fefce8;">
+                    <h4>👨‍💼 Principal's Remarks</h4>
+                    <p>${principalRemarks}</p>
+                </div>` : ''}
+
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <div class="label">Class Teacher</div>
+                        <div class="line"></div>
+                        <div class="sub">${data.teacherName || 'Name & Signature'}</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="label">Principal</div>
+                        <div class="line"></div>
+                        <div class="sub">Name & Signature</div>
+                    </div>
+                    <div class="signature-box">
+                        <div class="label">Parent/Guardian</div>
+                        <div class="line"></div>
+                        <div class="sub">Name & Signature</div>
+                    </div>
+                </div>
+
+                <div class="report-footer">
+                    🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
+                </div>
+            `;
 
             container.innerHTML = html;
         }
