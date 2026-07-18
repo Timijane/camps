@@ -93,6 +93,17 @@
         .add-class-row button { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .add-class-row button:hover { background: #059669; }
 
+        /* UPDATE 1: Tab Switching Styles */
+        .tab-row { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 18px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid #e2e8f0; background: white; color: #64748b; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active:hover { background: #4338ca; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .pin-used { background: #d1fae5; color: #065f46; }
+        .pin-unused { background: #fef3c7; color: #92400e; }
+
         /* ===== MODAL ===== */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
@@ -146,44 +157,59 @@
                 <div id="pendingList">Loading...</div>
             </div>
 
-            <!-- Card 2: Generate Bulk PINs -->
+            <!-- UPDATE 2: Card 2: PIN Management (Tabs: Generate + History + All PINs) -->
             <div class="card">
-                <h3>🔐 Generate Bulk PINs</h3>
-                <div class="sub">Generate 10 to 60 unique PINs at once for parents to purchase.</div>
-                <div class="flex-input">
-                    <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; text-align:center;" />
-                    <button class="btn-sm btn-primary" id="genBulkPinBtn" style="padding:12px 20px; flex:1;">🔄 Generate</button>
+                <h3>🔐 PIN Management</h3>
+                <div class="tab-row">
+                    <button class="tab-btn active" data-tab="tabGenerate">🔄 Generate PINs</button>
+                    <button class="tab-btn" data-tab="tabHistory">📜 Usage History</button>
+                    <button class="tab-btn" data-tab="tabAllPins">📋 All PINs</button>
                 </div>
-                <div class="pin-display-box" id="bulkPinResult">
-                    <span class="pin-label">✨ Generated PINs</span>
-                    <div id="pinListContainer"><span style="color:#94a3b8;">No PINs generated yet.</span></div>
+
+                <!-- Tab: Generate -->
+                <div id="tabGenerate" class="tab-panel active">
+                    <div class="sub">Generate 10 to 60 unique PINs at once for parents to purchase.</div>
+                    <div class="flex-input">
+                        <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; text-align:center;" />
+                        <button class="btn-sm btn-primary" id="genBulkPinBtn" style="padding:12px 20px; flex:1;">🔄 Generate</button>
+                    </div>
+                    <div class="pin-display-box" id="bulkPinResult">
+                        <span class="pin-label">✨ Generated PINs</span>
+                        <div id="pinListContainer"><span style="color:#94a3b8;">No PINs generated yet.</span></div>
+                    </div>
+                    <button class="btn-sm btn-outline" id="copyPinsBtn" style="margin-top:8px; width:100%;">📋 Copy All to Clipboard</button>
                 </div>
-                <button class="btn-sm btn-outline" id="copyPinsBtn" style="margin-top:8px; width:100%;">📋 Copy All to Clipboard</button>
+
+                <!-- Tab: Usage History -->
+                <div id="tabHistory" class="tab-panel">
+                    <div class="sub">Track who used which PIN and when.</div>
+                    <button class="btn-sm btn-primary" id="refreshHistoryBtn" style="margin-bottom:10px;">🔄 Refresh</button>
+                    <div class="table-scroll" id="pinHistoryContainer">
+                        <p style="color:#94a3b8; font-size:14px;">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Tab: All PINs -->
+                <div id="tabAllPins" class="tab-panel">
+                    <div class="sub">View all generated PINs and their status.</div>
+                    <button class="btn-sm btn-primary" id="refreshAllPinsBtn" style="margin-bottom:10px;">🔄 Refresh</button>
+                    <div class="table-scroll" id="allPinsContainer">
+                        <p style="color:#94a3b8; font-size:14px;">Loading...</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Card 3: PIN Usage History -->
+            <!-- UPDATE 3: Card 3: Class Droplets Manager -->
             <div class="card">
-                <h3>📜 PIN Usage History</h3>
-                <div class="sub">Track who used which PIN and when.</div>
-                <button class="btn-sm btn-primary" id="refreshHistoryBtn" style="margin-bottom:10px;">🔄 Refresh History</button>
-                <div class="table-scroll" id="pinHistoryContainer">
-                    <p style="color:#94a3b8; font-size:14px;">Loading history...</p>
+                <h3>📚 Manage Classes</h3>
+                <div class="sub">Add or remove standardized classes. Students and teachers will select from this list.</div>
+                <div class="add-class-row">
+                    <input id="newClassInput" placeholder="e.g. Basic 7" />
+                    <button id="addClassBtn">➕ Add</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Full Width: Class Droplets Manager -->
-        <div class="card" style="margin-top:25px;">
-            <h3>📚 Manage Classes (Droplets)</h3>
-            <div class="sub">Add or remove standardized classes. Students and teachers will select from this list.</div>
-            
-            <div class="add-class-row">
-                <input id="newClassInput" placeholder="e.g. Basic 7" />
-                <button id="addClassBtn">➕ Add Class</button>
-            </div>
-            
-            <div id="classDropletContainer" class="droplet-container">
-                <span style="color:#94a3b8; font-size:14px;">Loading classes...</span>
+                <div id="classDropletContainer" class="droplet-container">
+                    <span style="color:#94a3b8; font-size:14px;">Loading...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -197,10 +223,13 @@
             <h2>📋 Review Report Card</h2>
             <p class="sub">Review the student's performance, add your remarks, and give consent before publishing.</p>
 
+            <!-- UPDATE 4: Add position/avg fields to modal student info -->
             <div class="student-info" id="modalStudentInfo">
                 <div><strong>Student:</strong> <span id="modalStudentName">---</span></div>
                 <div><strong>Class:</strong> <span id="modalStudentClass">---</span></div>
                 <div><strong>Term:</strong> <span id="modalStudentTerm">Third Term</span></div>
+                <div><strong>Position:</strong> <span id="modalStudentPosition">---</span></div>
+                <div><strong>Overall Avg:</strong> <span id="modalStudentAvg">---</span></div>
             </div>
 
             <div class="subject-summary" id="modalSubjectSummary">
@@ -262,6 +291,22 @@
     const $ = (id) => document.getElementById(id);
     let masterClassList = [];
     let currentPendingDocId = null;
+
+    // UPDATE 5: Tab switching JavaScript
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const card = btn.closest('.card');
+            card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            $(btn.dataset.tab).classList.add('active');
+
+            if (btn.dataset.tab === 'tabHistory') loadPinHistory();
+            if (btn.dataset.tab === 'tabAllPins') loadAllPins();
+        });
+    });
 
     // =============================================================
     // LOGIN
@@ -419,13 +464,16 @@
             $('modalStudentClass').innerText = data.class;
             $('modalStudentTerm').innerText = data.term || 'Third Term';
 
-            // Build subject summary table
-            const subjects = Object.keys(data.subjects);
-            let tableHtml = `<table><tr><th>Subject</th><th>1st</th><th>2nd</th><th>CA</th><th>Exam</th><th>Total</th></tr>`;
+            // UPDATE 6: Add position/avg to review modal
+            $('modalStudentPosition').innerText = data.overallPosition ? data.overallPosition + getOrdinalSuffix(data.overallPosition) : 'N/A';
+            $('modalStudentAvg').innerText = data.overallAverage ? data.overallAverage.toFixed(1) + '%' : 'N/A';
+
+            // UPDATE 7: Fix subject table in modal
+            const subjects = Object.keys(data.subjects || {});
+            let tableHtml = `<table><tr><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr>`;
             subjects.forEach(sub => {
-                const s = data.subjects[sub];
-                const total = (s.thirdCA || 0) + (s.thirdExam || 0);
-                tableHtml += `<tr><td><strong>${sub}</strong></td><td>${s.firstTerm||0}</td><td>${s.secondTerm||0}</td><td>${s.thirdCA||0}</td><td>${s.thirdExam||0}</td><td>${total}</td></tr>`;
+                const s = data.subjects[sub] || {};
+                tableHtml += `<tr><td><strong>${sub}</strong></td><td>${s.firstTerm||0}</td><td>${s.secondTerm||0}</td><td>${s.thirdTerm||0}</td><td>${s.average||0}%</td><td>${s.remark||'--'}</td></tr>`;
             });
             tableHtml += '</table>';
             $('modalSubjectSummary').innerHTML = tableHtml;
@@ -473,16 +521,17 @@
         }
 
         try {
+            // UPDATE 8: Fix approval update
             await db.collection('reportCards').doc(currentPendingDocId).update({
                 approved: true,
-                adminRemarks: remarks || 'No additional remarks provided.',
+                principalRemarks: remarks || 'No remarks provided.',
                 adminConsent: true,
                 approvedAt: new Date()
             });
 
             showToast('✅ Report card approved and published!', 'success');
             closeReviewModal();
-            loadPendingReports(); // Refresh the list
+            loadPendingReports();
         } catch (e) {
             showToast('❌ Error approving report: ' + e.message, 'error');
         }
@@ -508,16 +557,17 @@
             let pin = '';
             for (let i = 0; i < 8; i++) pin += chars[Math.floor(Math.random() * chars.length)];
 
-            // Check if PIN already exists in our generated list or in Firestore
             const check = await db.collection('pins').doc(pin).get();
             if (!check.exists && !generatedPins.includes(pin)) {
                 generatedPins.push(pin);
                 const ref = db.collection('pins').doc(pin);
-                batch.set(ref, {
-                    used: false,
-                    usedBy: null,
-                    usedAt: null,
-                    createdAt: new Date()
+                // UPDATE 11: Include all fields in PIN document
+                batch.set(ref, { 
+                    used: false, 
+                    usedBy: null, 
+                    usedAt: null, 
+                    class: null, 
+                    createdAt: new Date() 
                 });
             }
         }
@@ -528,12 +578,10 @@
 
         try {
             await batch.commit();
-            // Display the PINs
-            const container = $('pinListContainer');
-            container.innerHTML = generatedPins.map(p => `<span class="pin-value">${p}</span>`).join(' ');
+            // UPDATE 12: Add used/unused styling
+            $('pinListContainer').innerHTML = generatedPins.map(p => `<span class="pin-value pin-unused">${p}</span>`).join(' ');
             showToast(`✅ ${generatedPins.length} PINs generated successfully!`, 'success');
 
-            // Scroll to show the PINs
             $('bulkPinResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch (e) {
             showToast('❌ Error saving PINs: ' + e.message, 'error');
@@ -548,7 +596,6 @@
         navigator.clipboard.writeText(pins).then(() => {
             showToast('📋 PINs copied to clipboard!', 'success');
         }).catch(() => {
-            // Fallback
             const textarea = document.createElement('textarea');
             textarea.value = pins;
             document.body.appendChild(textarea);
@@ -600,11 +647,43 @@
     });
 
     // =============================================================
+    // UPDATE 10: ALL PINS LIST
+    // =============================================================
+    async function loadAllPins() {
+        const container = $('allPinsContainer');
+        try {
+            const snap = await db.collection('pins').orderBy('createdAt','desc').limit(100).get();
+            if (snap.empty) { container.innerHTML = '<p style="color:#94a3b8;">No PINs generated yet.</p>'; return; }
+            let html = '<table><tr><th>PIN</th><th>Status</th><th>Used By</th><th>Class</th><th>Created</th></tr>';
+            snap.forEach(doc => {
+                const data = doc.data();
+                const status = data.used ? '✅ Used' : '🆕 Available';
+                const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+                html += `<tr>
+                    <td><strong>${doc.id}</strong></td>
+                    <td style="color:${data.used?'#059669':'#d97706'}; font-weight:700;">${status}</td>
+                    <td>${data.usedBy||'--'}</td>
+                    <td>${data.class||'--'}</td>
+                    <td>${created}</td>
+                </tr>`;
+            });
+            container.innerHTML = html + '</table>';
+        } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error.</p>'; }
+    }
+
+    $('refreshAllPinsBtn').addEventListener('click', () => { loadAllPins(); showToast('🔄 Refreshed.', 'success'); });
+
+    // =============================================================
+    // UPDATE 9: Helper function
+    // =============================================================
+    function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
+
+    // =============================================================
     // INIT
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Admin Console with Bulk PINs, History, and Review/Consent is ready!');
+    console.log('✅ Admin Console with all updates is ready!');
 </script>
 </body>
 </html>
