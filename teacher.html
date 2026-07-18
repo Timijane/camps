@@ -42,7 +42,7 @@
         @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 
         #dashboardPage { flex-direction: row; background: #f8fafc; }
-        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
+        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; transition: all 0.3s ease; }
         .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
         .sidebar .brand span { color: #4f46e5; }
         .sidebar .user-info { font-size: 14px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
@@ -54,7 +54,8 @@
         .class-switcher select:focus { border-color: #4f46e5; }
         .class-switcher button { padding: 12px 20px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; white-space: nowrap; }
         .class-switcher button:hover { background: #4338ca; }
-        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .sidebar-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: #1e293b; }
         .add-subject-row { display: flex; gap: 6px; margin-bottom: 15px; }
         .add-subject-row input { flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; }
         .add-subject-row input:focus { border-color: #4f46e5; }
@@ -74,7 +75,6 @@
         .panel-header h2 { font-size: 24px; color: #0f172a; font-weight: 800; }
         .panel-header h2 span { color: #4f46e5; }
         .panel-header .badge-points { background: #1e1b4b; color: white; padding: 6px 18px; border-radius: 60px; font-weight: 700; font-size: 14px; }
-
         .main-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .main-tab { padding: 10px 22px; border-radius: 60px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.15s; border: 2px solid transparent; background: transparent; color: #64748b; font-family: 'Inter', sans-serif; }
         .main-tab:hover { background: #f1f5f9; color: #0f172a; }
@@ -119,7 +119,6 @@
         .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-section .btn-csv.upload:hover { background: #059669; }
-
         .debug-output { background: #1e1e2e; color: #a6e22e; padding: 16px; border-radius: 16px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; margin-top: 10px; display: none; border: 2px solid #dc2626; }
 
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
@@ -138,13 +137,11 @@
         .btn-danger:hover { background: #b91c1c; }
         .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
         .btn-outline:hover { background: #f8fafc; }
-
         .schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
         .schedule-grid label { font-weight: 600; color: #1e293b; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
         .schedule-grid input { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; outline: none; }
         .schedule-grid input:focus { border-color: #4f46e5; }
         .flex-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
         th { background: #f1f5f9; font-weight: 700; }
@@ -155,15 +152,11 @@
         .photo-container-small { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid #e2e8f0; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
         .photo-container-small:hover { border-color: #4f46e5; }
         .auto-save-badge { background: #10b981; color: white; padding: 4px 16px; border-radius: 30px; font-weight: 600; font-size: 12px; display: inline-block; transition: 0.3s; }
-
-        /* Position summary */
-        .position-summary-card { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin: 15px 0; text-align: center; }
-        .position-summary-card .pos-number { font-size: 48px; font-weight: 900; color: #1e1b4b; }
-        .position-summary-card .pos-label { font-size: 14px; color: #64748b; }
-
-        /* Mobile floating subject button */
-        .floating-subject-btn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 56px; height: 56px; border-radius: 50%; background: #4f46e5; color: white; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(79,70,229,0.4); }
-        .subject-collapse-btn { display: none; cursor: pointer; background: none; border: none; font-size: 20px; padding: 4px 8px; }
+        .position-card { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin: 15px 0; text-align: center; display: none; }
+        .position-card .pos-number { font-size: 48px; font-weight: 900; color: #1e1b4b; }
+        .position-card .pos-label { font-size: 14px; color: #64748b; }
+        .suggestion-item { padding: 8px 14px; background: #eef2ff; border-radius: 12px; margin: 4px 0; cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid #c7d2fe; }
+        .suggestion-item:hover { background: #ddd6fe; }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -174,8 +167,16 @@
         @media (max-width: 800px) {
             body { padding: 0; }
             #app { height: 100vh; border-radius: 0; max-width: 100%; }
-            .sidebar { width: 100%; min-width: unset; height: auto; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 15px; }
             #dashboardPage { flex-direction: column; }
+            .sidebar { width: 100%; min-width: unset; height: auto; max-height: 60px; overflow: hidden; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 15px; transition: max-height 0.3s ease; }
+            .sidebar.expanded { max-height: 100vh; overflow-y: auto; }
+            .sidebar .brand { font-size: 16px; }
+            .sidebar .user-info { margin-bottom: 10px; }
+            .sidebar .class-switcher { margin-bottom: 10px; }
+            .sidebar-toggle { display: inline-block; }
+            .sidebar .subject-list, .sidebar .add-subject-row, .sidebar .sidebar-title { display: none; }
+            .sidebar.expanded .subject-list, .sidebar.expanded .add-subject-row, .sidebar.expanded .sidebar-title { display: block; }
+            .sidebar.expanded .subject-list { display: block; }
             .main-panel { padding: 15px; }
             .schedule-grid { grid-template-columns: 1fr; }
             .report-builder-container { padding: 10px; }
@@ -185,12 +186,6 @@
             .score-input { width: 40px !important; font-size: 11px !important; }
             .photo-container-small { width: 70px !important; height: 70px !important; }
             #studentSelector { font-size: 14px; }
-
-            /* Mobile: subject column collapses */
-            .subject-col-header, .subject-col-cell { display: none; }
-            .subject-collapse-btn { display: inline-block; }
-            .floating-subject-btn { display: flex; align-items: center; justify-content: center; }
-            .subject-expanded .subject-col-header, .subject-expanded .subject-col-cell { display: table-cell; }
         }
     </style>
 </head>
@@ -198,7 +193,6 @@
 
 <div id="app">
     <div id="toastContainer" class="toast-container"></div>
-    <button class="floating-subject-btn" id="floatingSubjectBtn" title="Toggle Subjects">📚</button>
 
     <div id="loginPage" class="page active">
         <div class="login-box">
@@ -212,13 +206,13 @@
     </div>
 
     <div id="dashboardPage" class="page">
-        <div class="sidebar">
-            <div class="brand">🏫 <span>Covenant</span> Arrows</div>
-            <div class="user-info"><span class="name" id="sidebarName">Teacher</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
-            <div class="class-switcher">
-                <select id="classSelect"><option value="">-- Select Class --</option></select>
-                <button id="switchClassBtn">Switch</button>
+        <div class="sidebar" id="sidebar">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="brand">🏫 <span>Covenant</span> Arrows</div>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
             </div>
+            <div class="user-info"><span class="name" id="sidebarName">Teacher</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
+            <div class="class-switcher"><select id="classSelect"><option value="">-- Select Class --</option></select><button id="switchClassBtn">Switch</button></div>
             <div class="sidebar-title"><span>📚 Subjects</span><span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span></div>
             <div class="add-subject-row"><input id="newSubjectInput" placeholder="New Subject..." /><button id="addSubjectBtn">➕</button></div>
             <div class="subject-list" id="subjectListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div></div>
@@ -241,25 +235,23 @@
                     <div class="form-row"><input id="optA" placeholder="Option A" /><input id="optB" placeholder="Option B" /><input id="optC" placeholder="Option C" /><input id="optD" placeholder="Option D" /></div>
                     <div class="form-row"><select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select><input id="qPoints" type="number" placeholder="Points" value="5" min="1" /><button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button></div>
                     <div class="csv-paste-section">
-                        <h4 style="font-weight:700; color:#1e1b4b;">📋 Bulk Paste CSV</h4>
+                        <h4 style="font-weight:700;">📋 Bulk Paste CSV</h4>
                         <textarea id="csvPasteArea" placeholder="Paste your CSV here..."></textarea>
                         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
                             <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
-                            <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700; cursor:pointer;">🗑️ Clear</button>
+                            <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700;">🗑️ Clear</button>
                             <button class="btn-csv debug" id="debugCsvBtn">🐛 Debug</button>
                         </div>
                         <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
                         <div id="debugOutput" class="debug-output"></div>
                     </div>
-                    <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload File</button></div>
+                    <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
                 </div>
             </div>
 
             <div id="tabPublish" class="tab-content">
-                <div class="card-panel">
-                    <h4>📢 Publish Exams</h4>
-                    <div id="examToggles" class="toggle-group">Loading...</div>
+                <div class="card-panel"><h4>📢 Publish Exams</h4><div id="examToggles" class="toggle-group">Loading...</div>
                     <div class="schedule-grid">
                         <label>📅 Start <input type="datetime-local" id="startDateTime" /></label>
                         <label>📅 End <input type="datetime-local" id="endDateTime" /></label>
@@ -271,17 +263,10 @@
                 </div>
             </div>
 
-            <div id="tabResults" class="tab-content">
-                <div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div>
-            </div>
+            <div id="tabResults" class="tab-content"><div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div></div>
 
             <div id="tabReports" class="tab-content">
-                <div class="card-panel">
-                    <h4>📋 Build Report Cards</h4>
-                    <p style="color:#64748b; margin-bottom:15px;"><span class="auto-save-badge">💾 Auto-Save</span></p>
-                    <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
-                    <div id="reportBuilderArea"></div>
-                </div>
+                <div class="card-panel"><h4>📋 Build Report Cards</h4><p style="color:#64748b; margin-bottom:15px;"><span class="auto-save-badge">💾 Auto-Save</span></p><button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button><div id="reportBuilderArea"></div></div>
             </div>
         </div>
     </div>
@@ -294,7 +279,7 @@
     const db = firebase.firestore();
     auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
 
-    const cloudinaryConfig = { cloudName: 'dmbjrohtn', uploadPreset: 'pelumi', folder: 'student_photos', maxFileSize: 5000000, allowedFormats: ['jpg', 'jpeg', 'png', 'webp'] };
+    const cloudinaryConfig = { cloudName: 'dmbjrohtn', uploadPreset: 'pelumi', folder: 'student_photos', maxFileSize: 5000000, allowedFormats: ['jpg','jpeg','png','webp'] };
 
     function openCloudinaryWidget(studentName, callback) {
         if (typeof cloudinary === 'undefined') { showToast('❌ Cloudinary not loaded.', 'error'); return; }
@@ -303,7 +288,7 @@
             folder: `${cloudinaryConfig.folder}/${currentUser.class}`, maxFileSize: cloudinaryConfig.maxFileSize,
             allowedFormats: cloudinaryConfig.allowedFormats, cropping: true, croppingAspectRatio: 1,
             showSkipCropButton: false, multiple: false, singleUploadAutoClose: true,
-            publicId: `${currentUser.class}_${studentName.replace(/\s+/g, '_')}_${Date.now()}`
+            publicId: `${currentUser.class}_${studentName.replace(/\s+/g,'_')}_${Date.now()}`
         }, (error, result) => {
             if (error) { showToast('❌ Upload failed.', 'error'); return; }
             if (result && result.event === "success") {
@@ -346,13 +331,18 @@
     let studentPositions = {};
     let isSaving = false;
 
+    // Sidebar toggle for mobile
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('expanded');
+    });
+
     async function loadMasterClassList() {
         try {
             const doc = await db.collection('classList').doc('allClasses').get();
-            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
             if (!doc.exists) await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
             populateDropdowns();
-        } catch (e) { masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6']; populateDropdowns(); }
+        } catch (e) { masterClassList = ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6']; populateDropdowns(); }
     }
 
     function populateDropdowns() {
@@ -399,7 +389,7 @@
     async function loadSubjects(cls) {
         try {
             const doc = await db.collection('classes').doc(cls).get();
-            currentSubjects = doc.exists ? doc.data().subjects || [] : ['English', 'Mathematics', 'Science'];
+            currentSubjects = doc.exists ? doc.data().subjects || [] : ['English','Mathematics','Science'];
             if (!doc.exists) await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
             renderSubjects();
             if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
@@ -579,7 +569,7 @@
     }
 
     // =============================================================
-    // REPORTS TAB - WITH MANUAL ADD & SMART MATCHING & POSITIONS
+    // REPORTS TAB
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
@@ -602,7 +592,7 @@
             });
             allStudentResults = mergedResults;
 
-            // Also load manually added students from Firestore
+            // Also load from reportCards
             const manualSnap = await db.collection('reportCards').where('class','==',cls).get();
             const manualStudents = new Set();
             manualSnap.forEach(d => { if (d.data().studentName) manualStudents.add(d.data().studentName); });
@@ -690,6 +680,7 @@
                     <input id="newStudentInput" placeholder="➕ Add student not in list..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
                     <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
                 </div>
+                <div id="nameSuggestions" style="margin-top:8px;"></div>
             </div>
 
             <div id="studentWorkArea" style="display:none;">
@@ -702,30 +693,24 @@
                     </div>
                 </div>
 
-                <div id="positionDisplay" style="display:none;" class="position-summary-card">
+                <div class="position-card" id="positionDisplay">
                     <div class="pos-label">Overall Position</div>
                     <div class="pos-number" id="positionNumber">--</div>
                     <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📖 Subject Scores <button class="subject-collapse-btn" onclick="toggleSubjectColumn()" title="Toggle subject column">📚</button></div>
-                    <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;" id="scoresTable">
-                        <thead><tr style="background:#f1f5f9;">
-                            <th class="subject-col-header" style="padding:8px; text-align:left;">Subject</th>
-                            <th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th>
-                            <th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th>
-                        </tr></thead>
-                        <tbody id="studentScoresTable">
-                            ${currentSubjects.map(sub => `<tr>
-                                <td class="subject-col-cell" style="padding:6px 10px; font-weight:600;">${sub}</td>
-                                <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                                <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                                <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fefce8; font-weight:700;" /></td>
-                                <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
-                                <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
-                            </tr>`).join('')}
-                        </tbody>
+                    <div class="section-label">📖 Subject Scores</div>
+                    <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;">
+                        <thead><tr style="background:#f1f5f9;"><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th><th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th></tr></thead>
+                        <tbody>${currentSubjects.map(sub => `<tr>
+                            <td style="padding:6px 10px; font-weight:600;">${sub}</td>
+                            <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
+                            <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
+                            <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fefce8; font-weight:700;" /></td>
+                            <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
+                            <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
+                        </tr>`).join('')}</tbody>
                     </table></div>
                 </div>
 
@@ -746,22 +731,13 @@
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">⚽ Clubs</div>
                     <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `<label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; font-weight:600; cursor:pointer;"><input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}</label>`).join('')}
+                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `<label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; cursor:pointer;"><input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}</label>`).join('')}
                     </div>
                 </div>
 
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📝 Teacher's Comment</div>
-                    <textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">👨‍💼 Principal's Remark</div>
-                    <textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📈 Promotion</div>
-                    <select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;"><option value="">-- Select --</option><option value="Promoted">✅ Promoted</option><option value="Not Promoted">❌ Not Promoted</option><option value="Probation">⚠️ Probation</option></select>
-                </div>
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">📝 Teacher's Comment</div><textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea></div>
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">👨‍💼 Principal's Remark</div><textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea></div>
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">📈 Promotion</div><select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;"><option value="">-- Select --</option><option value="Promoted">✅ Promoted</option><option value="Not Promoted">❌ Not Promoted</option><option value="Probation">⚠️ Probation</option></select></div>
 
                 <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
                     <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save</button>
@@ -783,44 +759,81 @@
     function attachBuilderEvents(cls) {
         const selector = document.getElementById('studentSelector');
         const workArea = document.getElementById('studentWorkArea');
+        const newStudentInput = document.getElementById('newStudentInput');
+        const suggestionsDiv = document.getElementById('nameSuggestions');
 
-        // Add student button
+        // Auto-suggest as user types
+        newStudentInput.addEventListener('input', async () => {
+            const query = newStudentInput.value.trim().toLowerCase();
+            if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
+
+            // Search Firestore for similar names
+            const snap = await db.collection('reportCards').where('class','==',cls).get();
+            const matches = [];
+            snap.forEach(d => {
+                const name = d.data().studentName;
+                if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) {
+                    matches.push(name);
+                }
+            });
+
+            // Also check results
+            const allNames = [...new Set([...reportStudentsList, ...matches])].filter(n => n.toLowerCase().includes(query));
+
+            if (allNames.length > 0) {
+                suggestionsDiv.innerHTML = allNames.slice(0, 5).map(n => `
+                    <div class="suggestion-item" data-name="${n}">📋 ${n}</div>
+                `).join('');
+                document.querySelectorAll('.suggestion-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const name = item.dataset.name;
+                        if (!reportStudentsList.includes(name)) {
+                            reportStudentsList.push(name);
+                            reportStudentsList.sort();
+                        }
+                        selector.value = name;
+                        newStudentInput.value = '';
+                        suggestionsDiv.innerHTML = '';
+                        rebuildSelector();
+                        selector.dispatchEvent(new Event('change'));
+                        showToast(`📋 Loaded: ${name}`, 'success');
+                    });
+                });
+            } else {
+                suggestionsDiv.innerHTML = '';
+            }
+        });
+
         document.getElementById('addStudentBtn').addEventListener('click', async () => {
-            const input = document.getElementById('newStudentInput');
-            const name = input.value.trim();
+            const name = newStudentInput.value.trim();
             if (!name) return showToast('⚠️ Enter a name.', 'warning');
             if (name.split(/\s+/).length < 2) return showToast('⚠️ Enter first and last name.', 'warning');
-            
-            // Check for similar existing names in Firestore
+
+            // Check Firestore for similar names
             const existingSnap = await db.collection('reportCards').where('class','==',cls).get();
             let matchedName = null;
             existingSnap.forEach(d => {
                 const existingName = d.data().studentName;
-                if (existingName && areNamesSamePerson(name, existingName)) {
-                    matchedName = existingName;
-                }
+                if (existingName && areNamesSamePerson(name, existingName)) matchedName = existingName;
             });
 
             if (matchedName) {
-                showToast(`📋 Found similar name: "${matchedName}". Loading data...`, 'warning');
-                if (!reportStudentsList.includes(matchedName)) {
-                    reportStudentsList.push(matchedName);
-                    reportStudentsList.sort();
-                }
+                showToast(`📋 Found: "${matchedName}". Loading...`, 'warning');
+                if (!reportStudentsList.includes(matchedName)) { reportStudentsList.push(matchedName); reportStudentsList.sort(); }
                 selector.value = matchedName;
-                input.value = '';
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
                 rebuildSelector();
+                selector.dispatchEvent(new Event('change'));
             } else {
-                if (!reportStudentsList.includes(name)) {
-                    reportStudentsList.push(name);
-                    reportStudentsList.sort();
-                }
+                if (!reportStudentsList.includes(name)) { reportStudentsList.push(name); reportStudentsList.sort(); }
                 selector.value = name;
-                input.value = '';
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
                 rebuildSelector();
+                selector.dispatchEvent(new Event('change'));
                 showToast(`✅ "${name}" added!`, 'success');
             }
-            selector.dispatchEvent(new Event('change'));
         });
 
         selector.addEventListener('change', async () => {
@@ -832,7 +845,6 @@
             await loadStudentData(student, cls);
             const photoUrl = await getStudentPhoto(student);
             updatePhotoDisplay(photoUrl);
-            // Show position if calculated
             if (studentPositions[student]) {
                 document.getElementById('positionDisplay').style.display = 'block';
                 document.getElementById('positionNumber').innerHTML = studentPositions[student].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[student].position) + '</small>';
@@ -860,38 +872,27 @@
             else showToast('✅ Last student!', 'warning');
         });
 
-        // Calculate positions button
         document.getElementById('calculatePositionsBtn').addEventListener('click', async () => {
             const btn = document.getElementById('calculatePositionsBtn');
             btn.innerText = '⏳ Calculating...'; btn.disabled = true;
             await calculateAllPositions(cls);
             btn.innerText = '🏆 Calculate Positions'; btn.disabled = false;
-            // Refresh current student display
-            if (currentSelectedStudent) {
-                if (studentPositions[currentSelectedStudent]) {
-                    document.getElementById('positionDisplay').style.display = 'block';
-                    document.getElementById('positionNumber').innerHTML = studentPositions[currentSelectedStudent].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[currentSelectedStudent].position) + '</small>';
-                }
+            if (currentSelectedStudent && studentPositions[currentSelectedStudent]) {
+                document.getElementById('positionDisplay').style.display = 'block';
+                document.getElementById('positionNumber').innerHTML = studentPositions[currentSelectedStudent].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[currentSelectedStudent].position) + '</small>';
             }
-            showToast(`✅ Positions calculated for ${reportStudentsList.length} students!`, 'success');
+            showToast(`✅ Positions calculated!`, 'success');
         });
 
         document.getElementById('pushAllAdminBtn').addEventListener('click', async () => {
             if (!confirm('Push ALL to Admin?')) return;
             const btn = document.getElementById('pushAllAdminBtn'); btn.innerText = '⏳...'; btn.disabled = true;
-            for (let s of reportStudentsList) {
-                selector.value = s;
-                await saveCurrentStudent(cls);
-                await db.collection('reportCards').doc(`${cls}_${s}`).update({ pushedToAdmin: true, pushedAt: new Date(), approved: false }).catch(()=>{});
-            }
+            for (let s of reportStudentsList) { selector.value = s; await saveCurrentStudent(cls); await db.collection('reportCards').doc(`${cls}_${s}`).update({ pushedToAdmin: true, pushedAt: new Date(), approved: false }).catch(()=>{}); }
             btn.innerText = '📤 Push All'; btn.disabled = false;
             showToast('✅ Pushed!', 'success');
         });
 
         document.getElementById('printAllBtn').addEventListener('click', () => window.print());
-
-        // Floating subject button for mobile
-        document.getElementById('floatingSubjectBtn').addEventListener('click', () => toggleSubjectColumn());
     }
 
     function rebuildSelector() {
@@ -900,57 +901,27 @@
         selector.innerHTML = '<option value="">-- Choose --</option>' + reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
     }
 
-    function toggleSubjectColumn() {
-        const table = document.getElementById('scoresTable');
-        if (table) table.classList.toggle('subject-expanded');
-    }
+    function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
 
     async function calculateAllPositions(cls) {
         studentPositions = {};
         const studentAverages = [];
-
         for (let student of reportStudentsList) {
             const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
             if (!doc.exists) continue;
             const data = doc.data();
             if (!data.subjects) continue;
-            
             let totalAvg = 0, count = 0;
-            Object.values(data.subjects).forEach(sd => {
-                if (sd.average && sd.average > 0) { totalAvg += sd.average; count++; }
-            });
-            
-            if (count > 0) {
-                const overallAvg = totalAvg / count;
-                studentAverages.push({ student, overallAvg });
-            }
+            Object.values(data.subjects).forEach(sd => { if (sd.average && sd.average > 0) { totalAvg += sd.average; count++; } });
+            if (count > 0) studentAverages.push({ student, overallAvg: totalAvg / count });
         }
-
-        // Sort descending
         studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
-
-        // Assign positions
         let position = 1;
         for (let i = 0; i < studentAverages.length; i++) {
-            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) {
-                position = i + 1;
-            }
-            studentPositions[studentAverages[i].student] = {
-                position: position,
-                average: studentAverages[i].overallAvg
-            };
-            // Save to Firestore
-            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
-                overallPosition: position,
-                overallAverage: studentAverages[i].overallAvg
-            }).catch(() => {});
+            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) position = i + 1;
+            studentPositions[studentAverages[i].student] = { position, average: studentAverages[i].overallAvg };
+            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({ overallPosition: position, overallAverage: studentAverages[i].overallAvg }).catch(()=>{});
         }
-    }
-
-    function getOrdinalSuffix(n) {
-        const s = ['th','st','nd','rd'];
-        const v = n % 100;
-        return s[(v-20)%10] || s[v] || s[0];
     }
 
     async function loadStudentData(student, cls) {
@@ -962,7 +933,6 @@
         const ce = document.querySelector('.commentary-input'); if (ce) ce.value = '';
         const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
         const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
-
         if (doc.exists) {
             const data = doc.data();
             if (data.subjects) Object.keys(data.subjects).forEach(sub => {
@@ -978,7 +948,6 @@
             if (data.principalRemarks && pe) pe.value = data.principalRemarks;
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
-
         if (allStudentResults[student]) Object.keys(allStudentResults[student]).forEach(sub => {
             const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
             if (ti && !ti.value) ti.value = allStudentResults[student][sub];
@@ -998,11 +967,7 @@
         });
     }
 
-    function getRemarkText(avg) {
-        if (avg>=75) return 'Distinction'; if (avg>=70) return 'Excellent'; if (avg>=65) return 'Very Good';
-        if (avg>=60) return 'Good'; if (avg>=55) return 'Above Avg'; if (avg>=50) return 'Average';
-        if (avg>=45) return 'Below Avg'; if (avg>=40) return 'Weak Pass'; return 'Fail';
-    }
+    function getRemarkText(avg) { if (avg>=75) return 'Distinction'; if (avg>=70) return 'Excellent'; if (avg>=65) return 'Very Good'; if (avg>=60) return 'Good'; if (avg>=55) return 'Above Avg'; if (avg>=50) return 'Average'; if (avg>=45) return 'Below Avg'; if (avg>=40) return 'Weak Pass'; return 'Fail'; }
 
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
@@ -1021,7 +986,6 @@
             const affective = {}; document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value)||3);
             const psychomotor = {}; document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value)||3);
             const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
-
             await db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`).set({
                 class: cls, studentName: currentSelectedStudent, term: 'Third',
                 session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
@@ -1035,13 +999,9 @@
                 promotionStatus: document.querySelector('.promotion-select')?.value || '',
                 updatedAt: new Date()
             }, { merge: true });
-
             if (si) { si.innerText = `✅ Saved at ${new Date().toLocaleTimeString()}`; si.style.color = '#059669'; }
             if (sb) sb.style.background = '#10b981';
-        } catch (e) {
-            if (si) { si.innerText = '❌ ' + e.message; si.style.color = '#dc2626'; }
-            if (sb) sb.style.background = '#dc2626';
-        }
+        } catch (e) { if (si) { si.innerText = '❌ ' + e.message; si.style.color = '#dc2626'; } if (sb) sb.style.background = '#dc2626'; }
     }
 
     let autoSaveTimeout;
@@ -1066,7 +1026,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Dashboard Ready - Smart matching, manual add, positions, mobile responsive');
+    console.log('✅ Dashboard Ready - Sidebar collapse, Add Student, Positions');
 </script>
 </body>
 </html>
