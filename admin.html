@@ -46,10 +46,11 @@
         .admin-header h1 span { color: #4f46e5; }
         .admin-header .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 10px 24px; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .admin-header .logout-btn:hover { background: #fecaca; }
+        .admin-header .stats { display: flex; gap: 20px; font-size: 14px; font-weight: 600; color: #475569; }
+        .admin-header .stats span { background: #f1f5f9; padding: 6px 16px; border-radius: 30px; }
 
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; }
-        @media (max-width: 1100px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 700px) { .grid-3 { grid-template-columns: 1fr; } }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
 
         .card { background: #f8fafc; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; }
         .card h3 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
@@ -58,6 +59,10 @@
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center; }
         th { background: white; font-weight: 700; }
+        tr.clickable { cursor: pointer; transition: 0.15s; }
+        tr.clickable:hover { background: #eef2ff; }
+        .status-approved { color: #059669; font-weight: 700; }
+        .status-pending { color: #d97706; font-weight: 700; }
 
         .btn-sm { padding: 6px 16px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; transition: 0.2s; }
         .btn-success { background: #10b981; color: white; }
@@ -78,11 +83,10 @@
         .pin-display-box .pin-value { font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #1e1b4b; display: inline-block; background: #f1f5f9; padding: 4px 12px; border-radius: 30px; margin: 3px; }
         .pin-display-box .pin-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
 
-        .table-scroll { max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .table-scroll { max-height: 250px; overflow-y: auto; margin-top: 10px; }
         .table-scroll table { font-size: 12px; }
         .table-scroll th { position: sticky; top: 0; background: #f1f5f9; z-index: 2; }
 
-        /* Class Droplet Styles */
         .class-droplet { display: inline-flex; align-items: center; gap: 8px; background: white; padding: 8px 16px; border-radius: 60px; border: 1px solid #e2e8f0; font-weight: 600; margin: 4px 8px 4px 0; }
         .class-droplet .del-class { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 800; font-size: 16px; padding: 0 4px; }
         .class-droplet .del-class:hover { color: #dc2626; }
@@ -93,7 +97,6 @@
         .add-class-row button { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .add-class-row button:hover { background: #059669; }
 
-        /* UPDATE 1: Tab Switching Styles */
         .tab-row { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
         .tab-btn { padding: 8px 18px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid #e2e8f0; background: white; color: #64748b; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
@@ -101,6 +104,7 @@
         .tab-btn.active:hover { background: #4338ca; }
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
+
         .pin-used { background: #d1fae5; color: #065f46; }
         .pin-unused { background: #fef3c7; color: #92400e; }
 
@@ -122,6 +126,38 @@
         .modal-box .consent-check { display: flex; align-items: center; gap: 12px; margin: 15px 0; font-weight: 600; }
         .modal-box .consent-check input { width: 20px; height: 20px; accent-color: #4f46e5; }
         .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+
+        /* ===== CLASS VIEW ===== */
+        .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .class-header .back-btn { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .class-header .back-btn:hover { background: #e2e8f0; }
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .class-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .class-card:hover { border-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .class-card .class-name { font-weight: 800; font-size: 18px; color: #1e1b4b; }
+        .class-card .class-count { font-size: 14px; color: #64748b; }
+        .class-card .class-status { font-size: 12px; font-weight: 600; margin-top: 6px; }
+        .class-card .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 12px; border-radius: 30px; }
+        .class-card .approved-badge { background: #d1fae5; color: #065f46; padding: 2px 12px; border-radius: 30px; }
+        .class-card .total-badge { background: #e0e7ff; color: #3730a3; padding: 2px 12px; border-radius: 30px; }
+
+        /* ===== STUDENT LIST IN CLASS ===== */
+        .student-list-wrap { margin-top: 15px; }
+        .student-list-wrap .search-box { padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; width: 100%; max-width: 300px; outline: none; font-family: 'Inter', sans-serif; }
+        .student-list-wrap .search-box:focus { border-color: #4f46e5; }
+        .student-list-wrap .filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+        .student-list-wrap .filters select { padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; background: white; }
+
+        .student-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
+        .student-row:hover { background: #f8fafc; }
+        .student-row .name { font-weight: 700; color: #0f172a; }
+        .student-row .info { font-size: 13px; color: #64748b; }
+
+        @media (max-width: 700px) {
+            #app { padding: 20px; border-radius: 16px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .class-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -144,20 +180,28 @@
     <!-- DASHBOARD -->
     <div id="dashboardPage" class="page">
         <div class="admin-header">
-            <h1>🔑 <span>Admin</span> Console</h1>
+            <div>
+                <h1>🔑 <span>Admin</span> Console</h1>
+                <div class="stats" id="statsBar">
+                    <span>📊 <span id="totalStudents">0</span> Total</span>
+                    <span>⏳ <span id="pendingCount">0</span> Pending</span>
+                    <span>✅ <span id="approvedCount">0</span> Approved</span>
+                </div>
+            </div>
             <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
         </div>
 
-        <!-- Grid 3 -->
-        <div class="grid-3">
-            <!-- Card 1: Pending Approvals -->
-            <div class="card">
-                <h3>⏳ Pending Approvals</h3>
-                <div class="sub">Review, add remarks & consent, then approve.</div>
-                <div id="pendingList">Loading...</div>
+        <!-- MAIN VIEW: Class Grid -->
+        <div id="mainView">
+            <div class="card" style="margin-bottom:20px;">
+                <h3>📚 Select a Class</h3>
+                <div class="sub">Click on any class to view all report cards for that class.</div>
+                <div id="classGridContainer" class="class-grid">
+                    <span style="color:#94a3b8;">Loading classes...</span>
+                </div>
             </div>
 
-            <!-- UPDATE 2: Card 2: PIN Management (Tabs: Generate + History + All PINs) -->
+            <!-- PIN Management -->
             <div class="card">
                 <h3>🔐 PIN Management</h3>
                 <div class="tab-row">
@@ -166,7 +210,6 @@
                     <button class="tab-btn" data-tab="tabAllPins">📋 All PINs</button>
                 </div>
 
-                <!-- Tab: Generate -->
                 <div id="tabGenerate" class="tab-panel active">
                     <div class="sub">Generate 10 to 60 unique PINs at once for parents to purchase.</div>
                     <div class="flex-input">
@@ -180,7 +223,6 @@
                     <button class="btn-sm btn-outline" id="copyPinsBtn" style="margin-top:8px; width:100%;">📋 Copy All to Clipboard</button>
                 </div>
 
-                <!-- Tab: Usage History -->
                 <div id="tabHistory" class="tab-panel">
                     <div class="sub">Track who used which PIN and when.</div>
                     <button class="btn-sm btn-primary" id="refreshHistoryBtn" style="margin-bottom:10px;">🔄 Refresh</button>
@@ -189,7 +231,6 @@
                     </div>
                 </div>
 
-                <!-- Tab: All PINs -->
                 <div id="tabAllPins" class="tab-panel">
                     <div class="sub">View all generated PINs and their status.</div>
                     <button class="btn-sm btn-primary" id="refreshAllPinsBtn" style="margin-bottom:10px;">🔄 Refresh</button>
@@ -198,32 +239,44 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- UPDATE 3: Card 3: Class Droplets Manager -->
-            <div class="card">
-                <h3>📚 Manage Classes</h3>
-                <div class="sub">Add or remove standardized classes. Students and teachers will select from this list.</div>
-                <div class="add-class-row">
-                    <input id="newClassInput" placeholder="e.g. Basic 7" />
-                    <button id="addClassBtn">➕ Add</button>
+        <!-- CLASS VIEW: Students in a specific class -->
+        <div id="classView" style="display:none;">
+            <div class="class-header">
+                <div>
+                    <button class="back-btn" id="backToClassesBtn">⬅ Back to Classes</button>
+                    <h2 style="display:inline-block; margin-left:15px; color:#1e1b4b;">📋 <span id="classViewTitle">Class Name</span></h2>
                 </div>
-                <div id="classDropletContainer" class="droplet-container">
-                    <span style="color:#94a3b8; font-size:14px;">Loading...</span>
+                <div>
+                    <span class="btn-sm btn-outline" id="classViewStats">0 students</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="filters">
+                    <input class="search-box" id="studentSearchBox" placeholder="🔍 Search student..." />
+                    <select id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="approved">✅ Approved</option>
+                    </select>
+                    <button class="btn-sm btn-primary" id="refreshClassViewBtn">🔄 Refresh</button>
+                </div>
+                <div id="studentListContainer">
+                    <p style="color:#94a3b8;">Loading students...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ========================================================== -->
-    <!-- MODAL: Review & Approve Report Card                         -->
-    <!-- ========================================================== -->
+    <!-- MODAL: Review & Approve Report Card -->
     <div class="modal-overlay" id="reviewModal">
         <div class="modal-box">
             <button class="close-modal" id="closeModalBtn">✕</button>
             <h2>📋 Review Report Card</h2>
             <p class="sub">Review the student's performance, add your remarks, and give consent before publishing.</p>
 
-            <!-- UPDATE 4: Add position/avg fields to modal student info -->
             <div class="student-info" id="modalStudentInfo">
                 <div><strong>Student:</strong> <span id="modalStudentName">---</span></div>
                 <div><strong>Class:</strong> <span id="modalStudentClass">---</span></div>
@@ -232,9 +285,7 @@
                 <div><strong>Overall Avg:</strong> <span id="modalStudentAvg">---</span></div>
             </div>
 
-            <div class="subject-summary" id="modalSubjectSummary">
-                <!-- Dynamically populated -->
-            </div>
+            <div class="subject-summary" id="modalSubjectSummary"></div>
 
             <div class="remark-field">
                 <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:4px;">📝 Admin / Principal Remarks</label>
@@ -291,18 +342,22 @@
     const $ = (id) => document.getElementById(id);
     let masterClassList = [];
     let currentPendingDocId = null;
+    let currentClassView = null;
+    let allReportCards = [];
 
-    // UPDATE 5: Tab switching JavaScript
+    function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
+
+    // =============================================================
+    // TAB SWITCHING
+    // =============================================================
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const parent = btn.parentElement;
             parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
             const card = btn.closest('.card');
             card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             $(btn.dataset.tab).classList.add('active');
-
             if (btn.dataset.tab === 'tabHistory') loadPinHistory();
             if (btn.dataset.tab === 'tabAllPins') loadAllPins();
         });
@@ -327,9 +382,10 @@
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 $('dashboardPage').classList.add('active');
                 showToast(`👑 Welcome, ${name || 'Admin'}!`, 'success');
-                loadPendingReports();
                 loadMasterClassList();
+                loadAllReportCards();
                 loadPinHistory();
+                loadAllPins();
             } else {
                 err.innerText = '❌ Invalid Admin PIN.';
             }
@@ -339,9 +395,10 @@
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 $('dashboardPage').classList.add('active');
                 showToast('👑 Welcome Admin! (Fallback mode)', 'success');
-                loadPendingReports();
                 loadMasterClassList();
+                loadAllReportCards();
                 loadPinHistory();
+                loadAllPins();
             } else {
                 err.innerText = '❌ Invalid Admin PIN. (Fallback: admin123)';
             }
@@ -355,7 +412,7 @@
     });
 
     // =============================================================
-    // 1. MASTER CLASS LIST (DROPLETS)
+    // LOAD MASTER CLASS LIST
     // =============================================================
     async function loadMasterClassList() {
         try {
@@ -366,94 +423,228 @@
                 masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
                 await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
             }
-            renderDroplets();
+            renderClassGrid();
         } catch (e) {
-            showToast('❌ Error loading master class list: ' + e.message, 'error');
+            showToast('❌ Error loading classes: ' + e.message, 'error');
         }
     }
 
-    function renderDroplets() {
-        const container = $('classDropletContainer');
+    // =============================================================
+    // LOAD ALL REPORT CARDS (for stats and class views)
+    // =============================================================
+    async function loadAllReportCards() {
+        try {
+            const snap = await db.collection('reportCards').get();
+            allReportCards = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                allReportCards.push({
+                    id: doc.id,
+                    ...data,
+                    approved: data.approved || false,
+                    studentName: data.studentName || 'Unknown',
+                    class: data.class || 'Unknown',
+                    overallPosition: data.overallPosition || null,
+                    overallAverage: data.overallAverage || 0
+                });
+            });
+            updateStats();
+            renderClassGrid();
+            if (currentClassView) {
+                renderStudentList(currentClassView);
+            }
+        } catch (e) {
+            console.error('Error loading report cards:', e);
+            showToast('❌ Error loading report cards.', 'error');
+        }
+    }
+
+    // =============================================================
+    // UPDATE STATS BAR
+    // =============================================================
+    function updateStats() {
+        const total = allReportCards.length;
+        const pending = allReportCards.filter(r => !r.approved).length;
+        const approved = allReportCards.filter(r => r.approved).length;
+        $('totalStudents').innerText = total;
+        $('pendingCount').innerText = pending;
+        $('approvedCount').innerText = approved;
+    }
+
+    // =============================================================
+    // RENDER CLASS GRID (Main View)
+    // =============================================================
+    function renderClassGrid() {
+        const container = $('classGridContainer');
         if (!masterClassList.length) {
-            container.innerHTML = '<span style="color:#94a3b8; font-size:14px;">No classes added yet. Add one above!</span>';
+            container.innerHTML = '<p style="color:#94a3b8;">No classes configured. Please add classes in the PIN Management section.</p>';
             return;
         }
-        container.innerHTML = masterClassList.map(cls => `
-            <span class="class-droplet">
-                📘 ${cls}
-                <button class="del-class" data-class="${cls}">✕</button>
-            </span>
-        `).join('');
 
-        container.querySelectorAll('.del-class').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const cls = btn.dataset.class;
-                if (!confirm(`Remove "${cls}" from the master list?`)) return;
-                masterClassList = masterClassList.filter(c => c !== cls);
-                await db.collection('classList').doc('allClasses').update({ classes: masterClassList });
-                renderDroplets();
-                showToast(`🗑️ "${cls}" removed.`, 'warning');
+        let html = '';
+        masterClassList.forEach(cls => {
+            const students = allReportCards.filter(r => r.class === cls);
+            const pending = students.filter(r => !r.approved).length;
+            const approved = students.filter(r => r.approved).length;
+            const total = students.length;
+            
+            html += `
+                <div class="class-card" data-class="${cls}">
+                    <div class="class-name">📚 ${cls}</div>
+                    <div class="class-count">${total} students</div>
+                    <div class="class-status">
+                        ${pending > 0 ? `<span class="pending-badge">⏳ ${pending} pending</span>` : ''}
+                        ${approved > 0 ? `<span class="approved-badge">✅ ${approved} approved</span>` : ''}
+                        ${total === 0 ? `<span class="total-badge">📭 No reports</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        // Click handler for class cards
+        container.querySelectorAll('.class-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const cls = card.dataset.class;
+                currentClassView = cls;
+                $('classViewTitle').innerText = cls;
+                $('mainView').style.display = 'none';
+                $('classView').style.display = 'block';
+                renderStudentList(cls);
+                // Update stats
+                const students = allReportCards.filter(r => r.class === cls);
+                $('classViewStats').innerText = `${students.length} students`;
             });
         });
     }
 
-    $('addClassBtn').addEventListener('click', async () => {
-        const val = $('newClassInput').value.trim();
-        if (!val) return showToast('⚠️ Please enter a class name.', 'warning');
-        if (masterClassList.includes(val)) return showToast('⚠️ Class already exists in the list.', 'warning');
+    // =============================================================
+    // RENDER STUDENT LIST (Class View)
+    // =============================================================
+    function renderStudentList(cls, searchQuery = '', statusFilter = 'all') {
+        const container = $('studentListContainer');
+        let students = allReportCards.filter(r => r.class === cls);
 
-        try {
-            masterClassList.push(val);
-            await db.collection('classList').doc('allClasses').update({ classes: masterClassList });
-            $('newClassInput').value = '';
-            renderDroplets();
-            showToast(`✅ "${val}" added to master list!`, 'success');
-        } catch (e) {
-            showToast('❌ Error adding class: ' + e.message, 'error');
+        // Apply search
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            students = students.filter(r => r.studentName.toLowerCase().includes(q));
+        }
+
+        // Apply status filter
+        if (statusFilter === 'pending') {
+            students = students.filter(r => !r.approved);
+        } else if (statusFilter === 'approved') {
+            students = students.filter(r => r.approved);
+        }
+
+        // Sort by name
+        students.sort((a, b) => a.studentName.localeCompare(b.studentName));
+
+        if (!students.length) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#94a3b8;">
+                    <p style="font-size:48px;">📭</p>
+                    <p>No students found${searchQuery ? ' matching "' + searchQuery + '"' : ''} in this class.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `<div style="overflow-x:auto;">`;
+        html += `<table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th style="text-align:left;">Student Name</th>
+                    <th>Avg %</th>
+                    <th>Position</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        students.forEach((r, idx) => {
+            const status = r.approved ? '✅ Approved' : '⏳ Pending';
+            const statusClass = r.approved ? 'status-approved' : 'status-pending';
+            const posText = r.overallPosition ? r.overallPosition + getOrdinalSuffix(r.overallPosition) : '--';
+            
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td style="text-align:left; font-weight:600;">${r.studentName}</td>
+                    <td>${r.overallAverage ? r.overallAverage.toFixed(1) + '%' : '--'}</td>
+                    <td>${posText}</td>
+                    <td class="${statusClass}">${status}</td>
+                    <td>
+                        ${!r.approved ? `<button class="btn-sm btn-warning reviewBtn" data-id="${r.id}">📝 Review</button>` : 
+                                        `<button class="btn-sm btn-outline viewBtn" data-id="${r.id}">👁️ View</button>`}
+                        <button class="btn-sm btn-danger deleteBtn" data-id="${r.id}" style="margin-left:4px;">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+
+        // Event listeners
+        container.querySelectorAll('.reviewBtn').forEach(btn => {
+            btn.addEventListener('click', () => openReviewModal(btn.dataset.id));
+        });
+        container.querySelectorAll('.viewBtn').forEach(btn => {
+            btn.addEventListener('click', () => openReviewModal(btn.dataset.id, true));
+        });
+        container.querySelectorAll('.deleteBtn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Delete this report card permanently?')) return;
+                try {
+                    await db.collection('reportCards').doc(btn.dataset.id).delete();
+                    showToast('🗑️ Report card deleted.', 'warning');
+                    await loadAllReportCards();
+                    renderStudentList(cls, $('studentSearchBox').value, $('statusFilter').value);
+                } catch (e) {
+                    showToast('❌ Error deleting: ' + e.message, 'error');
+                }
+            });
+        });
+    }
+
+    // =============================================================
+    // CLASS VIEW CONTROLS
+    // =============================================================
+    $('backToClassesBtn').addEventListener('click', () => {
+        $('classView').style.display = 'none';
+        $('mainView').style.display = 'block';
+        currentClassView = null;
+        loadAllReportCards();
+    });
+
+    $('refreshClassViewBtn').addEventListener('click', () => {
+        if (currentClassView) {
+            loadAllReportCards();
+            renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
+            showToast('🔄 Refreshed.', 'success');
+        }
+    });
+
+    $('studentSearchBox').addEventListener('input', () => {
+        if (currentClassView) {
+            renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
+        }
+    });
+
+    $('statusFilter').addEventListener('change', () => {
+        if (currentClassView) {
+            renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
         }
     });
 
     // =============================================================
-    // 2. PENDING APPROVALS (with Review Modal)
+    // REVIEW MODAL
     // =============================================================
-    async function loadPendingReports() {
-        const container = $('pendingList');
-        try {
-            const snap = await db.collection('reportCards')
-                .where('approved', '==', false)
-                .orderBy('pushedAt', 'desc')
-                .get();
-
-            if (snap.empty) return container.innerHTML = '<p style="color:#059669; font-weight:600;">🎉 All clear! No pending reports.</p>';
-
-            let html = '<table><tr><th>Student</th><th>Class</th><th>Pushed</th><th>Action</th></tr>';
-            snap.forEach(doc => {
-                const data = doc.data();
-                const date = data.pushedAt?.toDate?.()?.toLocaleDateString() || 'N/A';
-                html += `<tr>
-                    <td><strong>${data.studentName}</strong></td>
-                    <td>${data.class}</td>
-                    <td>${date}</td>
-                    <td><button class="btn-sm btn-warning reviewBtn" data-id="${doc.id}">📝 Review & Approve</button></td>
-                </tr>`;
-            });
-            container.innerHTML = html + '</table>';
-
-            container.querySelectorAll('.reviewBtn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    openReviewModal(btn.dataset.id);
-                });
-            });
-        } catch (e) {
-            container.innerHTML = '<p style="color:#dc2626;">❌ Error loading pending reports.</p>';
-            showToast('❌ Error loading data.', 'error');
-        }
-    }
-
-    // =============================================================
-    // 3. REVIEW MODAL LOGIC
-    // =============================================================
-    async function openReviewModal(docId) {
+    async function openReviewModal(docId, viewOnly = false) {
         currentPendingDocId = docId;
         try {
             const doc = await db.collection('reportCards').doc(docId).get();
@@ -463,12 +654,10 @@
             $('modalStudentName').innerText = data.studentName;
             $('modalStudentClass').innerText = data.class;
             $('modalStudentTerm').innerText = data.term || 'Third Term';
-
-            // UPDATE 6: Add position/avg to review modal
             $('modalStudentPosition').innerText = data.overallPosition ? data.overallPosition + getOrdinalSuffix(data.overallPosition) : 'N/A';
             $('modalStudentAvg').innerText = data.overallAverage ? data.overallAverage.toFixed(1) + '%' : 'N/A';
 
-            // UPDATE 7: Fix subject table in modal
+            // Subject table
             const subjects = Object.keys(data.subjects || {});
             let tableHtml = `<table><tr><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr>`;
             subjects.forEach(sub => {
@@ -478,11 +667,26 @@
             tableHtml += '</table>';
             $('modalSubjectSummary').innerHTML = tableHtml;
 
-            // Clear previous inputs
-            $('adminRemarksInput').value = '';
-            $('adminConsentCheck').checked = false;
+            // If view-only, disable inputs and change button text
+            if (viewOnly || data.approved) {
+                $('adminRemarksInput').value = data.principalRemarks || '';
+                $('adminRemarksInput').disabled = true;
+                $('adminConsentCheck').disabled = true;
+                $('finalizeApprovalBtn').innerText = '👁️ View Only (Approved)';
+                $('finalizeApprovalBtn').disabled = true;
+                $('finalizeApprovalBtn').style.opacity = '0.6';
+                $('adminRemarksInput').style.background = '#f1f5f9';
+            } else {
+                $('adminRemarksInput').value = '';
+                $('adminRemarksInput').disabled = false;
+                $('adminConsentCheck').disabled = false;
+                $('adminConsentCheck').checked = false;
+                $('finalizeApprovalBtn').innerText = '📤 Approve & Publish';
+                $('finalizeApprovalBtn').disabled = false;
+                $('finalizeApprovalBtn').style.opacity = '1';
+                $('adminRemarksInput').style.background = 'white';
+            }
 
-            // Show modal
             $('reviewModal').classList.add('active');
 
         } catch (e) {
@@ -497,17 +701,16 @@
 
     $('closeModalBtn').addEventListener('click', closeReviewModal);
     $('cancelReviewBtn').addEventListener('click', closeReviewModal);
-
-    // Click outside modal to close
     $('reviewModal').addEventListener('click', (e) => {
         if (e.target === $('reviewModal')) closeReviewModal();
     });
 
     // =============================================================
-    // 4. FINALIZE APPROVAL (with Remarks & Consent)
+    // FINALIZE APPROVAL
     // =============================================================
     $('finalizeApprovalBtn').addEventListener('click', async () => {
         if (!currentPendingDocId) return showToast('⚠️ No report selected.', 'error');
+        if ($('finalizeApprovalBtn').disabled) return;
 
         const remarks = $('adminRemarksInput').value.trim();
         const consent = $('adminConsentCheck').checked;
@@ -516,12 +719,7 @@
             return showToast('⚠️ You must check the consent box to approve this report.', 'warning');
         }
 
-        if (!remarks) {
-            if (!confirm('⚠️ You haven\'t added any admin remarks. Continue anyway?')) return;
-        }
-
         try {
-            // UPDATE 8: Fix approval update
             await db.collection('reportCards').doc(currentPendingDocId).update({
                 approved: true,
                 principalRemarks: remarks || 'No remarks provided.',
@@ -531,14 +729,17 @@
 
             showToast('✅ Report card approved and published!', 'success');
             closeReviewModal();
-            loadPendingReports();
+            await loadAllReportCards();
+            if (currentClassView) {
+                renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
+            }
         } catch (e) {
             showToast('❌ Error approving report: ' + e.message, 'error');
         }
     });
 
     // =============================================================
-    // 5. BULK PIN GENERATION (10 to 60 at once)
+    // BULK PIN GENERATION
     // =============================================================
     $('genBulkPinBtn').addEventListener('click', async () => {
         const count = parseInt($('pinCount').value) || 20;
@@ -561,7 +762,6 @@
             if (!check.exists && !generatedPins.includes(pin)) {
                 generatedPins.push(pin);
                 const ref = db.collection('pins').doc(pin);
-                // UPDATE 11: Include all fields in PIN document
                 batch.set(ref, { 
                     used: false, 
                     usedBy: null, 
@@ -573,22 +773,18 @@
         }
 
         if (generatedPins.length < count) {
-            showToast(`⚠️ Only generated ${generatedPins.length} unique PINs. Please try again.`, 'warning');
+            showToast(`⚠️ Only generated ${generatedPins.length} unique PINs.`, 'warning');
         }
 
         try {
             await batch.commit();
-            // UPDATE 12: Add used/unused styling
             $('pinListContainer').innerHTML = generatedPins.map(p => `<span class="pin-value pin-unused">${p}</span>`).join(' ');
-            showToast(`✅ ${generatedPins.length} PINs generated successfully!`, 'success');
-
-            $('bulkPinResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`✅ ${generatedPins.length} PINs generated!`, 'success');
         } catch (e) {
             showToast('❌ Error saving PINs: ' + e.message, 'error');
         }
     });
 
-    // Copy PINs to clipboard
     $('copyPinsBtn').addEventListener('click', () => {
         const pinSpans = document.querySelectorAll('#pinListContainer .pin-value');
         if (!pinSpans.length) return showToast('⚠️ No PINs to copy.', 'warning');
@@ -607,7 +803,7 @@
     });
 
     // =============================================================
-    // 6. PIN USAGE HISTORY
+    // PIN USAGE HISTORY
     // =============================================================
     async function loadPinHistory() {
         const container = $('pinHistoryContainer');
@@ -622,32 +818,22 @@
                 return;
             }
 
-            let html = `<table>
-                <tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>`;
+            let html = `<table><tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>`;
             snap.forEach(doc => {
                 const data = doc.data();
                 const date = data.usedAt?.toDate?.()?.toLocaleString() || 'N/A';
-                html += `<tr>
-                    <td><strong>${doc.id}</strong></td>
-                    <td>${data.usedBy || 'N/A'}</td>
-                    <td>${data.class || 'N/A'}</td>
-                    <td>${date}</td>
-                </tr>`;
+                html += `<tr><td><strong>${doc.id}</strong></td><td>${data.usedBy || 'N/A'}</td><td>${data.class || 'N/A'}</td><td>${date}</td></tr>`;
             });
             container.innerHTML = html + '</table>';
         } catch (e) {
             container.innerHTML = '<p style="color:#dc2626;">❌ Error loading history.</p>';
-            showToast('❌ Error loading PIN history.', 'error');
         }
     }
 
-    $('refreshHistoryBtn').addEventListener('click', () => {
-        loadPinHistory();
-        showToast('🔄 History refreshed.', 'success');
-    });
+    $('refreshHistoryBtn').addEventListener('click', () => { loadPinHistory(); showToast('🔄 Refreshed.', 'success'); });
 
     // =============================================================
-    // UPDATE 10: ALL PINS LIST
+    // ALL PINS LIST
     // =============================================================
     async function loadAllPins() {
         const container = $('allPinsContainer');
@@ -659,13 +845,7 @@
                 const data = doc.data();
                 const status = data.used ? '✅ Used' : '🆕 Available';
                 const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
-                html += `<tr>
-                    <td><strong>${doc.id}</strong></td>
-                    <td style="color:${data.used?'#059669':'#d97706'}; font-weight:700;">${status}</td>
-                    <td>${data.usedBy||'--'}</td>
-                    <td>${data.class||'--'}</td>
-                    <td>${created}</td>
-                </tr>`;
+                html += `<tr><td><strong>${doc.id}</strong></td><td style="color:${data.used?'#059669':'#d97706'}; font-weight:700;">${status}</td><td>${data.usedBy||'--'}</td><td>${data.class||'--'}</td><td>${created}</td></tr>`;
             });
             container.innerHTML = html + '</table>';
         } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error.</p>'; }
@@ -674,16 +854,11 @@
     $('refreshAllPinsBtn').addEventListener('click', () => { loadAllPins(); showToast('🔄 Refreshed.', 'success'); });
 
     // =============================================================
-    // UPDATE 9: Helper function
-    // =============================================================
-    function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
-
-    // =============================================================
     // INIT
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Admin Console with all updates is ready!');
+    console.log('✅ Admin Console with Class-Based View is ready!');
 </script>
 </body>
 </html>
