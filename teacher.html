@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Teacher Dashboard · Auto‑Save & Position</title>
+    <title>Teacher Dashboard · Real‑Time Sync</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
@@ -31,6 +31,17 @@
         .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
         .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
 
+        /* --- REAL-TIME SYNC INDICATOR --- */
+        .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 30px; }
+        .sync-status.connected { background: #d1fae5; color: #065f46; }
+        .sync-status.connecting { background: #fef3c7; color: #92400e; }
+        .sync-status.disconnected { background: #fee2e2; color: #991b1b; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .sync-status.connected .sync-dot { background: #10b981; }
+        .sync-status.connecting .sync-dot { background: #f59e0b; animation: pulse-dot 1s infinite; }
+        .sync-status.disconnected .sync-dot { background: #dc2626; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
         .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
         .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
         .toast.hide { animation: slideOut 0.3s ease forwards; }
@@ -38,9 +49,11 @@
         .toast.success { border-color: #10b981; }
         .toast.error { border-color: #dc2626; }
         .toast.warning { border-color: #f59e0b; }
+        .toast.sync { border-color: #4f46e5; background: #eef2ff; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 
+        /* --- REST OF STYLES SAME AS BEFORE --- */
         #dashboardPage { flex-direction: row; background: #f8fafc; }
         .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; transition: all 0.3s ease; }
         .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
@@ -166,6 +179,11 @@
         .merge-btn:hover { background: #d97706; }
         .merge-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
 
+        .save-indicator-success { color: #059669; font-weight: 600; }
+        .save-indicator-saving { color: #f59e0b; font-weight: 600; }
+        .save-indicator-error { color: #dc2626; font-weight: 600; }
+        .sync-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #64748b; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -226,7 +244,16 @@
         </div>
 
         <div class="main-panel">
-            <div class="panel-header"><h2>📖 <span id="selectedSubjectName">Select a Subject</span></h2><div class="badge-points" id="totalPointsBadge">⭐ Total Points: 0</div></div>
+            <div class="panel-header">
+                <h2>📖 <span id="selectedSubjectName">Select a Subject</span></h2>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <div class="badge-points" id="totalPointsBadge">⭐ Total Points: 0</div>
+                    <div class="sync-status connected" id="syncStatus">
+                        <span class="sync-dot"></span>
+                        <span id="syncText">Live</span>
+                    </div>
+                </div>
+            </div>
             <div class="main-tabs">
                 <button class="main-tab active" data-tab="tabQuestions">📝 Questions</button>
                 <button class="main-tab" data-tab="tabPublish">📢 Publish</button>
@@ -273,7 +300,8 @@
             <div id="tabResults" class="tab-content"><div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div></div>
 
             <div id="tabReports" class="tab-content">
-                <div class="card-panel"><h4>📋 Build Report Cards</h4><p style="color:#64748b; margin-bottom:15px;"><span class="auto-save-badge">💾 Auto-Save</span></p><button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button><div id="reportBuilderArea"></div></div>
+                <div class="card-panel"><h4>📋 Build Report Cards</h4><p style="color:#64748b; margin-bottom:15px;"><span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span> <span class="sync-indicator" id="syncIndicator">🔄 Real-time sync active</span></p>
+                <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button><div id="reportBuilderArea"></div></div>
             </div>
         </div>
     </div>
@@ -286,16 +314,45 @@
     const db = firebase.firestore();
     auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
 
+    // =============================================================
+    // REAL-TIME SYNC STATUS
+    // =============================================================
+    let syncUnsubscribe = null;
+    let isRealTimeSyncActive = false;
+    let syncTimeout = null;
+
+    function updateSyncStatus(status, message) {
+        const el = document.getElementById('syncStatus');
+        const text = document.getElementById('syncText');
+        if (!el || !text) return;
+        el.className = 'sync-status ' + status;
+        const labels = { connected: 'Live ✓', connecting: 'Connecting...', disconnected: 'Offline ✗' };
+        text.innerText = labels[status] || message || 'Live';
+    }
+
+    function showSyncToast(message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast sync';
+        toast.innerHTML = `<span class="icon">🔄</span> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 3000);
+    }
+
+    // =============================================================
+    // CLOUDINARY CONFIG
+    // =============================================================
     const cloudinaryConfig = { cloudName: 'dmbjrohtn', uploadPreset: 'pelumi', folder: 'student_photos', maxFileSize: 5000000, allowedFormats: ['jpg','jpeg','png','webp'] };
 
     function openCloudinaryWidget(studentName, callback) {
         if (typeof cloudinary === 'undefined') { showToast('❌ Cloudinary not loaded.', 'error'); return; }
         const widget = cloudinary.createUploadWidget({
             cloudName: cloudinaryConfig.cloudName, uploadPreset: cloudinaryConfig.uploadPreset,
-            folder: `${cloudinaryConfig.folder}/${currentUser.class}`, maxFileSize: cloudinaryConfig.maxFileSize,
+            folder: `${cloudinaryConfig.folder}/${currentUser.class || 'general'}`,
+            maxFileSize: cloudinaryConfig.maxFileSize,
             allowedFormats: cloudinaryConfig.allowedFormats, cropping: true, croppingAspectRatio: 1,
             showSkipCropButton: false, multiple: false, singleUploadAutoClose: true,
-            publicId: `${currentUser.class}_${studentName.replace(/\s+/g,'_')}_${Date.now()}`
+            publicId: `${currentUser.class || 'general'}_${studentName.replace(/\s+/g,'_')}_${Date.now()}`
         }, (error, result) => {
             if (error) { showToast('❌ Upload failed.', 'error'); return; }
             if (result && result.event === "success") {
@@ -318,7 +375,7 @@
 
     function showToast(message, type = "success") {
         const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️' };
+        const icons = { success: '✅', error: '❌', warning: '⚠️', sync: '🔄' };
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
@@ -337,9 +394,105 @@
     let currentSelectedStudent = null;
     let studentPositions = {};
     let isSaving = false;
+    let saveTimeout = null;
+    let totalStudentsCount = 0;
+    let isUserChange = true; // Track if change is from user or real-time sync
 
     document.getElementById('sidebarToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('expanded'));
 
+    // =============================================================
+    // SETUP REAL-TIME LISTENER FOR REPORT CARDS
+    // =============================================================
+    function setupRealTimeSync(cls) {
+        // Clean up previous listener
+        if (syncUnsubscribe) {
+            syncUnsubscribe();
+            syncUnsubscribe = null;
+        }
+
+        updateSyncStatus('connecting', 'Connecting...');
+
+        // Listen to all report cards for this class
+        syncUnsubscribe = db.collection('reportCards')
+            .where('class', '==', cls)
+            .onSnapshot((snapshot) => {
+                if (snapshot.metadata.hasPendingWrites) {
+                    // This is a local change, don't show toast
+                    return;
+                }
+
+                updateSyncStatus('connected', 'Live');
+
+                // Check if the current student was updated by someone else
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'modified') {
+                        const data = change.doc.data();
+                        const studentName = data.studentName;
+                        
+                        // If this is the currently selected student and the change is from elsewhere
+                        if (studentName === currentSelectedStudent && !isUserChange) {
+                            // Reload the student data
+                            loadStudentData(studentName, cls);
+                            showSyncToast(`🔄 "${studentName}" was updated by another teacher`);
+                        }
+                        
+                        // If this is a merge operation (mergedFrom field exists)
+                        if (data.mergedFrom && data.mergedFrom.length > 0) {
+                            // Update the student list
+                            reportStudentsList = reportStudentsList.filter(s => !data.mergedFrom.includes(s));
+                            if (!reportStudentsList.includes(studentName)) {
+                                reportStudentsList.push(studentName);
+                            }
+                            reportStudentsList.sort();
+                            rebuildSelector();
+                            showSyncToast(`🔄 Students were merged into "${studentName}"`);
+                        }
+                    }
+                    
+                    if (change.type === 'added') {
+                        const data = change.doc.data();
+                        // Check if this is a new student that should be in the list
+                        if (data.class === cls && data.studentName && !reportStudentsList.includes(data.studentName)) {
+                            reportStudentsList.push(data.studentName);
+                            reportStudentsList.sort();
+                            rebuildSelector();
+                            showSyncToast(`🆕 New student "${data.studentName}" added`);
+                        }
+                    }
+                    
+                    if (change.type === 'removed') {
+                        const data = change.doc.data();
+                        if (data.studentName && reportStudentsList.includes(data.studentName)) {
+                            reportStudentsList = reportStudentsList.filter(s => s !== data.studentName);
+                            rebuildSelector();
+                            showSyncToast(`🗑️ "${data.studentName}" was removed`);
+                            if (currentSelectedStudent === data.studentName) {
+                                currentSelectedStudent = null;
+                                document.getElementById('studentWorkArea').style.display = 'none';
+                            }
+                        }
+                    }
+                });
+                
+                // Update total count
+                totalStudentsCount = reportStudentsList.length;
+                updateSyncStatus('connected', 'Live');
+                
+            }, (error) => {
+                console.error('Real-time sync error:', error);
+                updateSyncStatus('disconnected', 'Offline');
+                showToast('⚠️ Real-time sync disconnected. Reconnecting...', 'error');
+                
+                // Try to reconnect after 5 seconds
+                setTimeout(() => {
+                    setupRealTimeSync(cls);
+                }, 5000);
+            });
+    }
+
+    // =============================================================
+    // MASTER CLASS LIST
+    // =============================================================
     async function loadMasterClassList() {
         try {
             const doc = await db.collection('classList').doc('allClasses').get();
@@ -359,6 +512,9 @@
         if (currentUser.class) $('classSelect').value = currentUser.class;
     }
 
+    // =============================================================
+    // LOGIN
+    // =============================================================
     $('loginBtn').addEventListener('click', async () => {
         const name = $('loginName').value.trim(), cls = $('loginClassSelect').value, err = $('loginErr');
         if (!name) return err.innerText = '⚠️ Please enter your name.';
@@ -372,9 +528,17 @@
         showToast(`👋 Welcome, ${name}!`, 'success');
         await loadSubjects(cls);
         await loadSchedule(cls);
+        
+        // Setup real-time sync for this class
+        setupRealTimeSync(cls);
     });
 
     $('logoutBtn').addEventListener('click', () => {
+        // Clean up real-time listener
+        if (syncUnsubscribe) {
+            syncUnsubscribe();
+            syncUnsubscribe = null;
+        }
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         $('loginPage').classList.add('active');
         currentUser = {}; selectedSubject = null; reportStudentsList = []; currentSelectedStudent = null;
@@ -385,11 +549,24 @@
         const newClass = $('classSelect').value;
         if (!newClass) return showToast('⚠️ Select class.', 'error');
         if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
+        
+        // Clean up old listener
+        if (syncUnsubscribe) {
+            syncUnsubscribe();
+            syncUnsubscribe = null;
+        }
+        
         currentUser.class = newClass; selectedSubject = null; reportStudentsList = []; currentSelectedStudent = null;
         await loadSubjects(newClass); await loadSchedule(newClass);
+        
+        // Setup real-time sync for new class
+        setupRealTimeSync(newClass);
         showToast(`🔄 Switched to ${newClass}`, 'success');
     });
 
+    // =============================================================
+    // SUBJECTS MANAGEMENT
+    // =============================================================
     async function loadSubjects(cls) {
         try {
             const doc = await db.collection('classes').doc(cls).get();
@@ -432,6 +609,9 @@
         $('newSubjectInput').value = ''; renderSubjects(); showToast(`✅ Added!`, 'success');
     });
 
+    // =============================================================
+    // QUESTIONS MANAGEMENT (Simplified for space)
+    // =============================================================
     async function selectSubject(subject) {
         selectedSubject = subject; renderSubjects();
         $('selectedSubjectName').innerText = subject;
@@ -479,6 +659,7 @@
         showToast('✅ Added!', 'success');
     });
 
+    // CSV upload functions (simplified for space)
     $('pasteCsvBtn').addEventListener('click', async () => {
         if (!selectedSubject) return showToast('⚠️ Select subject.', 'warning');
         const csvText = $('csvPasteArea').value.trim();
@@ -535,6 +716,9 @@
 
     $('clearPasteBtn').addEventListener('click', () => { $('csvPasteArea').value = ''; $('debugOutput').style.display = 'none'; showToast('🗑️ Cleared.', 'warning'); });
 
+    // =============================================================
+    // EXAM PUBLISHING (Simplified)
+    // =============================================================
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
         const active = status.exists ? status.data().activeSubjects || [] : [];
@@ -552,12 +736,10 @@
                 if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16); 
                 const durationVal = data.durationMinutes || 30;
                 document.getElementById('durationMinutes').value = durationVal;
-                console.log('✅ Loaded duration:', durationVal);
             } else {
                 document.getElementById('durationMinutes').value = 30;
             }
         } catch (e) {
-            console.error('Error loading schedule:', e);
             document.getElementById('durationMinutes').value = 30;
         }
     }
@@ -566,20 +748,13 @@
         const startStr = $('startDateTime').value, endStr = $('endDateTime').value;
         const durationInput = document.getElementById('durationMinutes');
         const duration = parseInt(durationInput.value) || 30;
-        
-        console.log('📝 Publishing with duration:', duration, 'minutes');
-        
         if (!startStr || !endStr) return showToast('⚠️ Set dates.', 'warning');
         if (new Date(startStr) >= new Date(endStr)) return showToast('⚠️ Start before End.', 'error');
-        
         await db.collection('examControls').doc(currentUser.class).set({ 
             scheduledStart: firebase.firestore.Timestamp.fromDate(new Date(startStr)), 
             scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(endStr)), 
-            durationMinutes: duration, 
-            isActive: true, 
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+            durationMinutes: duration, isActive: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
         }, { merge: true });
-        
         const active = [...document.querySelectorAll('.examCb:checked')].map(cb => cb.value);
         await db.collection('examStatus').doc(currentUser.class).set({ activeSubjects: active }, { merge: true });
         showToast(`✅ Published! Duration: ${duration} minutes`, 'success');
@@ -592,9 +767,7 @@
         await db.collection('examControls').doc(currentUser.class).set({ 
             scheduledStart: firebase.firestore.Timestamp.fromDate(now), 
             scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(now.getTime() + duration * 60000)), 
-            durationMinutes: duration, 
-            isActive: true, 
-            forceStarted: true 
+            durationMinutes: duration, isActive: true, forceStarted: true 
         }, { merge: true }); 
         showToast(`⚡ Started! Duration: ${duration} minutes`, 'success'); 
     });
@@ -606,8 +779,7 @@
 
     $('clearScheduleBtn').addEventListener('click', async () => { 
         await db.collection('examControls').doc(currentUser.class).delete(); 
-        $('startDateTime').value=''; 
-        $('endDateTime').value=''; 
+        $('startDateTime').value=''; $('endDateTime').value=''; 
         document.getElementById('durationMinutes').value = 30;
         showToast('🗑️ Cleared.', 'warning'); 
     });
@@ -622,7 +794,7 @@
     }
 
     // =============================================================
-    // SMART NAME DEDUPLICATION FUNCTIONS
+    // SMART NAME DEDUPLICATION FUNCTIONS (Same as before)
     // =============================================================
     function normalizeNameForGrouping(name) {
         return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
@@ -712,7 +884,7 @@
     }
 
     // =============================================================
-    // REPORTS TAB WITH SMART DEDUPLICATION
+    // BUILD REPORT BUTTON
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
@@ -766,6 +938,7 @@
             }
 
             reportStudentsList = uniqueStudents;
+            totalStudentsCount = uniqueStudents.length;
             await new Promise(r => setTimeout(r, 300));
             buildReportBuilderUI(cls);
             showToast(`✅ ${uniqueStudents.length} students loaded (${mergedCount} duplicates merged)`, 'success');
@@ -776,6 +949,9 @@
         }
     });
 
+    // =============================================================
+    // BUILD REPORT BUILDER UI
+    // =============================================================
     function buildReportBuilderUI(cls) {
         const area = $('reportBuilderArea');
         let html = `
@@ -784,7 +960,7 @@
                 <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
                 <span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span>
             </div>
-            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects</p>
+            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects | <span style="color:#4f46e5;">🔄 Real-time sync active</span></p>
 
             <!-- MERGE STUDENTS SECTION -->
             <div class="merge-section" id="mergeSection">
@@ -875,7 +1051,7 @@
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">📈 Promotion</div><select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;"><option value="">-- Select --</option><option value="Promoted">✅ Promoted</option><option value="Not Promoted">❌ Not Promoted</option><option value="Probation">⚠️ Probation</option></select></div>
 
                 <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
-                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save</button>
+                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
                     <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
                 </div>
             </div>
@@ -891,10 +1067,11 @@
         attachBuilderEvents(cls);
     }
 
+    // =============================================================
+    // ATTACH BUILDER EVENTS (Merge, Auto-Save, etc.)
+    // =============================================================
     function attachBuilderEvents(cls) {
-        // =============================================================
-        // MERGE STUDENTS LOGIC
-        // =============================================================
+        // MERGE STUDENTS LOGIC - Merges results documents
         const mergeChecks = document.querySelectorAll('.merge-check');
         const mergeTarget = document.getElementById('mergeTargetSelect');
         const mergeBtn = document.getElementById('executeMergeBtn');
@@ -944,7 +1121,7 @@
             
             const otherNames = checkedNames.filter(n => n !== targetName);
             
-            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?\n\nNames to merge:\n${otherNames.join('\n')}\n\n⚠️ This will combine all scores under "${targetName}" and remove the other names.`)) {
+            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?\n\nNames to merge:\n${otherNames.join('\n')}\n\n✅ All exam results will be preserved and reassigned to "${targetName}".`)) {
                 return;
             }
             
@@ -954,7 +1131,7 @@
             mergeStatus.style.color = '#64748b';
             
             try {
-                const cls = currentUser.class;
+                isUserChange = false; // Prevent real-time listener from triggering reload
                 
                 const targetDoc = await db.collection('reportCards').doc(`${cls}_${targetName}`).get();
                 let targetData = targetDoc.exists ? targetDoc.data() : { subjects: {} };
@@ -965,25 +1142,22 @@
                     if (otherDoc.exists) {
                         const otherData = otherDoc.data();
                         
+                        // Merge subjects
                         if (otherData.subjects) {
                             Object.keys(otherData.subjects).forEach(sub => {
                                 const otherSub = otherData.subjects[sub];
-                                
-                                if (!targetData.subjects[sub]) {
-                                    targetData.subjects[sub] = {};
-                                }
-                                
+                                if (!targetData.subjects[sub]) targetData.subjects[sub] = {};
                                 const existing = targetData.subjects[sub];
                                 existing.firstTerm = Math.max(existing.firstTerm || 0, otherSub.firstTerm || 0);
                                 existing.secondTerm = Math.max(existing.secondTerm || 0, otherSub.secondTerm || 0);
                                 existing.thirdTerm = Math.max(existing.thirdTerm || 0, otherSub.thirdTerm || 0);
-                                
                                 const scores = [existing.firstTerm, existing.secondTerm, existing.thirdTerm].filter(v => v > 0);
                                 existing.average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
                                 existing.remark = getRemarkText(existing.average);
                             });
                         }
                         
+                        // Merge affective domain
                         if (otherData.affectiveDomain) {
                             if (!targetData.affectiveDomain) targetData.affectiveDomain = {};
                             Object.keys(otherData.affectiveDomain).forEach(trait => {
@@ -994,6 +1168,7 @@
                             });
                         }
                         
+                        // Merge psychomotor
                         if (otherData.psychomotorDomain) {
                             if (!targetData.psychomotorDomain) targetData.psychomotorDomain = {};
                             Object.keys(otherData.psychomotorDomain).forEach(skill => {
@@ -1004,14 +1179,30 @@
                             });
                         }
                         
+                        // Merge clubs
                         if (otherData.extracurriculars) {
                             if (!targetData.extracurriculars) targetData.extracurriculars = [];
                             const combined = [...new Set([...(targetData.extracurriculars || []), ...otherData.extracurriculars])];
                             targetData.extracurriculars = combined;
                         }
                         
-                        await db.collection('reportCards').doc(`${cls}_${otherName}`).delete();
+                        // ★★★ MERGE results documents (UPDATE not DELETE) ★★★
+                        const resultsSnap = await db.collection('results')
+                            .where('class', '==', cls)
+                            .where('studentName', '==', otherName)
+                            .get();
                         
+                        const batch = db.batch();
+                        resultsSnap.forEach(doc => {
+                            batch.update(doc.ref, { 
+                                studentName: targetName,
+                                mergedFrom: doc.data().studentName,
+                                mergedAt: new Date()
+                            });
+                        });
+                        await batch.commit();
+                        
+                        // Merge in-memory results
                         if (allStudentResults[otherName]) {
                             if (!allStudentResults[targetName]) allStudentResults[targetName] = {};
                             Object.keys(allStudentResults[otherName]).forEach(sub => {
@@ -1021,24 +1212,32 @@
                                     allStudentResults[targetName][sub] = other;
                                 }
                             });
-                            delete allStudentResults[otherName];
                         }
+                        
+                        // Delete old report card
+                        await db.collection('reportCards').doc(`${cls}_${otherName}`).delete();
                     }
                     
                     reportStudentsList = reportStudentsList.filter(s => s !== otherName);
                 }
                 
+                // Save merged report card
                 targetData.class = cls;
                 targetData.studentName = targetName;
                 targetData.term = 'Third';
                 targetData.updatedAt = new Date();
+                targetData.mergedFrom = otherNames;
+                targetData.mergedAt = new Date();
+                targetData.totalStudents = reportStudentsList.length;
                 
                 await db.collection('reportCards').doc(`${cls}_${targetName}`).set(targetData, { merge: true });
                 
+                totalStudentsCount = reportStudentsList.length;
                 reportStudentsList.sort();
                 buildReportBuilderUI(cls);
                 
-                showToast(`✅ Merged ${otherNames.length} student(s) into "${targetName}"!`, 'success');
+                isUserChange = true;
+                showToast(`✅ Merged ${otherNames.length} student(s) into "${targetName}"! All results preserved.`, 'success');
                 
             } catch (e) {
                 console.error('Merge error:', e);
@@ -1047,9 +1246,11 @@
                 mergeBtn.disabled = false;
                 mergeBtn.innerText = '🔀 Merge Selected Students';
                 showToast('❌ Merge failed: ' + e.message, 'error');
+                isUserChange = true;
             }
         });
 
+        // SELECTOR - Save before switching
         const selector = document.getElementById('studentSelector');
         const workArea = document.getElementById('studentWorkArea');
         const newStudentInput = document.getElementById('newStudentInput');
@@ -1091,11 +1292,10 @@
             } else { selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = ''; selector.dispatchEvent(new Event('change')); }
         });
 
-        // --- FIX: Save BEFORE switching students ---
         selector.addEventListener('change', async () => {
             const student = selector.value;
             
-            // IMPORTANT: Save current student BEFORE loading new one
+            // Save current student BEFORE loading new one
             if (currentSelectedStudent) {
                 await saveCurrentStudent(cls);
             }
@@ -1112,47 +1312,63 @@
             await loadStudentData(student, cls);
             const photoUrl = await getStudentPhoto(student);
             updatePhotoDisplay(photoUrl);
-            
-            // Update position display
             updatePositionDisplay(student);
         });
 
+        // PHOTO UPLOAD
         const photoContainer = document.querySelector('.photo-container-small');
         const uploadBtn = document.getElementById('uploadPhotoBtn');
         const handlePhotoUpload = () => { if (!currentSelectedStudent) return; openCloudinaryWidget(currentSelectedStudent, (data) => updatePhotoDisplay(data.url)); };
         if (photoContainer) photoContainer.addEventListener('click', handlePhotoUpload);
         if (uploadBtn) uploadBtn.addEventListener('click', handlePhotoUpload);
 
-        // --- FIX: Save immediately on any input change ---
+        // AUTO-SAVE ON ALL INPUTS
         document.querySelectorAll('.score-input').forEach(input => {
             input.addEventListener('input', () => { 
                 calculateStudentScores(); 
-                // Save immediately on every keystroke
+                triggerAutoSave(cls);
+            });
+            input.addEventListener('blur', () => {
                 saveCurrentStudent(cls);
             });
         });
         
-        document.querySelectorAll('.affective-select, .psychomotor-select, .club-check, .commentary-input, .principal-input, .promotion-select').forEach(el => {
+        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => {
             el.addEventListener('change', () => {
+                triggerAutoSave(cls);
+            });
+        });
+        
+        document.querySelectorAll('.club-check').forEach(el => {
+            el.addEventListener('change', () => {
+                triggerAutoSave(cls);
+            });
+        });
+        
+        document.querySelectorAll('.commentary-input, .principal-input').forEach(el => {
+            el.addEventListener('input', () => {
+                triggerAutoSave(cls);
+            });
+            el.addEventListener('blur', () => {
                 saveCurrentStudent(cls);
             });
-            el.addEventListener('input', () => {
-                // For text inputs, save on input too
-                if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-                    saveCurrentStudent(cls);
-                }
+        });
+        
+        document.querySelectorAll('.promotion-select').forEach(el => {
+            el.addEventListener('change', () => {
+                triggerAutoSave(cls);
             });
         });
 
+        // SAVE BUTTON
         document.getElementById('saveStudentBtn').addEventListener('click', async () => { 
             await saveCurrentStudent(cls); 
             showToast('✅ Saved!', 'success'); 
         });
         
+        // NEXT BUTTON
         document.getElementById('nextStudentBtn').addEventListener('click', async () => {
-            // Save current student first
             await saveCurrentStudent(cls);
-            
             const idx = reportStudentsList.indexOf(currentSelectedStudent);
             if (idx < reportStudentsList.length - 1) { 
                 selector.value = reportStudentsList[idx + 1]; 
@@ -1162,31 +1378,25 @@
             }
         });
 
+        // CALCULATE POSITIONS
         document.getElementById('calculatePositionsBtn').addEventListener('click', async () => {
             const btn = document.getElementById('calculatePositionsBtn');
             btn.innerText = '⏳ Calculating...'; btn.disabled = true;
-            
-            // Save all students first
             await saveCurrentStudent(cls);
-            
             await calculateAllPositions(cls);
             btn.innerText = '🏆 Calculate Positions'; btn.disabled = false;
-            
-            // Update position display for current student
             if (currentSelectedStudent) {
                 updatePositionDisplay(currentSelectedStudent);
             }
             showToast(`✅ Positions calculated for ${reportStudentsList.length} students!`, 'success');
         });
 
+        // PUSH ALL TO ADMIN
         document.getElementById('pushAllAdminBtn').addEventListener('click', async () => {
             if (!confirm('Push ALL to Admin?')) return;
             const btn = document.getElementById('pushAllAdminBtn'); 
             btn.innerText = '⏳...'; btn.disabled = true;
-            
-            // Save current student first
             await saveCurrentStudent(cls);
-            
             for (let s of reportStudentsList) { 
                 selector.value = s; 
                 await saveCurrentStudent(cls); 
@@ -1203,6 +1413,24 @@
         document.getElementById('printAllBtn').addEventListener('click', () => window.print());
     }
 
+    // =============================================================
+    // AUTO-SAVE WITH DEBOUNCE
+    // =============================================================
+    function triggerAutoSave(cls) {
+        clearTimeout(saveTimeout);
+        const si = document.getElementById('saveIndicator');
+        const sb = document.getElementById('saveStatusBadge');
+        if (si) { si.innerText = '⏳ Saving...'; si.className = 'save-indicator-saving'; }
+        if (sb) { sb.style.background = '#f59e0b'; sb.innerText = '💾 Saving...'; }
+        
+        saveTimeout = setTimeout(() => {
+            saveCurrentStudent(cls);
+        }, 800);
+    }
+
+    // =============================================================
+    // UPDATE POSITION DISPLAY
+    // =============================================================
     function updatePositionDisplay(student) {
         const posDisplay = document.getElementById('positionDisplay');
         const posNumber = document.getElementById('positionNumber');
@@ -1211,11 +1439,10 @@
         if (studentPositions[student]) {
             posDisplay.style.display = 'block';
             const pos = studentPositions[student].position;
-            const total = reportStudentsList.length;
+            const total = reportStudentsList.length || totalStudentsCount;
             posNumber.innerHTML = pos + '<small style="font-size:20px;">' + getOrdinalSuffix(pos) + '</small>';
             
-            // Calculate percentage
-            const percentage = ((total - pos) / (total - 1)) * 100;
+            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
             const percentDisplay = total > 1 ? Math.round(percentage) : 100;
             posPercentage.innerText = `📊 Top ${percentDisplay}% of ${total} students`;
         } else {
@@ -1232,9 +1459,16 @@
 
     function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
 
+    // =============================================================
+    // CALCULATE ALL POSITIONS
+    // =============================================================
     async function calculateAllPositions(cls) {
         studentPositions = {};
         const studentAverages = [];
+        
+        for (let student of reportStudentsList) {
+            await saveCurrentStudent(cls);
+        }
         
         for (let student of reportStudentsList) {
             const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
@@ -1254,9 +1488,9 @@
             }
         }
         
-        // Sort by average (highest first)
         studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
         
+        const totalStudents = reportStudentsList.length;
         let position = 1;
         for (let i = 0; i < studentAverages.length; i++) {
             if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) {
@@ -1268,11 +1502,15 @@
             };
             await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({ 
                 overallPosition: position, 
-                overallAverage: studentAverages[i].overallAvg 
+                overallAverage: studentAverages[i].overallAvg,
+                totalStudents: totalStudents
             }).catch(()=>{});
         }
     }
 
+    // =============================================================
+    // LOAD STUDENT DATA
+    // =============================================================
     async function loadStudentData(student, cls) {
         const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
         document.querySelectorAll('.score-input').forEach(el => el.value = '');
@@ -1295,7 +1533,6 @@
                     const ti = document.querySelector(`.score-third[data-sub="${sub}"]`); 
                     if (ti) {
                         ti.value = sd.thirdTerm || '';
-                        // Keep the yellow background for 3rd term
                         ti.style.background = '#fefce8';
                         ti.style.fontWeight = '700';
                     }
@@ -1324,24 +1561,20 @@
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
         
-        // Auto-fill 3rd term from ALL available results (but don't overwrite if already set)
+        // Auto-fill 3rd term from results
         if (allStudentResults[student]) {
             currentSubjects.forEach(sub => {
                 if (allStudentResults[student][sub] !== undefined) {
                     const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti) {
-                        // Only fill if empty or if user hasn't manually changed it
-                        if (!ti.value || ti.value === '') {
-                            ti.value = allStudentResults[student][sub];
-                            ti.style.background = '#fef08a';
-                            ti.style.fontWeight = '700';
-                        }
+                    if (ti && (!ti.value || ti.value === '')) {
+                        ti.value = allStudentResults[student][sub];
+                        ti.style.background = '#fef08a';
+                        ti.style.fontWeight = '700';
                     }
                 }
             });
         }
 
-        // Check for similar names (case-insensitive)
         const studentLower = student.toLowerCase();
         Object.keys(allStudentResults).forEach(resultName => {
             if (resultName.toLowerCase() === studentLower && resultName !== student) {
@@ -1388,14 +1621,16 @@
         return 'Fail'; 
     }
 
+    // =============================================================
+    // SAVE CURRENT STUDENT
+    // =============================================================
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
-        if (isSaving) return; // Prevent concurrent saves
+        if (isSaving) return;
         
         isSaving = true;
-        const si = document.getElementById('saveIndicator'), sb = document.getElementById('saveStatusBadge');
-        if (si) si.innerText = '⏳ Saving...'; 
-        if (sb) sb.style.background = '#f59e0b';
+        const si = document.getElementById('saveIndicator');
+        const sb = document.getElementById('saveStatusBadge');
         
         try {
             const subjectsData = {};
@@ -1408,14 +1643,12 @@
                 subjectsData[sub] = { firstTerm: f, secondTerm: s, thirdTerm: t, average: avg, remark };
             });
             
-            // Also merge in any scores from allStudentResults that weren't in the form
             if (allStudentResults[currentSelectedStudent]) {
                 Object.keys(allStudentResults[currentSelectedStudent]).forEach(sub => {
                     if (currentSubjects.includes(sub)) {
                         if (!subjectsData[sub]) {
                             subjectsData[sub] = { firstTerm: 0, secondTerm: 0, thirdTerm: 0, average: 0, remark: '' };
                         }
-                        // Only set if 3rd term is empty or 0
                         if (!subjectsData[sub].thirdTerm || subjectsData[sub].thirdTerm === 0) {
                             subjectsData[sub].thirdTerm = allStudentResults[currentSelectedStudent][sub];
                             const scores = [subjectsData[sub].firstTerm, subjectsData[sub].secondTerm, subjectsData[sub].thirdTerm].filter(v => v > 0);
@@ -1449,31 +1682,32 @@
                 classTeacherCommentary: document.querySelector('.commentary-input')?.value || '',
                 principalRemarks: document.querySelector('.principal-input')?.value || '',
                 promotionStatus: document.querySelector('.promotion-select')?.value || '',
+                totalStudents: reportStudentsList.length || totalStudentsCount,
                 updatedAt: new Date()
             }, { merge: true });
             
             if (si) { 
                 si.innerText = `✅ Saved at ${new Date().toLocaleTimeString()}`; 
-                si.style.color = '#059669'; 
+                si.className = 'save-indicator-success';
             }
-            if (sb) sb.style.background = '#10b981';
+            if (sb) { 
+                sb.style.background = '#10b981'; 
+                sb.innerText = '💾 Auto-Save';
+            }
             
         } catch (e) { 
             console.error('Save error:', e);
             if (si) { 
                 si.innerText = '❌ ' + e.message; 
-                si.style.color = '#dc2626'; 
+                si.className = 'save-indicator-error';
             } 
-            if (sb) sb.style.background = '#dc2626'; 
+            if (sb) { 
+                sb.style.background = '#dc2626'; 
+                sb.innerText = '⚠️ Save Error';
+            }
         } finally {
             isSaving = false;
         }
-    }
-
-    let autoSaveTimeout;
-    function autoSaveCurrentStudent(cls) { 
-        clearTimeout(autoSaveTimeout); 
-        autoSaveTimeout = setTimeout(() => saveCurrentStudent(cls), 500); 
     }
 
     function updatePhotoDisplay(photoUrl) {
@@ -1501,7 +1735,7 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
-    console.log('✅ Full Teacher Dashboard Ready with Smart Deduplication');
+    console.log('✅ Teacher Dashboard with Real-Time Sync is ready!');
 </script>
 </body>
 </html>
