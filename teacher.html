@@ -543,22 +543,75 @@
     }
 
     async function loadSchedule(cls) {
-        try { const doc = await db.collection('examControls').doc(cls).get(); if (doc.exists) { const data = doc.data(); if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16); if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16); $('durationMinutes').value = data.durationMinutes || 30; } } catch (e) {}
+        try { 
+            const doc = await db.collection('examControls').doc(cls).get(); 
+            if (doc.exists) { 
+                const data = doc.data(); 
+                if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16); 
+                if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16); 
+                // Fix: Explicitly set duration from Firestore or default to 30
+                const durationVal = data.durationMinutes || 30;
+                document.getElementById('durationMinutes').value = durationVal;
+                console.log('✅ Loaded duration:', durationVal);
+            } else {
+                // Set default if no document exists
+                document.getElementById('durationMinutes').value = 30;
+            }
+        } catch (e) {
+            console.error('Error loading schedule:', e);
+            document.getElementById('durationMinutes').value = 30;
+        }
     }
 
     $('publishWithScheduleBtn').addEventListener('click', async () => {
-        const startStr = $('startDateTime').value, endStr = $('endDateTime').value, duration = parseInt($('durationMinutes').value) || 30;
+        const startStr = $('startDateTime').value, endStr = $('endDateTime').value;
+        const durationInput = document.getElementById('durationMinutes');
+        const duration = parseInt(durationInput.value) || 30;
+        
+        console.log('📝 Publishing with duration:', duration, 'minutes');
+        
         if (!startStr || !endStr) return showToast('⚠️ Set dates.', 'warning');
         if (new Date(startStr) >= new Date(endStr)) return showToast('⚠️ Start before End.', 'error');
-        await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(new Date(startStr)), scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(endStr)), durationMinutes: duration, isActive: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        
+        await db.collection('examControls').doc(currentUser.class).set({ 
+            scheduledStart: firebase.firestore.Timestamp.fromDate(new Date(startStr)), 
+            scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(endStr)), 
+            durationMinutes: duration, 
+            isActive: true, 
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+        }, { merge: true });
+        
         const active = [...document.querySelectorAll('.examCb:checked')].map(cb => cb.value);
         await db.collection('examStatus').doc(currentUser.class).set({ activeSubjects: active }, { merge: true });
-        showToast('✅ Published!', 'success');
+        showToast(`✅ Published! Duration: ${duration} minutes`, 'success');
     });
 
-    $('forceStartBtn').addEventListener('click', async () => { const now = new Date(); await db.collection('examControls').doc(currentUser.class).set({ scheduledStart: firebase.firestore.Timestamp.fromDate(now), scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(now.getTime()+86400000)), durationMinutes: parseInt($('durationMinutes').value)||30, isActive: true, forceStarted: true }, { merge: true }); showToast('⚡ Started!', 'success'); });
-    $('stopExamBtn').addEventListener('click', async () => { await db.collection('examControls').doc(currentUser.class).update({ isActive: false }); showToast('🛑 Stopped.', 'warning'); });
-    $('clearScheduleBtn').addEventListener('click', async () => { await db.collection('examControls').doc(currentUser.class).delete(); $('startDateTime').value=''; $('endDateTime').value=''; showToast('🗑️ Cleared.', 'warning'); });
+    $('forceStartBtn').addEventListener('click', async () => { 
+        const now = new Date(); 
+        const durationInput = document.getElementById('durationMinutes');
+        const duration = parseInt(durationInput.value) || 30;
+        await db.collection('examControls').doc(currentUser.class).set({ 
+            scheduledStart: firebase.firestore.Timestamp.fromDate(now), 
+            scheduledEnd: firebase.firestore.Timestamp.fromDate(new Date(now.getTime() + duration * 60000)), 
+            durationMinutes: duration, 
+            isActive: true, 
+            forceStarted: true 
+        }, { merge: true }); 
+        showToast(`⚡ Started! Duration: ${duration} minutes`, 'success'); 
+    });
+
+    $('stopExamBtn').addEventListener('click', async () => { 
+        await db.collection('examControls').doc(currentUser.class).update({ isActive: false }); 
+        showToast('🛑 Stopped.', 'warning'); 
+    });
+
+    $('clearScheduleBtn').addEventListener('click', async () => { 
+        await db.collection('examControls').doc(currentUser.class).delete(); 
+        $('startDateTime').value=''; 
+        $('endDateTime').value=''; 
+        document.getElementById('durationMinutes').value = 30;
+        showToast('🗑️ Cleared.', 'warning'); 
+    });
 
     async function loadResults(cls) {
         const snap = await db.collection('results').where('class','==',cls).get();
