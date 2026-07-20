@@ -152,6 +152,7 @@
         .position-card { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin: 15px 0; text-align: center; display: none; }
         .position-card .pos-number { font-size: 48px; font-weight: 900; color: #1e1b4b; }
         .position-card .pos-label { font-size: 14px; color: #64748b; }
+        .position-card .pos-percentage { font-size: 14px; color: #4f46e5; font-weight: 700; margin-top: 4px; }
         .suggestion-item { padding: 8px 14px; background: #eef2ff; border-radius: 12px; margin: 4px 0; cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid #c7d2fe; }
         .suggestion-item:hover { background: #ddd6fe; }
 
@@ -549,12 +550,10 @@
                 const data = doc.data(); 
                 if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16); 
                 if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16); 
-                // Fix: Explicitly set duration from Firestore or default to 30
                 const durationVal = data.durationMinutes || 30;
                 document.getElementById('durationMinutes').value = durationVal;
                 console.log('✅ Loaded duration:', durationVal);
             } else {
-                // Set default if no document exists
                 document.getElementById('durationMinutes').value = 30;
             }
         } catch (e) {
@@ -832,6 +831,7 @@
                     <div class="pos-label">Overall Position</div>
                     <div class="pos-number" id="positionNumber">--</div>
                     <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
+                    <div class="pos-percentage" id="positionPercentage"></div>
                 </div>
 
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
@@ -956,18 +956,15 @@
             try {
                 const cls = currentUser.class;
                 
-                // Step 1: Get the target student's report card (if it exists)
                 const targetDoc = await db.collection('reportCards').doc(`${cls}_${targetName}`).get();
                 let targetData = targetDoc.exists ? targetDoc.data() : { subjects: {} };
                 
-                // Step 2: Merge scores from all other names
                 for (let otherName of otherNames) {
                     const otherDoc = await db.collection('reportCards').doc(`${cls}_${otherName}`).get();
                     
                     if (otherDoc.exists) {
                         const otherData = otherDoc.data();
                         
-                        // Merge subjects
                         if (otherData.subjects) {
                             Object.keys(otherData.subjects).forEach(sub => {
                                 const otherSub = otherData.subjects[sub];
@@ -976,22 +973,17 @@
                                     targetData.subjects[sub] = {};
                                 }
                                 
-                                // Keep the higher score for each term
                                 const existing = targetData.subjects[sub];
                                 existing.firstTerm = Math.max(existing.firstTerm || 0, otherSub.firstTerm || 0);
                                 existing.secondTerm = Math.max(existing.secondTerm || 0, otherSub.secondTerm || 0);
                                 existing.thirdTerm = Math.max(existing.thirdTerm || 0, otherSub.thirdTerm || 0);
                                 
-                                // Recalculate average
                                 const scores = [existing.firstTerm, existing.secondTerm, existing.thirdTerm].filter(v => v > 0);
                                 existing.average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
-                                
-                                // Get remark
                                 existing.remark = getRemarkText(existing.average);
                             });
                         }
                         
-                        // Merge affective domain (keep higher values)
                         if (otherData.affectiveDomain) {
                             if (!targetData.affectiveDomain) targetData.affectiveDomain = {};
                             Object.keys(otherData.affectiveDomain).forEach(trait => {
@@ -1002,7 +994,6 @@
                             });
                         }
                         
-                        // Merge psychomotor
                         if (otherData.psychomotorDomain) {
                             if (!targetData.psychomotorDomain) targetData.psychomotorDomain = {};
                             Object.keys(otherData.psychomotorDomain).forEach(skill => {
@@ -1013,17 +1004,14 @@
                             });
                         }
                         
-                        // Merge clubs
                         if (otherData.extracurriculars) {
                             if (!targetData.extracurriculars) targetData.extracurriculars = [];
                             const combined = [...new Set([...(targetData.extracurriculars || []), ...otherData.extracurriculars])];
                             targetData.extracurriculars = combined;
                         }
                         
-                        // Delete the old student's report card
                         await db.collection('reportCards').doc(`${cls}_${otherName}`).delete();
                         
-                        // Also remove from results (merge into target)
                         if (allStudentResults[otherName]) {
                             if (!allStudentResults[targetName]) allStudentResults[targetName] = {};
                             Object.keys(allStudentResults[otherName]).forEach(sub => {
@@ -1037,11 +1025,9 @@
                         }
                     }
                     
-                    // Remove from the student list
                     reportStudentsList = reportStudentsList.filter(s => s !== otherName);
                 }
                 
-                // Step 3: Save the merged report card
                 targetData.class = cls;
                 targetData.studentName = targetName;
                 targetData.term = 'Third';
@@ -1049,7 +1035,6 @@
                 
                 await db.collection('reportCards').doc(`${cls}_${targetName}`).set(targetData, { merge: true });
                 
-                // Step 4: Rebuild the UI
                 reportStudentsList.sort();
                 buildReportBuilderUI(cls);
                 
@@ -1106,19 +1091,30 @@
             } else { selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = ''; selector.dispatchEvent(new Event('change')); }
         });
 
+        // --- FIX: Save BEFORE switching students ---
         selector.addEventListener('change', async () => {
             const student = selector.value;
-            if (!student) { workArea.style.display = 'none'; return; }
+            
+            // IMPORTANT: Save current student BEFORE loading new one
+            if (currentSelectedStudent) {
+                await saveCurrentStudent(cls);
+            }
+            
+            if (!student) { 
+                workArea.style.display = 'none'; 
+                currentSelectedStudent = null;
+                return; 
+            }
+            
             currentSelectedStudent = student;
             workArea.style.display = 'block';
             document.getElementById('selectedStudentName').innerText = student;
             await loadStudentData(student, cls);
             const photoUrl = await getStudentPhoto(student);
             updatePhotoDisplay(photoUrl);
-            if (studentPositions[student]) {
-                document.getElementById('positionDisplay').style.display = 'block';
-                document.getElementById('positionNumber').innerHTML = studentPositions[student].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[student].position) + '</small>';
-            } else { document.getElementById('positionDisplay').style.display = 'none'; }
+            
+            // Update position display
+            updatePositionDisplay(student);
         });
 
         const photoContainer = document.querySelector('.photo-container-small');
@@ -1127,39 +1123,104 @@
         if (photoContainer) photoContainer.addEventListener('click', handlePhotoUpload);
         if (uploadBtn) uploadBtn.addEventListener('click', handlePhotoUpload);
 
-        document.querySelectorAll('.score-input').forEach(input => input.addEventListener('input', () => { calculateStudentScores(); autoSaveCurrentStudent(cls); }));
+        // --- FIX: Save immediately on any input change ---
+        document.querySelectorAll('.score-input').forEach(input => {
+            input.addEventListener('input', () => { 
+                calculateStudentScores(); 
+                // Save immediately on every keystroke
+                saveCurrentStudent(cls);
+            });
+        });
+        
         document.querySelectorAll('.affective-select, .psychomotor-select, .club-check, .commentary-input, .principal-input, .promotion-select').forEach(el => {
-            el.addEventListener('change', () => autoSaveCurrentStudent(cls));
-            el.addEventListener('input', () => autoSaveCurrentStudent(cls));
+            el.addEventListener('change', () => {
+                saveCurrentStudent(cls);
+            });
+            el.addEventListener('input', () => {
+                // For text inputs, save on input too
+                if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+                    saveCurrentStudent(cls);
+                }
+            });
         });
 
-        document.getElementById('saveStudentBtn').addEventListener('click', async () => { await saveCurrentStudent(cls); showToast('✅ Saved!', 'success'); });
-        document.getElementById('nextStudentBtn').addEventListener('click', () => {
+        document.getElementById('saveStudentBtn').addEventListener('click', async () => { 
+            await saveCurrentStudent(cls); 
+            showToast('✅ Saved!', 'success'); 
+        });
+        
+        document.getElementById('nextStudentBtn').addEventListener('click', async () => {
+            // Save current student first
+            await saveCurrentStudent(cls);
+            
             const idx = reportStudentsList.indexOf(currentSelectedStudent);
-            if (idx < reportStudentsList.length - 1) { selector.value = reportStudentsList[idx + 1]; selector.dispatchEvent(new Event('change')); }
-            else showToast('✅ Last student!', 'warning');
+            if (idx < reportStudentsList.length - 1) { 
+                selector.value = reportStudentsList[idx + 1]; 
+                selector.dispatchEvent(new Event('change')); 
+            } else {
+                showToast('✅ Last student!', 'warning');
+            }
         });
 
         document.getElementById('calculatePositionsBtn').addEventListener('click', async () => {
             const btn = document.getElementById('calculatePositionsBtn');
             btn.innerText = '⏳ Calculating...'; btn.disabled = true;
+            
+            // Save all students first
+            await saveCurrentStudent(cls);
+            
             await calculateAllPositions(cls);
             btn.innerText = '🏆 Calculate Positions'; btn.disabled = false;
-            if (currentSelectedStudent && studentPositions[currentSelectedStudent]) {
-                document.getElementById('positionDisplay').style.display = 'block';
-                document.getElementById('positionNumber').innerHTML = studentPositions[currentSelectedStudent].position + '<small style="font-size:20px;">' + getOrdinalSuffix(studentPositions[currentSelectedStudent].position) + '</small>';
+            
+            // Update position display for current student
+            if (currentSelectedStudent) {
+                updatePositionDisplay(currentSelectedStudent);
             }
-            showToast(`✅ Positions calculated!`, 'success');
+            showToast(`✅ Positions calculated for ${reportStudentsList.length} students!`, 'success');
         });
 
         document.getElementById('pushAllAdminBtn').addEventListener('click', async () => {
             if (!confirm('Push ALL to Admin?')) return;
-            const btn = document.getElementById('pushAllAdminBtn'); btn.innerText = '⏳...'; btn.disabled = true;
-            for (let s of reportStudentsList) { selector.value = s; await saveCurrentStudent(cls); await db.collection('reportCards').doc(`${cls}_${s}`).update({ pushedToAdmin: true, pushedAt: new Date(), approved: false }).catch(()=>{}); }
-            btn.innerText = '📤 Push All'; btn.disabled = false; showToast('✅ Pushed!', 'success');
+            const btn = document.getElementById('pushAllAdminBtn'); 
+            btn.innerText = '⏳...'; btn.disabled = true;
+            
+            // Save current student first
+            await saveCurrentStudent(cls);
+            
+            for (let s of reportStudentsList) { 
+                selector.value = s; 
+                await saveCurrentStudent(cls); 
+                await db.collection('reportCards').doc(`${cls}_${s}`).update({ 
+                    pushedToAdmin: true, 
+                    pushedAt: new Date(), 
+                    approved: false 
+                }).catch(()=>{}); 
+            }
+            btn.innerText = '📤 Push All'; btn.disabled = false; 
+            showToast('✅ All pushed!', 'success');
         });
 
         document.getElementById('printAllBtn').addEventListener('click', () => window.print());
+    }
+
+    function updatePositionDisplay(student) {
+        const posDisplay = document.getElementById('positionDisplay');
+        const posNumber = document.getElementById('positionNumber');
+        const posPercentage = document.getElementById('positionPercentage');
+        
+        if (studentPositions[student]) {
+            posDisplay.style.display = 'block';
+            const pos = studentPositions[student].position;
+            const total = reportStudentsList.length;
+            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + getOrdinalSuffix(pos) + '</small>';
+            
+            // Calculate percentage
+            const percentage = ((total - pos) / (total - 1)) * 100;
+            const percentDisplay = total > 1 ? Math.round(percentage) : 100;
+            posPercentage.innerText = `📊 Top ${percentDisplay}% of ${total} students`;
+        } else {
+            posDisplay.style.display = 'none';
+        }
     }
 
     function rebuildSelector() {
@@ -1174,21 +1235,41 @@
     async function calculateAllPositions(cls) {
         studentPositions = {};
         const studentAverages = [];
+        
         for (let student of reportStudentsList) {
             const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
             if (!doc.exists) continue;
             const data = doc.data();
             if (!data.subjects) continue;
+            
             let totalAvg = 0, count = 0;
-            Object.values(data.subjects).forEach(sd => { if (sd.average && sd.average > 0) { totalAvg += sd.average; count++; } });
-            if (count > 0) studentAverages.push({ student, overallAvg: totalAvg / count });
+            Object.values(data.subjects).forEach(sd => { 
+                if (sd.average && sd.average > 0) { 
+                    totalAvg += sd.average; 
+                    count++; 
+                } 
+            });
+            if (count > 0) {
+                studentAverages.push({ student, overallAvg: totalAvg / count });
+            }
         }
+        
+        // Sort by average (highest first)
         studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
+        
         let position = 1;
         for (let i = 0; i < studentAverages.length; i++) {
-            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) position = i + 1;
-            studentPositions[studentAverages[i].student] = { position, average: studentAverages[i].overallAvg };
-            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({ overallPosition: position, overallAverage: studentAverages[i].overallAvg }).catch(()=>{});
+            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) {
+                position = i + 1;
+            }
+            studentPositions[studentAverages[i].student] = { 
+                position: position, 
+                average: studentAverages[i].overallAvg 
+            };
+            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({ 
+                overallPosition: position, 
+                overallAverage: studentAverages[i].overallAvg 
+            }).catch(()=>{});
         }
     }
 
@@ -1201,48 +1282,76 @@
         const ce = document.querySelector('.commentary-input'); if (ce) ce.value = '';
         const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
         const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
+        
         if (doc.exists) {
             const data = doc.data();
-            if (data.subjects) Object.keys(data.subjects).forEach(sub => {
-                const sd = data.subjects[sub];
-                const fi = document.querySelector(`.score-first[data-sub="${sub}"]`); if (fi) fi.value = sd.firstTerm || '';
-                const si = document.querySelector(`.score-second[data-sub="${sub}"]`); if (si) si.value = sd.secondTerm || '';
-                const ti = document.querySelector(`.score-third[data-sub="${sub}"]`); if (ti) ti.value = sd.thirdTerm || '';
-            });
-            if (data.affectiveDomain) Object.keys(data.affectiveDomain).forEach(t => { const s = document.querySelector(`.affective-select[data-trait="${t}"]`); if (s) s.value = data.affectiveDomain[t]; });
-            if (data.psychomotorDomain) Object.keys(data.psychomotorDomain).forEach(sk => { const s = document.querySelector(`.psychomotor-select[data-skill="${sk}"]`); if (s) s.value = data.psychomotorDomain[sk]; });
-            if (data.extracurriculars) data.extracurriculars.forEach(c => { const cb = document.querySelector(`.club-check[value="${c}"]`); if (cb) cb.checked = true; });
+            if (data.subjects) {
+                Object.keys(data.subjects).forEach(sub => {
+                    const sd = data.subjects[sub];
+                    const fi = document.querySelector(`.score-first[data-sub="${sub}"]`); 
+                    if (fi) fi.value = sd.firstTerm || '';
+                    const si = document.querySelector(`.score-second[data-sub="${sub}"]`); 
+                    if (si) si.value = sd.secondTerm || '';
+                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`); 
+                    if (ti) {
+                        ti.value = sd.thirdTerm || '';
+                        // Keep the yellow background for 3rd term
+                        ti.style.background = '#fefce8';
+                        ti.style.fontWeight = '700';
+                    }
+                });
+            }
+            if (data.affectiveDomain) {
+                Object.keys(data.affectiveDomain).forEach(t => { 
+                    const s = document.querySelector(`.affective-select[data-trait="${t}"]`); 
+                    if (s) s.value = data.affectiveDomain[t]; 
+                });
+            }
+            if (data.psychomotorDomain) {
+                Object.keys(data.psychomotorDomain).forEach(sk => { 
+                    const s = document.querySelector(`.psychomotor-select[data-skill="${sk}"]`); 
+                    if (s) s.value = data.psychomotorDomain[sk]; 
+                });
+            }
+            if (data.extracurriculars) {
+                data.extracurriculars.forEach(c => { 
+                    const cb = document.querySelector(`.club-check[value="${c}"]`); 
+                    if (cb) cb.checked = true; 
+                });
+            }
             if (data.classTeacherCommentary && ce) ce.value = data.classTeacherCommentary;
             if (data.principalRemarks && pe) pe.value = data.principalRemarks;
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
-        // Auto-fill 3rd term from ALL available results
+        
+        // Auto-fill 3rd term from ALL available results (but don't overwrite if already set)
         if (allStudentResults[student]) {
             currentSubjects.forEach(sub => {
                 if (allStudentResults[student][sub] !== undefined) {
                     const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
                     if (ti) {
-                        // Always fill with the score from results (even if previously saved)
-                        ti.value = allStudentResults[student][sub];
-                        ti.style.background = '#fef08a';
-                        ti.style.fontWeight = '700';
+                        // Only fill if empty or if user hasn't manually changed it
+                        if (!ti.value || ti.value === '') {
+                            ti.value = allStudentResults[student][sub];
+                            ti.style.background = '#fef08a';
+                            ti.style.fontWeight = '700';
+                        }
                     }
                 }
             });
         }
 
-        // Also check if there are results under a similar name (case-insensitive)
+        // Check for similar names (case-insensitive)
         const studentLower = student.toLowerCase();
         Object.keys(allStudentResults).forEach(resultName => {
             if (resultName.toLowerCase() === studentLower && resultName !== student) {
-                // Found results under a different case - merge them
                 if (!allStudentResults[student]) allStudentResults[student] = {};
                 Object.keys(allStudentResults[resultName]).forEach(sub => {
                     if (!allStudentResults[student][sub] || allStudentResults[resultName][sub] > allStudentResults[student][sub]) {
                         allStudentResults[student][sub] = allStudentResults[resultName][sub];
                     }
                     const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti) {
+                    if (ti && (!ti.value || ti.value === '')) {
                         ti.value = allStudentResults[student][sub];
                         ti.style.background = '#fef08a';
                         ti.style.fontWeight = '700';
@@ -1260,17 +1369,34 @@
             const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
             const scores = [f,s,t].filter(v => v > 0);
             const avg = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
-            const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`); if (ac) ac.innerText = avg>0?avg.toFixed(1)+'%':'--';
-            const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`); if (rc) rc.innerText = avg>0?getRemarkText(avg):'--';
+            const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`); 
+            if (ac) ac.innerText = avg>0?avg.toFixed(1)+'%':'--';
+            const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`); 
+            if (rc) rc.innerText = avg>0?getRemarkText(avg):'--';
         });
     }
 
-    function getRemarkText(avg) { if (avg>=75) return 'Distinction'; if (avg>=70) return 'Excellent'; if (avg>=65) return 'Very Good'; if (avg>=60) return 'Good'; if (avg>=55) return 'Above Avg'; if (avg>=50) return 'Average'; if (avg>=45) return 'Below Avg'; if (avg>=40) return 'Weak Pass'; return 'Fail'; }
+    function getRemarkText(avg) { 
+        if (avg>=75) return 'Distinction'; 
+        if (avg>=70) return 'Excellent'; 
+        if (avg>=65) return 'Very Good'; 
+        if (avg>=60) return 'Good'; 
+        if (avg>=55) return 'Above Avg'; 
+        if (avg>=50) return 'Average'; 
+        if (avg>=45) return 'Below Avg'; 
+        if (avg>=40) return 'Weak Pass'; 
+        return 'Fail'; 
+    }
 
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
+        if (isSaving) return; // Prevent concurrent saves
+        
+        isSaving = true;
         const si = document.getElementById('saveIndicator'), sb = document.getElementById('saveStatusBadge');
-        if (si) si.innerText = '⏳ Saving...'; if (sb) sb.style.background = '#f59e0b';
+        if (si) si.innerText = '⏳ Saving...'; 
+        if (sb) sb.style.background = '#f59e0b';
+        
         try {
             const subjectsData = {};
             currentSubjects.forEach(sub => {
@@ -1286,13 +1412,12 @@
             if (allStudentResults[currentSelectedStudent]) {
                 Object.keys(allStudentResults[currentSelectedStudent]).forEach(sub => {
                     if (currentSubjects.includes(sub)) {
-                        // Subject exists in current class - make sure it's saved
                         if (!subjectsData[sub]) {
                             subjectsData[sub] = { firstTerm: 0, secondTerm: 0, thirdTerm: 0, average: 0, remark: '' };
                         }
+                        // Only set if 3rd term is empty or 0
                         if (!subjectsData[sub].thirdTerm || subjectsData[sub].thirdTerm === 0) {
                             subjectsData[sub].thirdTerm = allStudentResults[currentSelectedStudent][sub];
-                            // Recalculate average
                             const scores = [subjectsData[sub].firstTerm, subjectsData[sub].secondTerm, subjectsData[sub].thirdTerm].filter(v => v > 0);
                             subjectsData[sub].average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
                             subjectsData[sub].remark = getRemarkText(subjectsData[sub].average);
@@ -1301,35 +1426,67 @@
                 });
             }
             
-            const affective = {}; document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value)||3);
-            const psychomotor = {}; document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value)||3);
+            const affective = {}; 
+            document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value)||3);
+            const psychomotor = {}; 
+            document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value)||3);
             const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
+            
             await db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`).set({
-                class: cls, studentName: currentSelectedStudent, term: 'Third',
+                class: cls, 
+                studentName: currentSelectedStudent, 
+                term: 'Third',
                 session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
-                schoolName: "COVENANT ARROWS' MODEL SCHOOL", teacherName: currentUser.name,
-                dateOfIssue: new Date().toISOString().slice(0,10), category: 'Day',
+                schoolName: "COVENANT ARROWS' MODEL SCHOOL", 
+                teacherName: currentUser.name,
+                dateOfIssue: new Date().toISOString().slice(0,10), 
+                category: 'Day',
                 attendance: { daysOpened: 90, daysPresent: 85, daysAbsent: 5 },
-                subjects: subjectsData, affectiveDomain: affective, psychomotorDomain: psychomotor,
+                subjects: subjectsData, 
+                affectiveDomain: affective, 
+                psychomotorDomain: psychomotor,
                 extracurriculars: clubs,
                 classTeacherCommentary: document.querySelector('.commentary-input')?.value || '',
                 principalRemarks: document.querySelector('.principal-input')?.value || '',
                 promotionStatus: document.querySelector('.promotion-select')?.value || '',
                 updatedAt: new Date()
             }, { merge: true });
-            if (si) { si.innerText = `✅ Saved at ${new Date().toLocaleTimeString()}`; si.style.color = '#059669'; }
+            
+            if (si) { 
+                si.innerText = `✅ Saved at ${new Date().toLocaleTimeString()}`; 
+                si.style.color = '#059669'; 
+            }
             if (sb) sb.style.background = '#10b981';
-        } catch (e) { if (si) { si.innerText = '❌ ' + e.message; si.style.color = '#dc2626'; } if (sb) sb.style.background = '#dc2626'; }
+            
+        } catch (e) { 
+            console.error('Save error:', e);
+            if (si) { 
+                si.innerText = '❌ ' + e.message; 
+                si.style.color = '#dc2626'; 
+            } 
+            if (sb) sb.style.background = '#dc2626'; 
+        } finally {
+            isSaving = false;
+        }
     }
 
     let autoSaveTimeout;
-    function autoSaveCurrentStudent(cls) { clearTimeout(autoSaveTimeout); autoSaveTimeout = setTimeout(() => saveCurrentStudent(cls), 2000); }
+    function autoSaveCurrentStudent(cls) { 
+        clearTimeout(autoSaveTimeout); 
+        autoSaveTimeout = setTimeout(() => saveCurrentStudent(cls), 500); 
+    }
 
     function updatePhotoDisplay(photoUrl) {
         const placeholder = document.querySelector('.photo-container-small span');
         const img = document.querySelector('.photo-img-small');
-        if (photoUrl && img) { img.src = photoUrl; img.style.display = 'block'; if (placeholder) placeholder.style.display = 'none'; }
-        else if (img) { img.style.display = 'none'; if (placeholder) placeholder.style.display = 'block'; }
+        if (photoUrl && img) { 
+            img.src = photoUrl; 
+            img.style.display = 'block'; 
+            if (placeholder) placeholder.style.display = 'none'; 
+        } else if (img) { 
+            img.style.display = 'none'; 
+            if (placeholder) placeholder.style.display = 'block'; 
+        }
     }
 
     document.querySelectorAll('.main-tab').forEach(tab => tab.addEventListener('click', () => {
