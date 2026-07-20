@@ -208,7 +208,7 @@
             overflow: hidden;
         }
 
-        /* ===== WATERMARK - Uses the same logo image ===== */
+        /* ===== WATERMARK - More visible (opacity increased) ===== */
         .watermark-img {
             position: absolute;
             top: 50%;
@@ -216,7 +216,7 @@
             transform: translate(-50%, -50%) rotate(-25deg);
             width: 500px;
             height: auto;
-            opacity: 0.04;
+            opacity: 0.08;
             pointer-events: none;
             z-index: 0;
         }
@@ -702,9 +702,8 @@
             .report-wrapper { box-shadow: none; border: none; border-radius: 0; padding: 10px 15px; margin: 0; }
             .report-card { max-width: 100%; padding: 0; overflow: visible; }
             
-            /* Watermark visible on print */
             .watermark-img { 
-                opacity: 0.03 !important; 
+                opacity: 0.05 !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
@@ -1142,8 +1141,11 @@
             const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
             const principalRemarks = data.principalRemarks || '';
             const promotionStatus = data.promotionStatus || '';
+            
+            // ★★★ FIX: Get position data with proper fallbacks ★★★
             const overallPosition = data.overallPosition || null;
             const overallAverage = data.overallAverage || 0;
+            const totalStudents = data.totalStudents || 0;
 
             const formatDate = (str) => {
                 if (!str) return 'Not set';
@@ -1199,18 +1201,21 @@
                 return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${e}</span>`;
             }).join(' ');
 
-            // ===== POSITION HTML - shows position, total students, and percentage =====
+            // ===== ★★★ FIXED: POSITION HTML - Always shows, even if position is 0 ★★★ =====
             let positionHtml = '';
-            if (overallPosition) {
+            if (overallPosition !== null && overallPosition > 0) {
                 const suffix = getOrdinalSuffix(overallPosition);
-                const totalStudents = data.totalStudents || 0;
-                const percentage = totalStudents > 0 ? ((totalStudents - overallPosition) / (totalStudents - 1) * 100) : 100;
-                const percentDisplay = totalStudents > 0 ? Math.round(percentage) : 100;
-                
                 let posEmoji = '';
                 if (overallPosition === 1) posEmoji = '🥇';
                 else if (overallPosition === 2) posEmoji = '🥈';
                 else if (overallPosition === 3) posEmoji = '🥉';
+                
+                // Calculate percentage
+                let percentDisplay = 100;
+                if (totalStudents > 1) {
+                    const percentage = ((totalStudents - overallPosition) / (totalStudents - 1)) * 100;
+                    percentDisplay = Math.round(percentage);
+                }
                 
                 positionHtml = `
                     <div class="position-summary">
@@ -1240,6 +1245,16 @@
                         </div>` : ''}
                     </div>
                 `;
+            } else {
+                // Show a helpful message if position is not available
+                positionHtml = `
+                    <div class="position-summary" style="background:#f1f5f9; border-color:#94a3b8;">
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:16px; color:#64748b;">📊 Position not calculated yet</div>
+                            <div class="pos-label">Please ask your teacher to calculate positions</div>
+                        </div>
+                    </div>
+                `;
             }
 
             let photoHtml = '';
@@ -1249,7 +1264,7 @@
                 photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
             }
 
-            // ===== WATERMARK uses the same logo URL =====
+            // ===== WATERMARK uses the same logo URL with better visibility =====
             const html = `
                 <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
 
