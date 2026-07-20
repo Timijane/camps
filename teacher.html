@@ -155,6 +155,16 @@
         .suggestion-item { padding: 8px 14px; background: #eef2ff; border-radius: 12px; margin: 4px 0; cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid #c7d2fe; }
         .suggestion-item:hover { background: #ddd6fe; }
 
+        .merge-section { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin-bottom: 15px; }
+        .merge-section .merge-title { font-weight: 800; color: #1e1b4b; margin-bottom: 8px; font-size: 14px; }
+        .merge-student-checkbox { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-radius: 12px; margin: 4px 0; border: 1px solid #e2e8f0; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .merge-student-checkbox:hover { background: #eef2ff; border-color: #4f46e5; }
+        .merge-student-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #4f46e5; cursor: pointer; }
+        .merge-target-select { width: 100%; padding: 10px 14px; border: 2px solid #4f46e5; border-radius: 60px; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; background: white; margin-top: 8px; }
+        .merge-btn { padding: 10px 20px; background: #f59e0b; color: #1e1b4b; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px; }
+        .merge-btn:hover { background: #d97706; }
+        .merge-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -724,6 +734,24 @@
             </div>
             <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects</p>
 
+            <!-- MERGE STUDENTS SECTION -->
+            <div class="merge-section" id="mergeSection">
+                <div class="merge-title">🔀 Merge Duplicate Students</div>
+                <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge. All their scores will combine under one name.</p>
+                <div id="mergeStudentList" style="max-height:200px; overflow-y:auto; margin-bottom:8px;">
+                    ${reportStudentsList.map(s => `
+                        <label class="merge-student-checkbox">
+                            <input type="checkbox" class="merge-check" value="${s}" /> ${s}
+                        </label>
+                    `).join('')}
+                </div>
+                <select class="merge-target-select" id="mergeTargetSelect" style="display:none;">
+                    <option value="">-- Choose which name to keep --</option>
+                </select>
+                <button class="merge-btn" id="executeMergeBtn" disabled>🔀 Merge Selected Students</button>
+                <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
+            </div>
+
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                 <label class="section-label">👤 Select Student:</label>
                 <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
@@ -811,6 +839,179 @@
     }
 
     function attachBuilderEvents(cls) {
+        // =============================================================
+        // MERGE STUDENTS LOGIC
+        // =============================================================
+        const mergeChecks = document.querySelectorAll('.merge-check');
+        const mergeTarget = document.getElementById('mergeTargetSelect');
+        const mergeBtn = document.getElementById('executeMergeBtn');
+        const mergeStatus = document.getElementById('mergeStatus');
+
+        mergeChecks.forEach(check => {
+            check.addEventListener('change', () => {
+                const checked = document.querySelectorAll('.merge-check:checked');
+                const checkedNames = Array.from(checked).map(c => c.value);
+                
+                if (checked.length >= 2) {
+                    mergeTarget.style.display = 'block';
+                    mergeTarget.innerHTML = '<option value="">-- Choose which name to keep --</option>' + 
+                        checkedNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                    mergeBtn.disabled = false;
+                    mergeStatus.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
+                    mergeStatus.style.color = '#059669';
+                } else {
+                    mergeTarget.style.display = 'none';
+                    mergeBtn.disabled = true;
+                    if (checked.length === 1) {
+                        mergeStatus.innerText = '⚠️ Select at least 2 students to merge.';
+                        mergeStatus.style.color = '#d97706';
+                    } else {
+                        mergeStatus.innerText = '';
+                    }
+                }
+            });
+        });
+
+        document.getElementById('executeMergeBtn').addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.merge-check:checked');
+            const checkedNames = Array.from(checked).map(c => c.value);
+            const targetName = mergeTarget.value;
+            
+            if (!targetName) {
+                mergeStatus.innerText = '⚠️ Please select which name to keep.';
+                mergeStatus.style.color = '#dc2626';
+                return;
+            }
+            
+            if (checkedNames.length < 2) {
+                mergeStatus.innerText = '⚠️ Select at least 2 students to merge.';
+                mergeStatus.style.color = '#dc2626';
+                return;
+            }
+            
+            const otherNames = checkedNames.filter(n => n !== targetName);
+            
+            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?\n\nNames to merge:\n${otherNames.join('\n')}\n\n⚠️ This will combine all scores under "${targetName}" and remove the other names.`)) {
+                return;
+            }
+            
+            mergeBtn.disabled = true;
+            mergeBtn.innerText = '⏳ Merging...';
+            mergeStatus.innerText = '⏳ Merging students...';
+            mergeStatus.style.color = '#64748b';
+            
+            try {
+                const cls = currentUser.class;
+                
+                // Step 1: Get the target student's report card (if it exists)
+                const targetDoc = await db.collection('reportCards').doc(`${cls}_${targetName}`).get();
+                let targetData = targetDoc.exists ? targetDoc.data() : { subjects: {} };
+                
+                // Step 2: Merge scores from all other names
+                for (let otherName of otherNames) {
+                    const otherDoc = await db.collection('reportCards').doc(`${cls}_${otherName}`).get();
+                    
+                    if (otherDoc.exists) {
+                        const otherData = otherDoc.data();
+                        
+                        // Merge subjects
+                        if (otherData.subjects) {
+                            Object.keys(otherData.subjects).forEach(sub => {
+                                const otherSub = otherData.subjects[sub];
+                                
+                                if (!targetData.subjects[sub]) {
+                                    targetData.subjects[sub] = {};
+                                }
+                                
+                                // Keep the higher score for each term
+                                const existing = targetData.subjects[sub];
+                                existing.firstTerm = Math.max(existing.firstTerm || 0, otherSub.firstTerm || 0);
+                                existing.secondTerm = Math.max(existing.secondTerm || 0, otherSub.secondTerm || 0);
+                                existing.thirdTerm = Math.max(existing.thirdTerm || 0, otherSub.thirdTerm || 0);
+                                
+                                // Recalculate average
+                                const scores = [existing.firstTerm, existing.secondTerm, existing.thirdTerm].filter(v => v > 0);
+                                existing.average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
+                                
+                                // Get remark
+                                existing.remark = getRemarkText(existing.average);
+                            });
+                        }
+                        
+                        // Merge affective domain (keep higher values)
+                        if (otherData.affectiveDomain) {
+                            if (!targetData.affectiveDomain) targetData.affectiveDomain = {};
+                            Object.keys(otherData.affectiveDomain).forEach(trait => {
+                                targetData.affectiveDomain[trait] = Math.max(
+                                    targetData.affectiveDomain[trait] || 0,
+                                    otherData.affectiveDomain[trait] || 0
+                                );
+                            });
+                        }
+                        
+                        // Merge psychomotor
+                        if (otherData.psychomotorDomain) {
+                            if (!targetData.psychomotorDomain) targetData.psychomotorDomain = {};
+                            Object.keys(otherData.psychomotorDomain).forEach(skill => {
+                                targetData.psychomotorDomain[skill] = Math.max(
+                                    targetData.psychomotorDomain[skill] || 0,
+                                    otherData.psychomotorDomain[skill] || 0
+                                );
+                            });
+                        }
+                        
+                        // Merge clubs
+                        if (otherData.extracurriculars) {
+                            if (!targetData.extracurriculars) targetData.extracurriculars = [];
+                            const combined = [...new Set([...(targetData.extracurriculars || []), ...otherData.extracurriculars])];
+                            targetData.extracurriculars = combined;
+                        }
+                        
+                        // Delete the old student's report card
+                        await db.collection('reportCards').doc(`${cls}_${otherName}`).delete();
+                        
+                        // Also remove from results (merge into target)
+                        if (allStudentResults[otherName]) {
+                            if (!allStudentResults[targetName]) allStudentResults[targetName] = {};
+                            Object.keys(allStudentResults[otherName]).forEach(sub => {
+                                const existing = allStudentResults[targetName][sub];
+                                const other = allStudentResults[otherName][sub];
+                                if (!existing || other > existing) {
+                                    allStudentResults[targetName][sub] = other;
+                                }
+                            });
+                            delete allStudentResults[otherName];
+                        }
+                    }
+                    
+                    // Remove from the student list
+                    reportStudentsList = reportStudentsList.filter(s => s !== otherName);
+                }
+                
+                // Step 3: Save the merged report card
+                targetData.class = cls;
+                targetData.studentName = targetName;
+                targetData.term = 'Third';
+                targetData.updatedAt = new Date();
+                
+                await db.collection('reportCards').doc(`${cls}_${targetName}`).set(targetData, { merge: true });
+                
+                // Step 4: Rebuild the UI
+                reportStudentsList.sort();
+                buildReportBuilderUI(cls);
+                
+                showToast(`✅ Merged ${otherNames.length} student(s) into "${targetName}"!`, 'success');
+                
+            } catch (e) {
+                console.error('Merge error:', e);
+                mergeStatus.innerText = '❌ Merge failed: ' + e.message;
+                mergeStatus.style.color = '#dc2626';
+                mergeBtn.disabled = false;
+                mergeBtn.innerText = '🔀 Merge Selected Students';
+                showToast('❌ Merge failed: ' + e.message, 'error');
+            }
+        });
+
         const selector = document.getElementById('studentSelector');
         const workArea = document.getElementById('studentWorkArea');
         const newStudentInput = document.getElementById('newStudentInput');
@@ -962,14 +1163,40 @@
             if (data.principalRemarks && pe) pe.value = data.principalRemarks;
             if (data.promotionStatus && pr) pr.value = data.promotionStatus;
         }
+        // Auto-fill 3rd term from ALL available results
         if (allStudentResults[student]) {
             currentSubjects.forEach(sub => {
                 if (allStudentResults[student][sub] !== undefined) {
                     const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti && !ti.value) ti.value = allStudentResults[student][sub];
+                    if (ti) {
+                        // Always fill with the score from results (even if previously saved)
+                        ti.value = allStudentResults[student][sub];
+                        ti.style.background = '#fef08a';
+                        ti.style.fontWeight = '700';
+                    }
                 }
             });
         }
+
+        // Also check if there are results under a similar name (case-insensitive)
+        const studentLower = student.toLowerCase();
+        Object.keys(allStudentResults).forEach(resultName => {
+            if (resultName.toLowerCase() === studentLower && resultName !== student) {
+                // Found results under a different case - merge them
+                if (!allStudentResults[student]) allStudentResults[student] = {};
+                Object.keys(allStudentResults[resultName]).forEach(sub => {
+                    if (!allStudentResults[student][sub] || allStudentResults[resultName][sub] > allStudentResults[student][sub]) {
+                        allStudentResults[student][sub] = allStudentResults[resultName][sub];
+                    }
+                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+                    if (ti) {
+                        ti.value = allStudentResults[student][sub];
+                        ti.style.background = '#fef08a';
+                        ti.style.fontWeight = '700';
+                    }
+                });
+            }
+        });
         calculateStudentScores();
     }
 
@@ -1001,6 +1228,26 @@
                 const remark = document.querySelector(`.remark-cell[data-sub="${sub}"]`)?.innerText || '';
                 subjectsData[sub] = { firstTerm: f, secondTerm: s, thirdTerm: t, average: avg, remark };
             });
+            
+            // Also merge in any scores from allStudentResults that weren't in the form
+            if (allStudentResults[currentSelectedStudent]) {
+                Object.keys(allStudentResults[currentSelectedStudent]).forEach(sub => {
+                    if (currentSubjects.includes(sub)) {
+                        // Subject exists in current class - make sure it's saved
+                        if (!subjectsData[sub]) {
+                            subjectsData[sub] = { firstTerm: 0, secondTerm: 0, thirdTerm: 0, average: 0, remark: '' };
+                        }
+                        if (!subjectsData[sub].thirdTerm || subjectsData[sub].thirdTerm === 0) {
+                            subjectsData[sub].thirdTerm = allStudentResults[currentSelectedStudent][sub];
+                            // Recalculate average
+                            const scores = [subjectsData[sub].firstTerm, subjectsData[sub].secondTerm, subjectsData[sub].thirdTerm].filter(v => v > 0);
+                            subjectsData[sub].average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
+                            subjectsData[sub].remark = getRemarkText(subjectsData[sub].average);
+                        }
+                    }
+                });
+            }
+            
             const affective = {}; document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value)||3);
             const psychomotor = {}; document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value)||3);
             const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
