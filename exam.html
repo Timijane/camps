@@ -150,8 +150,9 @@
     let answers = {};
     let qIndex = 0;
     let timerInterval = null;
-    let timeSeconds = 900; // 15 minutes
-    const TOTAL_TIME = 900;
+    let timeSeconds = 900; // Default 15 minutes (will be overridden)
+    let TOTAL_TIME = 900;
+    let examDuration = 15; // Store duration in minutes
     let masterClassList = [];
 
     const $ = (id) => document.getElementById(id);
@@ -306,7 +307,27 @@
     // =============================================================
     async function startCBT(cls, subject) {
         clearInterval(timerInterval);
+        
+        // FIRST: Fetch the duration from Firestore
+        try {
+            const controlsDoc = await db.collection('examControls').doc(cls).get();
+            if (controlsDoc.exists) {
+                const data = controlsDoc.data();
+                examDuration = data.durationMinutes || 15;
+                console.log('✅ Loaded exam duration:', examDuration, 'minutes');
+            } else {
+                examDuration = 15;
+                console.log('⚠️ No exam controls found, using default 15 minutes');
+            }
+        } catch (e) {
+            console.error('⚠️ Failed to load duration, using default 15 minutes:', e);
+            examDuration = 15;
+        }
+        
+        // Set the timer based on loaded duration
+        TOTAL_TIME = examDuration * 60;
         timeSeconds = TOTAL_TIME;
+        
         qIndex = 0;
         answers = {};
         currentSubject = subject;
@@ -315,7 +336,11 @@
         container.innerHTML = '<p style="color:#64748b;">⏳ Loading your questions...</p>';
         $('cbtArea').style.display = 'block';
         $('resultDisplay').innerHTML = '';
-        $('timerDisplay').innerText = '⏱️ 15:00';
+        
+        // Update timer display with correct duration
+        const mins = Math.floor(timeSeconds / 60);
+        const secs = timeSeconds % 60;
+        $('timerDisplay').innerText = `⏱️ ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         $('timerDisplay').classList.remove('warning');
 
         try {
@@ -471,7 +496,7 @@
     // =============================================================
     showPage('login');
     loadMasterClassList();
-    console.log('✅ Covenant Arrows\' Model CBT with Class Droplets is ready!');
+    console.log('✅ Covenant Arrows\' Model CBT with Dynamic Duration is ready!');
 </script>
 </body>
 </html>
