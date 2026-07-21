@@ -7,7 +7,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -100,6 +99,31 @@
         .main-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
+
+        /* ===== RESULTS TAB - ACCORDION STYLES ===== */
+        .subject-accordion { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+        .subject-accordion-header { background: #f8fafc; padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-weight: 700; font-size: 14px; color: #1e293b; }
+        .subject-accordion-header:hover { background: #f1f5f9; }
+        .subject-accordion-header .subject-name { color: #4f46e5; }
+        .subject-accordion-header .subject-count { background: #e2e8f0; padding: 2px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; color: #64748b; }
+        .subject-accordion-header .subject-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .subject-accordion-header .subject-actions .btn-sm { padding: 4px 12px; border: none; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .subject-accordion-header .subject-actions .btn-sm.multiply { background: #dbeafe; color: #1e3a8a; }
+        .subject-accordion-header .subject-actions .btn-sm.multiply:hover { background: #bfdbfe; }
+        .subject-accordion-header .subject-actions .btn-sm.copy { background: #ede9fe; color: #5b21b6; }
+        .subject-accordion-header .subject-actions .btn-sm.copy:hover { background: #ddd6fe; }
+        .subject-accordion-header .subject-actions .btn-sm.save { background: #d1fae5; color: #065f46; }
+        .subject-accordion-header .subject-actions .btn-sm.save:hover { background: #a7f3d0; }
+        .subject-accordion-header .arrow { transition: transform 0.3s ease; font-size: 12px; color: #94a3b8; }
+        .subject-accordion-header .arrow.open { transform: rotate(180deg); }
+        .subject-accordion-body { display: none; padding: 0 20px 16px; background: white; }
+        .subject-accordion-body.open { display: block; }
+        .subject-accordion-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .subject-accordion-body th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .subject-accordion-body td { padding: 6px 6px; border-bottom: 1px solid #f1f5f9; }
+        .subject-accordion-body tr:hover { background: #f8fafc; }
+        .subject-accordion-body .score-cell { font-weight: 700; color: #0f172a; text-align: right; }
+        .subject-accordion-body .student-name { color: #334155; }
 
         .question-grid { display: flex; flex-direction: column; gap: 10px; }
         .q-item { background: white; border-radius: 16px; padding: 14px 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: 0.15s; }
@@ -235,6 +259,8 @@
             .photo-container-small { width: 70px !important; height: 70px !important; }
             #studentSelector { font-size: 14px; }
             .signature-canvas { max-width: 100%; height: 100px; }
+            .subject-accordion-header { flex-wrap: wrap; gap: 8px; }
+            .subject-accordion-header .subject-actions { width: 100%; justify-content: flex-start; }
         }
     </style>
 </head>
@@ -323,7 +349,13 @@
                 </div>
             </div>
 
-            <div id="tabResults" class="tab-content"><div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div></div>
+            <!-- ===== RESULTS TAB - NEW ACCORDION VIEW ===== -->
+            <div id="tabResults" class="tab-content">
+                <div class="card-panel">
+                    <h4>📊 Student Results</h4>
+                    <div id="resultsContainer"></div>
+                </div>
+            </div>
 
             <div id="tabReports" class="tab-content">
                 <div class="card-panel">
@@ -387,6 +419,205 @@
     }
 
     const $ = (id) => document.getElementById(id);
+
+    // =============================================================
+    // LOAD RESULTS - NEW ACCORDION VIEW
+    // =============================================================
+    async function loadResultsWithAccordion(cls) {
+        const container = document.getElementById('resultsContainer');
+        if (!container) return;
+        
+        try {
+            const snap = await db.collection('results').where('class', '==', cls).get();
+            
+            if (snap.empty) {
+                container.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:20px;">No results found.</p>';
+                return;
+            }
+
+            // Group results by subject
+            const subjectGroups = {};
+            snap.forEach(doc => {
+                const data = doc.data();
+                const subject = data.subject || 'Unknown';
+                const studentName = data.studentName || 'Unknown';
+                const score = data.score || 0;
+                
+                if (!subjectGroups[subject]) {
+                    subjectGroups[subject] = [];
+                }
+                // Store as object with student and score
+                subjectGroups[subject].push({ student: studentName, score: score });
+            });
+
+            // Sort each subject's students alphabetically
+            Object.keys(subjectGroups).forEach(subject => {
+                subjectGroups[subject].sort((a, b) => a.student.localeCompare(b.student));
+            });
+
+            // Build the accordion HTML
+            let html = '<div class="results-accordion">';
+            const sortedSubjects = Object.keys(subjectGroups).sort();
+            
+            sortedSubjects.forEach((subject, index) => {
+                const students = subjectGroups[subject];
+                const totalStudents = students.length;
+                const isOpen = index === 0 ? 'open' : '';
+                
+                html += `
+                <div class="subject-accordion">
+                    <div class="subject-accordion-header" data-subject="${subject}">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <span class="subject-name">📚 ${subject}</span>
+                            <span class="subject-count">${totalStudents} students</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn-sm multiply" data-subject="${subject}" data-multiplier="2">×2</button>
+                            <button class="btn-sm multiply" data-subject="${subject}" data-multiplier="3">×3</button>
+                            <button class="btn-sm copy" data-subject="${subject}">📋 Copy</button>
+                            <span class="arrow ${isOpen}">▼</span>
+                        </div>
+                    </div>
+                    <div class="subject-accordion-body ${isOpen}" data-subject="${subject}">
+                        <table>
+                            <thead>
+                                <tr><th>Student</th><th style="text-align:right;">Score</th></tr>
+                            </thead>
+                            <tbody>
+                                ${students.map(s => `
+                                    <tr>
+                                        <td class="student-name">${s.student}</td>
+                                        <td class="score-cell">${s.score}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+
+            // --- Attach Accordion Click Events ---
+            document.querySelectorAll('.subject-accordion-header').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    // Don't toggle if clicking a button
+                    if (e.target.closest('.btn-sm')) return;
+                    
+                    const subject = this.dataset.subject;
+                    const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
+                    const arrow = this.querySelector('.arrow');
+                    
+                    if (body) {
+                        body.classList.toggle('open');
+                        if (arrow) arrow.classList.toggle('open');
+                    }
+                });
+            });
+
+            // --- Attach Multiply Events ---
+            document.querySelectorAll('.btn-sm.multiply').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const subject = this.dataset.subject;
+                    const multiplier = parseInt(this.dataset.multiplier);
+                    
+                    if (!confirm(`Multiply ALL "${subject}" scores by ${multiplier}?`)) return;
+                    
+                    multiplySubjectScores(subject, multiplier, cls);
+                });
+            });
+
+            // --- Attach Copy Events ---
+            document.querySelectorAll('.btn-sm.copy').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const subject = this.dataset.subject;
+                    copySubjectScores(subject);
+                });
+            });
+
+        } catch (e) {
+            console.error('Load results error:', e);
+            container.innerHTML = `<p style="color:#dc2626;">Error loading results: ${e.message}</p>`;
+        }
+    }
+
+    // =============================================================
+    // MULTIPLY SUBJECT SCORES
+    // =============================================================
+    async function multiplySubjectScores(subject, multiplier, cls) {
+        try {
+            showToast(`⏳ Multiplying ${subject} scores by ${multiplier}...`, 'warning');
+            
+            const snap = await db.collection('results')
+                .where('class', '==', cls)
+                .where('subject', '==', subject)
+                .get();
+            
+            if (snap.empty) {
+                showToast('No scores found for this subject.', 'warning');
+                return;
+            }
+
+            const batch = db.batch();
+            let count = 0;
+            
+            snap.forEach(doc => {
+                const data = doc.data();
+                const newScore = Math.min(Math.round((data.score || 0) * multiplier), 100);
+                batch.update(doc.ref, { score: newScore });
+                count++;
+            });
+            
+            await batch.commit();
+            
+            showToast(`✅ ${count} scores multiplied by ${multiplier}`, 'success');
+            
+            // Reload results
+            await loadResultsWithAccordion(cls);
+            
+        } catch (e) {
+            console.error('Multiply error:', e);
+            showToast('❌ Failed to multiply: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // COPY SUBJECT SCORES
+    // =============================================================
+    function copySubjectScores(subject) {
+        const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
+        if (!body) return;
+        
+        const rows = body.querySelectorAll('tr');
+        let text = `📊 ${subject} Scores\n`;
+        text += '─'.repeat(40) + '\n';
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 2) {
+                const student = cells[0].textContent.trim();
+                const score = cells[1].textContent.trim();
+                text += `${student}: ${score}\n`;
+            }
+        });
+        
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`📋 Copied ${subject} scores to clipboard!`, 'success');
+        }).catch(() => {
+            // Fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast(`📋 Copied ${subject} scores to clipboard!`, 'success');
+        });
+    }
 
     // =============================================================
     // CLOUDINARY
@@ -1300,7 +1531,6 @@
         area.innerHTML = `<div style="text-align:center; padding:20px;">⏳ Loading students...</div>`;
 
         try {
-            // First, load all students from reportCards collection (for persistence)
             const reportSnap = await db.collection('reportCards').where('class', '==', cls).get();
             const existingStudents = [];
             reportSnap.forEach(doc => {
@@ -1310,15 +1540,13 @@
                 }
             });
 
-            // Then load from results for scores
             const resultsSnap = await db.collection('results').where('class', '==', cls).get();
             
             if (resultsSnap.empty && existingStudents.length === 0) {
-                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found. Students need to take exams first.</div>`;
+                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
                 return;
             }
 
-            // Build results from exam data
             const rawEntries = [];
             resultsSnap.forEach(d => {
                 const data = d.data();
@@ -1329,7 +1557,6 @@
                 });
             });
 
-            // Group similar names
             const groups = groupSimilarNames(rawEntries);
             const mergedResults = {};
             const canonicalNames = [];
@@ -1347,7 +1574,6 @@
 
             allStudentResults = mergedResults;
 
-            // Combine: use existing students from reportCards + any from results
             const combinedList = [...new Set([...existingStudents, ...canonicalNames])];
             reportStudentsList = combinedList
                 .filter(name => name.trim().split(/\s+/).length >= 2 && name.length > 5)
@@ -1648,7 +1874,6 @@
         // ATTACH EVENTS
         // =============================================================
 
-        // ---- INIT SIGNATURE CANVASES ----
         let teacherSig = null;
         let adminSig = null;
 
@@ -1664,7 +1889,6 @@
         window.teacherSig = teacherSig;
         window.adminSig = adminSig;
 
-        // ---- RECOVER ----
         document.getElementById('recoverBtn')?.addEventListener('click', async () => {
             await recoverFirstSecondFromThirdTerm();
             if (currentSelectedStudent) {
@@ -1672,22 +1896,18 @@
             }
         });
 
-        // ---- DELETE ----
         document.getElementById('deleteStudentBtn')?.addEventListener('click', () => {
             if (currentSelectedStudent) deleteStudent(currentSelectedStudent);
         });
 
-        // ---- PUSH STUDENT ----
         document.getElementById('pushStudentBtn')?.addEventListener('click', async () => {
             await pushStudentToAdmin(currentSelectedStudent);
         });
 
-        // ---- PUSH ALL ----
         document.getElementById('pushAllBtn')?.addEventListener('click', async () => {
             await pushAllStudentsToAdmin();
         });
 
-        // ---- EDIT NAME ----
         document.getElementById('editStudentNameBtn')?.addEventListener('click', async () => {
             if (!currentSelectedStudent) return;
             const newName = prompt('✏️ Edit student name:', currentSelectedStudent);
@@ -1696,7 +1916,6 @@
             }
         });
 
-        // ---- MERGE ----
         document.getElementById('executeMergeBtn')?.addEventListener('click', async () => {
             const checked = document.querySelectorAll('.merge-check:checked');
             const checkedNames = Array.from(checked).map(c => c.value);
@@ -1710,13 +1929,11 @@
             await mergeStudents(otherNames, targetName);
         });
 
-        // ---- STUDENT SELECTOR ----
         const selector = document.getElementById('studentSelector');
         const workArea = document.getElementById('studentWorkArea');
         const newStudentInput = document.getElementById('newStudentInput');
         const suggestionsDiv = document.getElementById('nameSuggestions');
 
-        // ---- PHOTO UPLOAD ----
         const photoContainer = document.querySelector('.photo-container-small');
         const uploadBtn = document.getElementById('uploadPhotoBtn');
 
@@ -1752,7 +1969,6 @@
             }
         }
 
-        // ---- SUGGESTIONS ----
         newStudentInput?.addEventListener('input', async () => {
             const query = newStudentInput.value.trim().toLowerCase();
             if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
@@ -1790,7 +2006,6 @@
             }
         });
 
-        // ---- ADD STUDENT - FIXED ----
         document.getElementById('addStudentBtn')?.addEventListener('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1808,7 +2023,6 @@
             try {
                 const cls = currentUser.class;
                 
-                // Check if student already exists in Firestore
                 const docRef = db.collection('reportCards').doc(`${cls}_${name}`);
                 const doc = await docRef.get();
                 
@@ -1828,7 +2042,6 @@
                     return;
                 }
 
-                // Create new student document
                 await docRef.set({
                     class: cls,
                     studentName: name,
@@ -1841,13 +2054,11 @@
                     _version: 1
                 });
 
-                // Add to local list
                 if (!reportStudentsList.includes(name)) {
                     reportStudentsList.push(name);
                     reportStudentsList.sort();
                 }
 
-                // Update UI
                 rebuildSelector();
                 rebuildMergeList();
                 updateStudentCount();
@@ -1855,7 +2066,6 @@
                 newStudentInput.value = '';
                 suggestionsDiv.innerHTML = '';
                 
-                // Load the new student
                 selector.dispatchEvent(new Event('change'));
                 
                 showToast(`✅ Added "${name}" successfully!`, 'success');
@@ -1866,7 +2076,6 @@
             }
         });
 
-        // ---- SELECTOR CHANGE ----
         selector?.addEventListener('change', async () => {
             const student = selector.value;
             if (currentSelectedStudent) {
@@ -1885,13 +2094,11 @@
             updatePositionDisplay(student);
         });
 
-        // ---- SAVE ----
         document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
             await saveCurrentStudent(cls);
             showToast('✅ Saved!', 'success');
         });
 
-        // ---- NEXT ----
         document.getElementById('nextStudentBtn')?.addEventListener('click', async () => {
             await saveCurrentStudent(cls);
             const idx = reportStudentsList.indexOf(currentSelectedStudent);
@@ -1903,7 +2110,6 @@
             }
         });
 
-        // ---- CALCULATE POSITIONS ----
         document.getElementById('calculatePositionsBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('calculatePositionsBtn');
             btn.innerText = '⏳ Calculating...';
@@ -1917,7 +2123,6 @@
             }
         });
 
-        // ---- AUTO-SAVE ----
         document.querySelectorAll('.score-input').forEach(input => {
             input.addEventListener('focus', () => { input.dataset.touched = 'true'; });
             input.addEventListener('input', () => {
@@ -2171,15 +2376,6 @@
         } catch (e) {}
     }
 
-    async function loadResults(cls) {
-        const snap = await db.collection('results').where('class', '==', cls).get();
-        const container = $('resultsContainer');
-        if (snap.empty) return container.innerHTML = '<p>No results yet.</p>';
-        let html = '<table><tr><th>Student</th><th>Subject</th><th>Score</th></tr>';
-        snap.forEach(d => { const data = d.data(); html += `<tr><td>${data.studentName}</td><td>${data.subject}</td><td>${data.score}</td></tr>`; });
-        container.innerHTML = html + '</table>';
-    }
-
     // =============================================================
     // BUILD REPORT BUTTON
     // =============================================================
@@ -2187,6 +2383,28 @@
         const cls = currentUser.class;
         if (!cls) return showToast('⚠️ Login first.', 'error');
         await loadStudentsFromResults(cls);
+    });
+
+    // =============================================================
+    // TAB SWITCHING - LOAD RESULTS WITH ACCORDION
+    // =============================================================
+    document.querySelectorAll('.main-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+            
+            if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
+            if (tab.dataset.tab === 'tabResults') {
+                if (currentUser.class) {
+                    loadResultsWithAccordion(currentUser.class);
+                }
+            }
+            if (tab.dataset.tab === 'tabReports') {
+                // Load reports if needed
+            }
+        });
     });
 
     // =============================================================
@@ -2224,7 +2442,7 @@
 
         await loadSubjects(newClass);
         await loadSchedule(newClass);
-        await loadResults(newClass);
+        await loadResultsWithAccordion(newClass);
 
         const area = document.getElementById('reportBuilderArea');
         area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Click "Load Students" to see results.</div>`;
@@ -2232,20 +2450,6 @@
         document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
 
         showToast(`🔄 Switched to ${newClass}`, 'success');
-    });
-
-    // =============================================================
-    // TAB SWITCHING
-    // =============================================================
-    document.querySelectorAll('.main-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(tab.dataset.tab).classList.add('active');
-            if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
-            if (tab.dataset.tab === 'tabResults') loadResults(currentUser.class);
-        });
     });
 
     // =============================================================
@@ -2271,7 +2475,7 @@
 
         await loadSubjects(cls);
         await loadSchedule(cls);
-        await loadResults(cls);
+        await loadResultsWithAccordion(cls);
 
         const resultsSnap = await db.collection('results').where('class', '==', cls).get();
         if (!resultsSnap.empty) {
@@ -2286,14 +2490,12 @@
     $('loginPage').classList.add('active');
     loadMasterClassList();
 
-    console.log('✅ Teacher Dashboard - COMPLETE FIXED VERSION');
-    console.log('📌 Features: Add, Edit, Delete, Merge, Push, Recover, Photos, Signatures');
-    console.log('🔄 All data saved to Firestore with versioning');
-    console.log('📸 Photo upload active with Cloudinary');
-    console.log('✍️ Teacher/Admin signatures saved to localStorage + Firestore');
-    console.log('🏆 Positions calculate for ALL students in the class');
-    console.log('✅ Add Student button is FIXED and working!');
-    console.log('✅ Students persist after refresh!');
+    console.log('✅ Teacher Dashboard - COMPLETE WITH ACCORDION RESULTS');
+    console.log('📌 Features: Subject accordion, ×2, ×3, Copy, Add/Edit/Delete/Merge/Push');
+    console.log('📊 Results are organized by subject with alphabetical student order');
+    console.log('🔢 ×2 and ×3 buttons multiply ALL scores for a subject');
+    console.log('📋 Copy button copies student: score to clipboard');
+    console.log('✅ ALL data is preserved - nothing is lost!');
 </script>
 </body>
 </html>
