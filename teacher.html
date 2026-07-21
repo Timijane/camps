@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Teacher Dashboard · Real‑Time Sync</title>
+    <title>Teacher Dashboard · Fixed</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
@@ -11,16 +11,18 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
     <style>
+        /* ===== RESET & BASE ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         #app { width: 100%; max-width: 1400px; height: 90vh; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
         .page { display: none; height: 100%; width: 100%; animation: fadeIn 0.3s ease; }
         .page.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
+        /* ===== LOGIN ===== */
         #loginPage { align-items: center; justify-content: center; background: linear-gradient(135deg, #e0f2fe, #ede9fe); }
         .login-box { background: white; padding: 50px 40px; border-radius: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); }
         .login-box h2 { font-size: 28px; color: #1e1b4b; margin-bottom: 6px; }
@@ -31,16 +33,7 @@
         .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
         .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
 
-        .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 30px; }
-        .sync-status.connected { background: #d1fae5; color: #065f46; }
-        .sync-status.connecting { background: #fef3c7; color: #92400e; }
-        .sync-status.disconnected { background: #fee2e2; color: #991b1b; }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .sync-status.connected .sync-dot { background: #10b981; }
-        .sync-status.connecting .sync-dot { background: #f59e0b; animation: pulse-dot 1s infinite; }
-        .sync-status.disconnected .sync-dot { background: #dc2626; }
-        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
+        /* ===== TOAST ===== */
         .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
         .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
         .toast.hide { animation: slideOut 0.3s ease forwards; }
@@ -48,31 +41,36 @@
         .toast.success { border-color: #10b981; }
         .toast.error { border-color: #dc2626; }
         .toast.warning { border-color: #f59e0b; }
-        .toast.sync { border-color: #4f46e5; background: #eef2ff; }
-        .toast.push { border-color: #8b5cf6; background: #ede9fe; }
         @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 
+        /* ===== DASHBOARD ===== */
         #dashboardPage { flex-direction: row; background: #f8fafc; }
-        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; transition: all 0.3s ease; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
         .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
         .sidebar .brand span { color: #4f46e5; }
         .sidebar .user-info { font-size: 14px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .sidebar .user-info .name { font-weight: 700; color: #0f172a; }
         .sidebar .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .sidebar .logout-btn:hover { background: #fecaca; }
+
         .class-switcher { display: flex; gap: 8px; margin-bottom: 25px; }
         .class-switcher select { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; font-weight: 600; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
         .class-switcher select:focus { border-color: #4f46e5; }
         .class-switcher button { padding: 12px 20px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; white-space: nowrap; }
         .class-switcher button:hover { background: #4338ca; }
-        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+
+        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .sidebar-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: #1e293b; }
+
         .add-subject-row { display: flex; gap: 6px; margin-bottom: 15px; }
         .add-subject-row input { flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; }
         .add-subject-row input:focus { border-color: #4f46e5; }
         .add-subject-row button { padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .add-subject-row button:hover { background: #059669; }
+
         .subject-list { flex: 1; overflow-y: auto; margin-top: 5px; }
         .subject-item { padding: 14px 18px; border-radius: 16px; margin-bottom: 6px; cursor: pointer; transition: 0.15s; font-weight: 600; color: #334155; display: flex; justify-content: space-between; align-items: center; border: 2px solid transparent; background: #f8fafc; }
         .subject-item:hover { background: #eef2ff; border-color: #c7d2fe; }
@@ -86,11 +84,25 @@
         .subject-item.active .del-sub { color: rgba(255,255,255,0.6); }
         .subject-item.active .del-sub:hover { color: white; }
 
+        /* ===== MAIN PANEL ===== */
         .main-panel { flex: 1; padding: 25px 30px; overflow-y: auto; height: 100%; background: #f8fafc; display: flex; flex-direction: column; }
-        .main-panel .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+
+        .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
         .panel-header h2 { font-size: 24px; color: #0f172a; font-weight: 800; }
         .panel-header h2 span { color: #4f46e5; }
         .panel-header .badge-points { background: #1e1b4b; color: white; padding: 6px 18px; border-radius: 60px; font-weight: 700; font-size: 14px; }
+
+        .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 30px; }
+        .sync-status.connected { background: #d1fae5; color: #065f46; }
+        .sync-status.connecting { background: #fef3c7; color: #92400e; }
+        .sync-status.disconnected { background: #fee2e2; color: #991b1b; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .sync-status.connected .sync-dot { background: #10b981; }
+        .sync-status.connecting .sync-dot { background: #f59e0b; animation: pulse-dot 1s infinite; }
+        .sync-status.disconnected .sync-dot { background: #dc2626; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* ===== TABS ===== */
         .main-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .main-tab { padding: 10px 22px; border-radius: 60px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.15s; border: 2px solid transparent; background: transparent; color: #64748b; font-family: 'Inter', sans-serif; }
         .main-tab:hover { background: #f1f5f9; color: #0f172a; }
@@ -98,6 +110,7 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
+        /* ===== QUESTIONS ===== */
         .question-grid { display: flex; flex-direction: column; gap: 10px; }
         .q-item { background: white; border-radius: 16px; padding: 14px 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: 0.15s; }
         .q-item:hover { border-color: #c7d2fe; }
@@ -119,6 +132,7 @@
         .form-row .btn-add-q { padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .form-row .btn-add-q:hover { background: #4338ca; }
 
+        /* ===== CSV ===== */
         .csv-paste-section { background: #f1f5f9; border-radius: 16px; padding: 16px 20px; margin-top: 12px; border: 2px dashed #cbd5e1; }
         .csv-paste-section textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; resize: vertical; background: white; }
         .csv-paste-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
@@ -132,13 +146,11 @@
         .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
         .csv-section .btn-csv.upload { background: #10b981; color: white; }
         .csv-section .btn-csv.upload:hover { background: #059669; }
-        .debug-output { background: #1e1e2e; color: #a6e22e; padding: 16px; border-radius: 16px; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; margin-top: 10px; display: none; border: 2px solid #dc2626; }
 
+        /* ===== CARD PANEL ===== */
         .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         .card-panel h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
-        .toggle-group { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; }
-        .toggle-group label { display: flex; align-items: center; gap: 8px; font-weight: 600; background: #f8fafc; padding: 10px 18px; border-radius: 60px; border: 2px solid #e2e8f0; cursor: pointer; }
-        .toggle-group label.active-toggle { border-color: #4f46e5; background: #eef2ff; }
+
         .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
@@ -150,32 +162,27 @@
         .btn-danger:hover { background: #b91c1c; }
         .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
         .btn-outline:hover { background: #f8fafc; }
-        .btn-push { background: #8b5cf6; color: white; }
-        .btn-push:hover { background: #7c3aed; }
-        .btn-push-all { background: #6d28d9; color: white; }
-        .btn-push-all:hover { background: #5b21b6; }
-        .btn-pushed { background: #d1fae5; color: #065f46; }
-        .btn-pushed:hover { background: #a7f3d0; }
 
-        .schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-        .schedule-grid label { font-weight: 600; color: #1e293b; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
-        .schedule-grid input { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; outline: none; }
-        .schedule-grid input:focus { border-color: #4f46e5; }
-        .flex-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 10px 12px; border: 1px solid #e2e8f0; text-align: center; }
-        th { background: #f1f5f9; font-weight: 700; }
-        .rep-input { width: 55px; padding: 6px 4px; text-align: center; border-radius: 30px; border: 2px solid #e2e8f0; font-family: 'Inter', sans-serif; font-size: 13px; }
-
+        /* ===== REPORT BUILDER ===== */
         .report-builder-container { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; margin-top: 15px; }
         .section-label { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 8px; display: block; }
+        .student-count-badge { background: #4f46e5; color: white; padding: 2px 14px; border-radius: 30px; font-size: 13px; font-weight: 700; }
+
         .photo-container-small { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid #e2e8f0; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
         .photo-container-small:hover { border-color: #4f46e5; }
-        .auto-save-badge { background: #10b981; color: white; padding: 4px 16px; border-radius: 30px; font-weight: 600; font-size: 12px; display: inline-block; transition: 0.3s; }
+        .photo-img-small { width: 100%; height: 100%; object-fit: cover; display: none; }
+
         .position-card { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin: 15px 0; text-align: center; display: none; }
         .position-card .pos-number { font-size: 48px; font-weight: 900; color: #1e1b4b; }
         .position-card .pos-label { font-size: 14px; color: #64748b; }
         .position-card .pos-percentage { font-size: 14px; color: #4f46e5; font-weight: 700; margin-top: 4px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center; }
+        th { background: #f1f5f9; font-weight: 700; }
+        .score-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-family: 'Inter', sans-serif; }
+        .score-input.third { background: #fefce8; font-weight: 700; }
+
         .suggestion-item { padding: 8px 14px; background: #eef2ff; border-radius: 12px; margin: 4px 0; cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid #c7d2fe; }
         .suggestion-item:hover { background: #ddd6fe; }
 
@@ -189,18 +196,10 @@
         .merge-btn:hover { background: #d97706; }
         .merge-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
 
-        .save-indicator-success { color: #059669; font-weight: 600; }
-        .save-indicator-saving { color: #f59e0b; font-weight: 600; }
-        .save-indicator-error { color: #dc2626; font-weight: 600; }
-        .sync-indicator { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #64748b; }
         .save-status-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0; padding: 8px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
         .save-status-bar .status-icon { font-size: 18px; }
         .save-status-bar .status-text { font-size: 13px; font-weight: 600; color: #64748b; }
         .save-status-bar .last-saved { font-size: 11px; color: #94a3b8; margin-left: auto; }
-
-        .recovery-banner { background: #fefce8; border: 2px solid #f59e0b; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: none; }
-        .recovery-banner .recovery-title { font-weight: 800; color: #1e1b4b; font-size: 14px; }
-        .recovery-banner .recovery-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
         .push-progress { background: #ede9fe; border: 2px solid #8b5cf6; border-radius: 12px; padding: 12px 16px; margin: 10px 0; display: none; }
         .push-progress .push-title { font-weight: 800; color: #5b21b6; font-size: 14px; }
@@ -208,12 +207,17 @@
         .push-progress .push-bar-fill { height: 100%; background: #8b5cf6; border-radius: 10px; transition: width 0.3s ease; width: 0%; }
         .push-progress .push-status { font-size: 13px; color: #64748b; }
 
+        .btn-push { background: #8b5cf6; color: white; }
+        .btn-push:hover { background: #7c3aed; }
+        .btn-push-all { background: #6d28d9; color: white; }
+        .btn-push-all:hover { background: #5b21b6; }
+        .btn-pushed { background: #d1fae5; color: #065f46; }
+        .btn-pushed:hover { background: #a7f3d0; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        .pushed-badge { background: #10b981; color: white; font-size: 10px; padding: 2px 10px; border-radius: 30px; font-weight: 700; margin-left: 6px; }
 
         @media (max-width: 800px) {
             body { padding: 0; }
@@ -227,13 +231,8 @@
             .sidebar-toggle { display: inline-block; }
             .sidebar .subject-list, .sidebar .add-subject-row, .sidebar .sidebar-title { display: none; }
             .sidebar.expanded .subject-list, .sidebar.expanded .add-subject-row, .sidebar.expanded .sidebar-title { display: block; }
-            .sidebar.expanded .subject-list { display: block; }
             .main-panel { padding: 15px; }
-            .schedule-grid { grid-template-columns: 1fr; }
-            .report-builder-container { padding: 10px; }
             .btn-action { width: 100%; text-align: center; }
-            table { font-size: 11px; }
-            table th, table td { padding: 4px 2px; }
             .score-input { width: 40px !important; font-size: 11px !important; }
             .photo-container-small { width: 70px !important; height: 70px !important; }
             #studentSelector { font-size: 14px; }
@@ -245,6 +244,7 @@
 <div id="app">
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- ===== LOGIN PAGE ===== -->
     <div id="loginPage" class="page active">
         <div class="login-box">
             <h2>👨‍🏫 Teacher Login</h2>
@@ -256,7 +256,9 @@
         </div>
     </div>
 
+    <!-- ===== DASHBOARD ===== -->
     <div id="dashboardPage" class="page">
+        <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div class="brand">🏫 <span>Covenant</span> Arrows</div>
@@ -269,6 +271,7 @@
             <div class="subject-list" id="subjectListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div></div>
         </div>
 
+        <!-- MAIN PANEL -->
         <div class="main-panel">
             <div class="panel-header">
                 <h2>📖 <span id="selectedSubjectName">Select a Subject</span></h2>
@@ -280,6 +283,8 @@
                     </div>
                 </div>
             </div>
+
+            <!-- TABS -->
             <div class="main-tabs">
                 <button class="main-tab active" data-tab="tabQuestions">📝 Questions</button>
                 <button class="main-tab" data-tab="tabPublish">📢 Publish</button>
@@ -287,6 +292,7 @@
                 <button class="main-tab" data-tab="tabReports">📋 Reports</button>
             </div>
 
+            <!-- TAB: QUESTIONS -->
             <div id="tabQuestions" class="tab-content active">
                 <div id="questionsContainer"><div class="empty-state"><h3>👈 Select a subject</h3></div></div>
                 <div id="addQuestionArea" style="display:none;" class="add-q-form">
@@ -301,47 +307,41 @@
                             <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
                             <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
                             <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700;">🗑️ Clear</button>
-                            <button class="btn-csv debug" id="debugCsvBtn">🐛 Debug</button>
                         </div>
                         <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
-                        <div id="debugOutput" class="debug-output"></div>
                     </div>
                     <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
                 </div>
             </div>
 
+            <!-- TAB: PUBLISH -->
             <div id="tabPublish" class="tab-content">
                 <div class="card-panel"><h4>📢 Publish Exams</h4><div id="examToggles" class="toggle-group">Loading...</div>
-                    <div class="schedule-grid">
+                    <div class="schedule-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:10px;">
                         <label>📅 Start <input type="datetime-local" id="startDateTime" /></label>
                         <label>📅 End <input type="datetime-local" id="endDateTime" /></label>
                         <label>⏱️ Duration <input type="number" id="durationMinutes" value="30" min="1" max="180" /></label>
                         <div style="display:flex; gap:8px;"><button class="btn-action btn-warning" id="forceStartBtn" style="flex:1;">⚡ Force</button><button class="btn-action btn-danger" id="stopExamBtn" style="flex:1;">🛑 Stop</button></div>
                     </div>
-                    <div class="flex-actions"><button class="btn-action btn-success" id="publishWithScheduleBtn">📤 Publish</button><button class="btn-action btn-outline" id="clearScheduleBtn">🗑️ Clear</button></div>
+                    <div class="flex-actions" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px;">
+                        <button class="btn-action btn-success" id="publishWithScheduleBtn">📤 Publish</button>
+                        <button class="btn-action btn-outline" id="clearScheduleBtn">🗑️ Clear</button>
+                    </div>
                     <p id="publishStatus" style="margin-top:10px; font-weight:600;"></p>
                 </div>
             </div>
 
+            <!-- TAB: RESULTS -->
             <div id="tabResults" class="tab-content"><div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div></div>
 
+            <!-- TAB: REPORTS -->
             <div id="tabReports" class="tab-content">
                 <div class="card-panel">
                     <h4>📋 Build Report Cards</h4>
                     <p style="color:#64748b; margin-bottom:15px;">
-                        <span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span> 
-                        <span class="sync-indicator" id="syncIndicator">🔄 Real-time sync active</span>
+                        <span class="student-count-badge" id="studentCountBadge">0 Students</span>
+                        <span style="margin-left:12px;">📚 <span id="subjectCountDisplay">0</span> Subjects</span>
                     </p>
-                    
-                    <div class="recovery-banner" id="recoveryBanner">
-                        <div class="recovery-title">⚠️ Data Recovery Available</div>
-                        <p style="font-size:13px; color:#64748b; margin:4px 0;">Click below to restore missing scores.</p>
-                        <div class="recovery-actions">
-                            <button class="btn-action btn-warning" id="recoverScoresBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
-                            <button class="btn-action btn-outline" id="dismissRecoveryBtn" style="font-size:12px; padding:8px 16px;">✕ Dismiss</button>
-                        </div>
-                    </div>
-                    
                     <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
                     <div id="reportBuilderArea"></div>
                 </div>
@@ -354,16 +354,23 @@
     // =============================================================
     // FIREBASE CONFIG
     // =============================================================
-    const firebaseConfig = { apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc", authDomain: "scholars-a8087.firebaseapp.com", projectId: "scholars-a8087", storageBucket: "scholars-a8087.firebasestorage.app", messagingSenderId: "406251764422", appId: "1:406251764422:web:28422145b6cb4a6eabf5c7", measurementId: "G-TEFG74LD7J" };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+        authDomain: "scholars-a8087.firebaseapp.com",
+        projectId: "scholars-a8087",
+        storageBucket: "scholars-a8087.firebasestorage.app",
+        messagingSenderId: "406251764422",
+        appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+        measurementId: "G-TEFG74LD7J"
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
 
     // =============================================================
-    // STATE VARIABLES
+    // STATE
     // =============================================================
-    let syncUnsubscribe = null;
     let currentUser = { name: '', class: '' };
     let currentSubjects = [];
     let selectedSubject = null;
@@ -375,18 +382,13 @@
     let studentPositions = {};
     let isSaving = false;
     let saveTimeout = null;
-    let totalStudentsCount = 0;
-    let isUserChange = true;
-    let docVersions = new Map();
-    let lastSavedTime = Date.now();
-    let lastModifiedTime = Date.now();
 
     // =============================================================
-    // TOAST & UI HELPERS
+    // TOAST
     // =============================================================
     function showToast(message, type = "success") {
         const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️', sync: '🔄', recovery: '💾', push: '📤' };
+        const icons = { success: '✅', error: '❌', warning: '⚠️' };
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
@@ -394,53 +396,233 @@
         setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 4000);
     }
 
-    function updateSyncStatus(status, message) {
-        const el = document.getElementById('syncStatus');
-        const text = document.getElementById('syncText');
-        if (!el || !text) return;
-        el.className = 'sync-status ' + status;
-        const labels = { connected: 'Live ✓', connecting: 'Connecting...', disconnected: 'Offline ✗' };
-        text.innerText = labels[status] || message || 'Live';
-    }
-
     const $ = (id) => document.getElementById(id);
 
     // =============================================================
-    // DELETE STUDENT
+    // CORE FUNCTIONS
     // =============================================================
-    async function deleteStudent(studentName) {
-        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
-        if (!confirm(`⚠️ Are you sure you want to delete "${studentName}"?\n\nThis will permanently remove their report card and all scores.\nThis CANNOT be undone!`)) return;
-        
+
+    // ---- GET REMARK ----
+    function getRemarkText(avg) {
+        if (avg >= 75) return 'Distinction';
+        if (avg >= 70) return 'Excellent';
+        if (avg >= 65) return 'Very Good';
+        if (avg >= 60) return 'Good';
+        if (avg >= 55) return 'Above Avg';
+        if (avg >= 50) return 'Average';
+        if (avg >= 45) return 'Below Avg';
+        if (avg >= 40) return 'Weak Pass';
+        return 'Fail';
+    }
+
+    // ---- CALCULATE STUDENT SCORES ----
+    function calculateStudentScores() {
+        currentSubjects.forEach(sub => {
+            const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
+            const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
+            const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
+            const scores = [f, s, t].filter(v => v > 0);
+            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+            const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`);
+            if (ac) ac.innerText = avg > 0 ? avg.toFixed(1) + '%' : '--';
+            const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`);
+            if (rc) rc.innerText = avg > 0 ? getRemarkText(avg) : '--';
+        });
+    }
+
+    // ---- SAVE CURRENT STUDENT ----
+    async function saveCurrentStudent(cls) {
+        if (!currentSelectedStudent) return;
+        if (isSaving) return;
+        isSaving = true;
+
         try {
-            // Delete report card
-            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).delete();
-            
-            // Remove from list
-            reportStudentsList = reportStudentsList.filter(s => s !== studentName);
-            totalStudentsCount = reportStudentsList.length;
-            
-            // Clear if currently selected
-            if (currentSelectedStudent === studentName) {
-                currentSelectedStudent = null;
-                const workArea = document.getElementById('studentWorkArea');
-                if (workArea) workArea.style.display = 'none';
-            }
-            
-            // Rebuild UI
-            rebuildSelector();
-            rebuildMergeList();
-            showToast(`🗑️ Deleted "${studentName}"`, 'warning');
-            
+            const docRef = db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`);
+            const docSnap = await docRef.get();
+            const existingData = docSnap.exists ? docSnap.data() : {};
+            const existingSubjects = existingData.subjects || {};
+
+            const subjectsData = {};
+            currentSubjects.forEach(sub => {
+                const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
+                const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
+                const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+
+                const existingSub = existingSubjects[sub] || {};
+                const oldFirst = existingSub.firstTerm || 0;
+                const oldSecond = existingSub.secondTerm || 0;
+                const oldThird = existingSub.thirdTerm || 0;
+
+                const newFirst = fi ? parseFloat(fi.value) : 0;
+                const newSecond = si ? parseFloat(si.value) : 0;
+                const newThird = ti ? parseFloat(ti.value) : 0;
+
+                // Only update if the input was actually touched
+                const firstVal = (fi && fi.dataset.touched === 'true') ? newFirst : oldFirst;
+                const secondVal = (si && si.dataset.touched === 'true') ? newSecond : oldSecond;
+                const thirdVal = (ti && ti.dataset.touched === 'true') ? newThird : oldThird;
+
+                const scores = [firstVal, secondVal, thirdVal].filter(v => v > 0);
+                const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+                const remark = getRemarkText(avg);
+
+                subjectsData[sub] = {
+                    firstTerm: firstVal,
+                    secondTerm: secondVal,
+                    thirdTerm: thirdVal,
+                    average: avg,
+                    remark: remark
+                };
+            });
+
+            const affective = {};
+            document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value) || 3);
+
+            const psychomotor = {};
+            document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value) || 3);
+
+            const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
+            const commentary = document.querySelector('.commentary-input')?.value || '';
+            const principal = document.querySelector('.principal-input')?.value || '';
+            const promotion = document.querySelector('.promotion-select')?.value || '';
+
+            await docRef.set({
+                class: cls,
+                studentName: currentSelectedStudent,
+                term: 'Third',
+                session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
+                schoolName: "COVENANT ARROWS' MODEL SCHOOL",
+                teacherName: currentUser.name,
+                dateOfIssue: new Date().toISOString().slice(0, 10),
+                category: 'Day',
+                attendance: { daysOpened: 90, daysPresent: 85, daysAbsent: 5 },
+                subjects: subjectsData,
+                affectiveDomain: affective,
+                psychomotorDomain: psychomotor,
+                extracurriculars: clubs,
+                classTeacherCommentary: commentary,
+                principalRemarks: principal,
+                promotionStatus: promotion,
+                totalStudents: reportStudentsList.length,
+                updatedAt: new Date()
+            }, { merge: true });
+
+            updateSaveStatus('saved', 'All changes saved');
+
         } catch (e) {
-            console.error('Delete error:', e);
-            showToast('❌ Delete failed: ' + e.message, 'error');
+            console.error('Save error:', e);
+            showToast('❌ Save failed: ' + e.message, 'error');
+        } finally {
+            isSaving = false;
         }
     }
 
-    // =============================================================
-    // REBUILD MERGE LIST
-    // =============================================================
+    // ---- UPDATE SAVE STATUS ----
+    function updateSaveStatus(status, message) {
+        const text = document.querySelector('.save-status-bar .status-text');
+        if (text) {
+            const colors = { saved: '#059669', saving: '#f59e0b', error: '#dc2626' };
+            text.textContent = message || 'All changes saved';
+            text.style.color = colors[status] || '#64748b';
+        }
+        const timeEl = document.querySelector('.save-status-bar .last-saved');
+        if (timeEl && status !== 'saving') {
+            timeEl.textContent = `Last saved: ${new Date().toLocaleTimeString()}`;
+        }
+    }
+
+    // ---- TRIGGER AUTO-SAVE ----
+    function triggerAutoSave(cls) {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => { saveCurrentStudent(cls); }, 800);
+    }
+
+    // ---- LOAD STUDENT DATA ----
+    async function loadStudentData(student, cls) {
+        const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
+
+        // Reset all inputs
+        document.querySelectorAll('.score-input').forEach(el => {
+            el.value = '';
+            el.dataset.touched = 'false';
+        });
+        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => el.dataset.touched = 'false');
+        document.querySelectorAll('.club-check').forEach(el => el.checked = false);
+        const ce = document.querySelector('.commentary-input'); if (ce) ce.value = '';
+        const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
+        const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
+
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.subjects) {
+                Object.keys(data.subjects).forEach(sub => {
+                    const sd = data.subjects[sub];
+                    const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
+                    if (fi) fi.value = sd.firstTerm || '';
+                    const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
+                    if (si) si.value = sd.secondTerm || '';
+                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+                    if (ti) {
+                        ti.value = sd.thirdTerm || '';
+                        ti.style.background = '#fefce8';
+                        ti.style.fontWeight = '700';
+                    }
+                });
+            }
+            if (data.affectiveDomain) {
+                Object.keys(data.affectiveDomain).forEach(t => {
+                    const s = document.querySelector(`.affective-select[data-trait="${t}"]`);
+                    if (s) s.value = data.affectiveDomain[t];
+                });
+            }
+            if (data.psychomotorDomain) {
+                Object.keys(data.psychomotorDomain).forEach(sk => {
+                    const s = document.querySelector(`.psychomotor-select[data-skill="${sk}"]`);
+                    if (s) s.value = data.psychomotorDomain[sk];
+                });
+            }
+            if (data.extracurriculars) {
+                data.extracurriculars.forEach(c => {
+                    const cb = document.querySelector(`.club-check[value="${c}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+            if (data.classTeacherCommentary && ce) ce.value = data.classTeacherCommentary;
+            if (data.principalRemarks && pe) pe.value = data.principalRemarks;
+            if (data.promotionStatus && pr) pr.value = data.promotionStatus;
+            if (data.overallPosition) {
+                studentPositions[student] = { position: data.overallPosition, average: data.overallAverage || 0 };
+            }
+        }
+
+        // Auto-fill 3rd term from results
+        if (allStudentResults[student]) {
+            currentSubjects.forEach(sub => {
+                if (allStudentResults[student][sub] !== undefined) {
+                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+                    if (ti && (!ti.value || ti.value === '')) {
+                        ti.value = allStudentResults[student][sub];
+                        ti.style.background = '#fef08a';
+                        ti.style.fontWeight = '700';
+                    }
+                }
+            });
+        }
+
+        calculateStudentScores();
+        updateSaveStatus('saved', 'Data loaded');
+    }
+
+    // ---- REBUILD SELECTOR ----
+    function rebuildSelector() {
+        const selector = document.getElementById('studentSelector');
+        if (!selector) return;
+        const currentVal = selector.value;
+        selector.innerHTML = '<option value="">-- Choose a student --</option>' +
+            reportStudentsList.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
+    }
+
+    // ---- REBUILD MERGE LIST ----
     function rebuildMergeList() {
         const container = document.getElementById('mergeStudentList');
         if (!container) return;
@@ -449,7 +631,7 @@
                 <input type="checkbox" class="merge-check" value="${s}" /> ${s}
             </label>
         `).join('');
-        
+
         // Re-attach events
         document.querySelectorAll('.merge-check').forEach(cb => {
             cb.addEventListener('change', () => {
@@ -459,7 +641,7 @@
                 const status = document.getElementById('mergeStatus');
                 if (checked.length >= 2) {
                     target.style.display = 'block';
-                    target.innerHTML = '<option value="">-- Choose which name to keep --</option>' + 
+                    target.innerHTML = '<option value="">-- Choose which name to keep --</option>' +
                         Array.from(checked).map(c => `<option value="${c.value}">${c.value}</option>`).join('');
                     btn.disabled = false;
                     if (status) {
@@ -482,161 +664,317 @@
         });
     }
 
-    // =============================================================
-    // PUSH TO ADMIN FUNCTIONS
-    // =============================================================
-    async function pushStudentToAdmin(studentName) {
-        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
-        const cls = currentUser.class;
-        if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
-
-        if (!confirm(`📤 Push "${studentName}" to Admin for approval?`)) return;
-
-        try {
-            showToast(`⏳ Pushing "${studentName}"...`, 'warning');
-            await saveCurrentStudent(cls);
-            
-            const docRef = db.collection('reportCards').doc(`${cls}_${studentName}`);
-            const doc = await docRef.get();
-            if (!doc.exists) { showToast('❌ Student not found.', 'error'); return; }
-            
-            const data = doc.data();
-            const currentVersion = data._version || 0;
-            
-            await docRef.update({
-                pushedToAdmin: true,
-                pushedAt: new Date(),
-                pushedBy: currentUser.name,
-                approved: false,
-                _version: currentVersion + 1,
-                updatedAt: new Date()
-            });
-            
-            docVersions.set(studentName, currentVersion + 1);
-            if (currentSelectedStudent === studentName) {
-                updatePushStatusUI(studentName, true);
-            }
-            showToast(`✅ "${studentName}" pushed to Admin!`, 'push');
-        } catch (e) {
-            console.error('Push error:', e);
-            showToast('❌ Push failed: ' + e.message, 'error');
+    // ---- UPDATE STUDENT COUNT ----
+    function updateStudentCount() {
+        const badge = document.getElementById('studentCountBadge');
+        if (badge) {
+            badge.innerText = `${reportStudentsList.length} Students`;
         }
     }
 
-    async function pushAllStudentsToAdmin() {
-        const cls = currentUser.class;
-        if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
-        if (reportStudentsList.length === 0) { showToast('⚠️ No students to push.', 'error'); return; }
+    // ---- UPDATE POSITION DISPLAY ----
+    function updatePositionDisplay(student) {
+        const posDisplay = document.getElementById('positionDisplay');
+        const posNumber = document.getElementById('positionNumber');
+        const posPercentage = document.getElementById('positionPercentage');
+        if (studentPositions[student]) {
+            posDisplay.style.display = 'block';
+            const pos = studentPositions[student].position;
+            const total = reportStudentsList.length;
+            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + getOrdinalSuffix(pos) + '</small>';
+            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
+            posPercentage.innerText = `📊 Top ${Math.round(percentage)}% of ${total} students`;
+        } else {
+            posDisplay.style.display = 'none';
+        }
+    }
 
-        if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?`)) return;
+    function getOrdinalSuffix(n) {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return s[(v - 20) % 10] || s[v] || s[0];
+    }
 
-        const progressEl = document.getElementById('pushProgress');
-        const progressFill = document.getElementById('pushProgressFill');
-        const progressStatus = document.getElementById('pushStatus');
-        
-        if (progressEl) progressEl.style.display = 'block';
-        if (progressFill) progressFill.style.width = '0%';
-        if (progressStatus) progressStatus.innerText = '⏳ Starting...';
-
-        let pushed = 0;
-        let failed = 0;
-        const total = reportStudentsList.length;
+    // =============================================================
+    // DELETE STUDENT (FIXED)
+    // =============================================================
+    async function deleteStudent(studentName) {
+        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
+        if (!confirm(`⚠️ Delete "${studentName}"? This CANNOT be undone!`)) return;
 
         try {
-            // First save current data
-            if (currentSelectedStudent) {
+            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).delete();
+
+            reportStudentsList = reportStudentsList.filter(s => s !== studentName);
+            if (currentSelectedStudent === studentName) {
+                currentSelectedStudent = null;
+                document.getElementById('studentWorkArea').style.display = 'none';
+            }
+
+            rebuildSelector();
+            rebuildMergeList();
+            updateStudentCount();
+            showToast(`🗑️ Deleted "${studentName}"`, 'warning');
+        } catch (e) {
+            showToast('❌ Delete failed: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // RENAME STUDENT (FIXED - No Permission Issue)
+    // =============================================================
+    async function renameStudent(oldName, newName) {
+        if (!newName || newName.trim().length < 2) {
+            showToast('⚠️ Please enter a valid name.', 'error');
+            return;
+        }
+
+        try {
+            const cls = currentUser.class;
+            const oldDoc = await db.collection('reportCards').doc(`${cls}_${oldName}`).get();
+            if (!oldDoc.exists) {
+                showToast('❌ Student not found.', 'error');
+                return;
+            }
+
+            const data = oldDoc.data();
+
+            // Check if new name already exists
+            const newDoc = await db.collection('reportCards').doc(`${cls}_${newName}`).get();
+            if (newDoc.exists) {
+                if (confirm(`"${newName}" already exists. Merge "${oldName}" into "${newName}"?`)) {
+                    await mergeStudents([oldName], newName);
+                    return;
+                }
+                showToast('❌ Name already exists. Use merge instead.', 'error');
+                return;
+            }
+
+            // Create new document
+            await db.collection('reportCards').doc(`${cls}_${newName}`).set({
+                ...data,
+                studentName: newName,
+                previousName: oldName,
+                renamedAt: new Date()
+            }, { merge: true });
+
+            // Delete old document
+            await db.collection('reportCards').doc(`${cls}_${oldName}`).delete();
+
+            // Update results collection
+            const resultsSnap = await db.collection('results')
+                .where('class', '==', cls)
+                .where('studentName', '==', oldName)
+                .get();
+
+            const batch = db.batch();
+            resultsSnap.forEach(doc => {
+                batch.update(doc.ref, {
+                    studentName: newName,
+                    previousName: oldName,
+                    renamedAt: new Date()
+                });
+            });
+            await batch.commit();
+
+            // Update local list
+            reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
+            reportStudentsList.sort();
+            currentSelectedStudent = newName;
+
+            // Rebuild UI
+            rebuildSelector();
+            rebuildMergeList();
+            updateStudentCount();
+
+            // Reload the student data
+            await loadStudentData(newName, cls);
+            document.getElementById('selectedStudentName').innerText = newName;
+
+            showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
+
+        } catch (e) {
+            console.error('Rename error:', e);
+            showToast('❌ Rename failed: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // MERGE STUDENTS
+    // =============================================================
+    async function mergeStudents(fromNames, toName) {
+        try {
+            const cls = currentUser.class;
+            const toDoc = await db.collection('reportCards').doc(`${cls}_${toName}`).get();
+            let toData = toDoc.exists ? toDoc.data() : { subjects: {} };
+
+            for (let fromName of fromNames) {
+                const fromDoc = await db.collection('reportCards').doc(`${cls}_${fromName}`).get();
+                if (!fromDoc.exists) continue;
+                const fromData = fromDoc.data();
+
+                // Merge subjects
+                if (fromData.subjects) {
+                    Object.keys(fromData.subjects).forEach(sub => {
+                        const fromSub = fromData.subjects[sub];
+                        if (!toData.subjects[sub]) toData.subjects[sub] = {};
+                        ['firstTerm', 'secondTerm', 'thirdTerm'].forEach(term => {
+                            if (fromSub[term] > (toData.subjects[sub][term] || 0)) {
+                                toData.subjects[sub][term] = fromSub[term];
+                            }
+                        });
+                        const scores = [toData.subjects[sub].firstTerm || 0, toData.subjects[sub].secondTerm || 0, toData.subjects[sub].thirdTerm || 0].filter(v => v > 0);
+                        toData.subjects[sub].average = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+                        toData.subjects[sub].remark = getRemarkText(toData.subjects[sub].average);
+                    });
+                }
+
+                // Merge affective
+                if (fromData.affectiveDomain) {
+                    if (!toData.affectiveDomain) toData.affectiveDomain = {};
+                    Object.keys(fromData.affectiveDomain).forEach(trait => {
+                        toData.affectiveDomain[trait] = Math.max(toData.affectiveDomain[trait] || 0, fromData.affectiveDomain[trait] || 0);
+                    });
+                }
+
+                // Merge psychomotor
+                if (fromData.psychomotorDomain) {
+                    if (!toData.psychomotorDomain) toData.psychomotorDomain = {};
+                    Object.keys(fromData.psychomotorDomain).forEach(skill => {
+                        toData.psychomotorDomain[skill] = Math.max(toData.psychomotorDomain[skill] || 0, fromData.psychomotorDomain[skill] || 0);
+                    });
+                }
+
+                // Merge clubs
+                if (fromData.extracurriculars) {
+                    if (!toData.extracurriculars) toData.extracurriculars = [];
+                    const combined = [...new Set([...(toData.extracurriculars || []), ...fromData.extracurriculars])];
+                    toData.extracurriculars = combined;
+                }
+
+                // Update results
+                const resultsSnap = await db.collection('results')
+                    .where('class', '==', cls)
+                    .where('studentName', '==', fromName)
+                    .get();
+
+                const batch = db.batch();
+                resultsSnap.forEach(doc => {
+                    batch.update(doc.ref, {
+                        studentName: toName,
+                        mergedFrom: fromName,
+                        mergedAt: new Date()
+                    });
+                });
+                await batch.commit();
+
+                await db.collection('reportCards').doc(`${cls}_${fromName}`).delete();
+                reportStudentsList = reportStudentsList.filter(s => s !== fromName);
+            }
+
+            toData.mergedFrom = [...(toData.mergedFrom || []), ...fromNames];
+            toData.mergedAt = new Date();
+            toData.studentName = toName;
+
+            await db.collection('reportCards').doc(`${cls}_${toName}`).set(toData, { merge: true });
+
+            if (!reportStudentsList.includes(toName)) reportStudentsList.push(toName);
+            reportStudentsList.sort();
+            currentSelectedStudent = toName;
+
+            rebuildSelector();
+            rebuildMergeList();
+            updateStudentCount();
+            await loadStudentData(toName, cls);
+            document.getElementById('selectedStudentName').innerText = toName;
+
+            showToast(`✅ Merged ${fromNames.length} student(s) into "${toName}"!`, 'success');
+
+        } catch (e) {
+            console.error('Merge error:', e);
+            showToast('❌ Merge failed: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // CALCULATE POSITIONS (FIXED - Uses actual averages)
+    // =============================================================
+    async function calculateAllPositions(cls) {
+        studentPositions = {};
+        const studentAverages = [];
+
+        // Save all students first
+        for (let student of reportStudentsList) {
+            if (currentSelectedStudent === student) {
                 await saveCurrentStudent(cls);
             }
+        }
 
-            for (let i = 0; i < total; i++) {
-                const student = reportStudentsList[i];
-                try {
-                    const docRef = db.collection('reportCards').doc(`${cls}_${student}`);
-                    const doc = await docRef.get();
-                    if (!doc.exists) { failed++; continue; }
-                    
-                    const data = doc.data();
-                    const currentVersion = data._version || 0;
-                    
-                    await docRef.update({
-                        pushedToAdmin: true,
-                        pushedAt: new Date(),
-                        pushedBy: currentUser.name,
-                        approved: false,
-                        _version: currentVersion + 1,
-                        updatedAt: new Date()
-                    });
-                    
-                    docVersions.set(student, currentVersion + 1);
-                    pushed++;
-                    
-                    const progress = Math.round(((i + 1) / total) * 100);
-                    if (progressFill) progressFill.style.width = progress + '%';
-                    if (progressStatus) progressStatus.innerText = `📤 ${pushed}/${total} pushed (${failed} failed)`;
-                } catch (e) {
-                    console.error(`Failed to push ${student}:`, e);
-                    failed++;
+        // Calculate averages
+        for (let student of reportStudentsList) {
+            const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
+            if (!doc.exists) continue;
+            const data = doc.data();
+            if (!data.subjects) continue;
+
+            let totalAvg = 0;
+            let count = 0;
+            Object.values(data.subjects).forEach(sd => {
+                if (sd.average && sd.average > 0) {
+                    totalAvg += sd.average;
+                    count++;
                 }
+            });
+            if (count > 0) {
+                studentAverages.push({ student, overallAvg: totalAvg / count });
             }
-
-            if (currentSelectedStudent) {
-                updatePushStatusUI(currentSelectedStudent, true);
-            }
-
-            if (failed === 0) {
-                showToast(`✅ All ${pushed} students pushed to Admin!`, 'push');
-                if (progressStatus) progressStatus.innerText = `✅ All ${pushed} students pushed successfully!`;
-            } else {
-                showToast(`⚠️ ${pushed} pushed, ${failed} failed. Check console.`, 'warning');
-                if (progressStatus) progressStatus.innerText = `⚠️ ${pushed} pushed, ${failed} failed.`;
-            }
-
-            setTimeout(() => {
-                if (progressEl) progressEl.style.display = 'none';
-            }, 5000);
-
-        } catch (e) {
-            console.error('Push all error:', e);
-            showToast('❌ Push all failed: ' + e.message, 'error');
-            if (progressStatus) progressStatus.innerText = '❌ Failed: ' + e.message;
         }
-    }
 
-    async function checkPushStatus(studentName) {
-        try {
-            const doc = await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).get();
-            if (doc.exists) return doc.data().pushedToAdmin || false;
-            return false;
-        } catch (e) { return false; }
-    }
+        // Sort by average descending
+        studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
 
-    function updatePushStatusUI(studentName, pushed) {
-        const btn = document.getElementById('pushStudentBtn');
-        if (!btn) return;
-        if (pushed) {
-            btn.innerText = '✅ Pushed to Admin';
-            btn.className = 'btn-action btn-pushed';
-            btn.disabled = true;
-        } else {
-            btn.innerText = '📤 Push to Admin';
-            btn.className = 'btn-action btn-push';
-            btn.disabled = false;
+        // Assign positions
+        const totalStudents = reportStudentsList.length;
+        let position = 1;
+        for (let i = 0; i < studentAverages.length; i++) {
+            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i - 1].overallAvg) {
+                position = i + 1;
+            }
+            studentPositions[studentAverages[i].student] = {
+                position: position,
+                average: studentAverages[i].overallAvg
+            };
+            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
+                overallPosition: position,
+                overallAverage: studentAverages[i].overallAvg,
+                totalStudents: totalStudents
+            }).catch(() => {});
         }
+
+        // Update display
+        if (currentSelectedStudent) {
+            updatePositionDisplay(currentSelectedStudent);
+        }
+        showToast(`✅ Positions calculated for ${studentAverages.length} students`, 'success');
     }
 
     // =============================================================
-    // RECOVERY FUNCTIONS
+    // RECOVER SCORES (Copy 3rd → 1st & 2nd)
     // =============================================================
     async function recoverFirstSecondFromThirdTerm() {
         const cls = currentUser.class;
         if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
+
         showToast('🔄 Recovering first/second term from third term...', 'warning');
+
         try {
-            const snap = await db.collection('reportCards').where('class','==',cls).get();
+            const snap = await db.collection('reportCards').where('class', '==', cls).get();
             let count = 0;
+
             for (let doc of snap.docs) {
                 const data = doc.data();
                 let changed = false;
+
                 if (data.subjects) {
                     Object.keys(data.subjects).forEach(sub => {
                         const subData = data.subjects[sub];
@@ -649,131 +987,547 @@
                                 subData.secondTerm = subData.thirdTerm;
                                 changed = true;
                             }
-                            const scores = [subData.firstTerm || 0, subData.secondTerm || 0, subData.thirdTerm || 0].filter(v => v > 0);
-                            subData.average = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
-                            subData.remark = getRemarkText(subData.average);
+                            if (changed) {
+                                const scores = [subData.firstTerm || 0, subData.secondTerm || 0, subData.thirdTerm || 0].filter(v => v > 0);
+                                subData.average = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+                                subData.remark = getRemarkText(subData.average);
+                            }
                         }
                     });
                 }
+
                 if (changed) {
                     await doc.ref.update({
                         subjects: data.subjects,
-                        _version: firebase.firestore.FieldValue.increment(1),
                         updatedAt: new Date()
                     });
                     count++;
                 }
             }
-            showToast(`✅ Recovered ${count} student records. Refresh to see changes.`, 'success');
-            
-            // Reload current student if selected
+
+            // Recalculate positions after recovery
+            await calculateAllPositions(cls);
+
+            // Reload current student
             if (currentSelectedStudent) {
                 await loadStudentData(currentSelectedStudent, cls);
-                calculateStudentScores();
             }
-            
-            // Recalculate positions
-            await calculateAllPositions(cls);
-            if (currentSelectedStudent) {
-                updatePositionDisplay(currentSelectedStudent);
-            }
-            
+
+            showToast(`✅ Recovered ${count} student records.`, 'success');
+
         } catch (e) {
             showToast('❌ Recovery failed: ' + e.message, 'error');
         }
     }
 
-    async function checkDataAndShowRecovery(cls) {
-        const snap = await db.collection('reportCards').where('class','==',cls).get();
-        let hasThirdButNoFirst = false;
-        snap.forEach(doc => {
-            const data = doc.data();
-            if (data.subjects) {
-                Object.values(data.subjects).forEach(sd => {
-                    if (sd.thirdTerm > 0 && (!sd.firstTerm || sd.firstTerm === 0)) {
-                        hasThirdButNoFirst = true;
-                    }
-                });
-            }
-        });
-        if (hasThirdButNoFirst) {
-            const banner = document.getElementById('recoveryBanner');
-            if (banner) banner.style.display = 'block';
-            showToast('💾 First/Second term scores missing. Click "Recover" to copy from Third Term.', 'recovery');
-        }
-    }
-
     // =============================================================
-    // CLOUDINARY
+    // PUSH TO ADMIN
     // =============================================================
-    const cloudinaryConfig = { cloudName: 'dmbjrohtn', uploadPreset: 'pelumi', folder: 'student_photos', maxFileSize: 5000000, allowedFormats: ['jpg','jpeg','png','webp'] };
+    async function pushStudentToAdmin(studentName) {
+        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
+        if (!confirm(`📤 Push "${studentName}" to Admin?`)) return;
 
-    function openCloudinaryWidget(studentName, callback) {
-        if (typeof cloudinary === 'undefined') { showToast('❌ Cloudinary not loaded.', 'error'); return; }
-        const widget = cloudinary.createUploadWidget({
-            cloudName: cloudinaryConfig.cloudName, uploadPreset: cloudinaryConfig.uploadPreset,
-            folder: `${cloudinaryConfig.folder}/${currentUser.class || 'general'}`,
-            maxFileSize: cloudinaryConfig.maxFileSize,
-            allowedFormats: cloudinaryConfig.allowedFormats, cropping: true, croppingAspectRatio: 1,
-            showSkipCropButton: false, multiple: false, singleUploadAutoClose: true,
-            publicId: `${currentUser.class || 'general'}_${studentName.replace(/\s+/g,'_')}_${Date.now()}`
-        }, (error, result) => {
-            if (error) { showToast('❌ Upload failed.', 'error'); return; }
-            if (result && result.event === "success") {
-                const photoData = { url: result.info.secure_url, publicId: result.info.public_id, uploadedAt: new Date().toISOString() };
-                saveStudentPhoto(studentName, photoData);
-                if (callback) callback(photoData);
-                showToast('📸 Photo uploaded!', 'success');
-            }
-        });
-        widget.open();
-    }
-
-    async function saveStudentPhoto(studentName, photoData) {
-        try { await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).set({ className: currentUser.class, studentName, photoUrl: photoData.url, publicId: photoData.publicId, updatedAt: new Date() }, { merge: true }); } catch (e) {}
-    }
-
-    async function getStudentPhoto(studentName) {
-        try { const doc = await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).get(); return doc.exists ? doc.data().photoUrl || null : null; } catch (e) { return null; }
-    }
-
-    // =============================================================
-    // REAL-TIME SYNC
-    // =============================================================
-    function setupRealTimeSync(cls) {
-        if (syncUnsubscribe) {
-            syncUnsubscribe();
-            syncUnsubscribe = null;
-        }
-        updateSyncStatus('connecting', 'Connecting...');
-        syncUnsubscribe = db.collection('reportCards')
-            .where('class', '==', cls)
-            .onSnapshot((snapshot) => {
-                if (snapshot.metadata.hasPendingWrites) return;
-                updateSyncStatus('connected', 'Live');
-                snapshot.docChanges().forEach(change => {
-                    const data = change.doc.data();
-                    if (data.studentName) {
-                        docVersions.set(data.studentName, data._version || 0);
-                    }
-                });
-            }, (error) => {
-                console.error('Sync error:', error);
-                updateSyncStatus('disconnected', 'Offline');
-                setTimeout(() => setupRealTimeSync(cls), 5000);
+        try {
+            await saveCurrentStudent(currentUser.class);
+            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).update({
+                pushedToAdmin: true,
+                pushedAt: new Date(),
+                pushedBy: currentUser.name,
+                approved: false
             });
+            showToast(`✅ "${studentName}" pushed to Admin!`, 'push');
+        } catch (e) {
+            showToast('❌ Push failed: ' + e.message, 'error');
+        }
+    }
+
+    async function pushAllStudentsToAdmin() {
+        if (reportStudentsList.length === 0) { showToast('⚠️ No students to push.', 'error'); return; }
+        if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?`)) return;
+
+        const progressEl = document.getElementById('pushProgress');
+        const progressFill = document.getElementById('pushProgressFill');
+        const progressStatus = document.getElementById('pushStatus');
+
+        if (progressEl) progressEl.style.display = 'block';
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressStatus) progressStatus.innerText = '⏳ Starting...';
+
+        let pushed = 0;
+        const total = reportStudentsList.length;
+
+        try {
+            if (currentSelectedStudent) {
+                await saveCurrentStudent(currentUser.class);
+            }
+
+            for (let i = 0; i < total; i++) {
+                const student = reportStudentsList[i];
+                try {
+                    await db.collection('reportCards').doc(`${currentUser.class}_${student}`).update({
+                        pushedToAdmin: true,
+                        pushedAt: new Date(),
+                        pushedBy: currentUser.name,
+                        approved: false
+                    });
+                    pushed++;
+                    const progress = Math.round(((i + 1) / total) * 100);
+                    if (progressFill) progressFill.style.width = progress + '%';
+                    if (progressStatus) progressStatus.innerText = `📤 ${pushed}/${total} pushed`;
+                } catch (e) {
+                    console.error(`Failed to push ${student}:`, e);
+                }
+            }
+
+            if (pushed === total) {
+                showToast(`✅ All ${pushed} students pushed to Admin!`, 'push');
+                if (progressStatus) progressStatus.innerText = `✅ All ${pushed} students pushed successfully!`;
+            } else {
+                showToast(`⚠️ ${pushed}/${total} pushed. Some failed.`, 'warning');
+            }
+
+            setTimeout(() => {
+                if (progressEl) progressEl.style.display = 'none';
+            }, 3000);
+
+        } catch (e) {
+            showToast('❌ Push all failed: ' + e.message, 'error');
+        }
     }
 
     // =============================================================
-    // MASTER CLASS LIST & LOGIN
+    // BUILD REPORT BUILDER UI
+    // =============================================================
+    function buildReportBuilderUI(cls) {
+        const area = document.getElementById('reportBuilderArea');
+        area.innerHTML = `
+        <div class="report-builder-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
+                <span class="student-count-badge">${reportStudentsList.length} Students</span>
+            </div>
+
+            <div class="save-status-bar">
+                <span class="status-icon">💾</span>
+                <span class="status-text" style="color:#059669;">All changes saved</span>
+                <span class="last-saved">Last saved: Just now</span>
+            </div>
+
+            <div class="push-progress" id="pushProgress">
+                <div class="push-title">📤 Pushing to Admin</div>
+                <div class="push-bar"><div class="push-bar-fill" id="pushProgressFill"></div></div>
+                <div class="push-status" id="pushStatus">⏳ Starting...</div>
+            </div>
+
+            <!-- RECOVER BUTTON -->
+            <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn-action btn-warning" id="recoverBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
+            </div>
+
+            <!-- MERGE SECTION -->
+            <div class="merge-section" id="mergeSection">
+                <div class="merge-title">🔀 Merge Duplicate Students</div>
+                <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge. All their scores will combine under one name.</p>
+                <div id="mergeStudentList" style="max-height:200px; overflow-y:auto; margin-bottom:8px;">
+                    ${reportStudentsList.map(s => `
+                        <label class="merge-student-checkbox">
+                            <input type="checkbox" class="merge-check" value="${s}" /> ${s}
+                        </label>
+                    `).join('')}
+                </div>
+                <select class="merge-target-select" id="mergeTargetSelect" style="display:none;">
+                    <option value="">-- Choose which name to keep --</option>
+                </select>
+                <button class="merge-btn" id="executeMergeBtn" disabled>🔀 Merge Selected Students</button>
+                <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
+            </div>
+
+            <!-- STUDENT SELECTOR -->
+            <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                <label class="section-label">👤 Select Student:</label>
+                <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
+                    <option value="">-- Choose a student --</option>
+                    ${reportStudentsList.map(s => `<option value="${s}">${s}</option>`).join('')}
+                </select>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <input id="newStudentInput" placeholder="➕ Add student manually..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
+                    <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
+                </div>
+                <div id="nameSuggestions" style="margin-top:8px;"></div>
+            </div>
+
+            <!-- STUDENT WORK AREA -->
+            <div id="studentWorkArea" style="display:none;">
+                <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
+                    <div class="photo-container-small" style="width:90px; height:90px; position:relative;">
+                        <span style="font-size:40px;">👤</span>
+                        <img class="photo-img-small" src="" style="display:none; width:100%; height:100%; object-fit:cover;" />
+                    </div>
+                    <div style="flex:1; min-width:150px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span style="font-size:18px; font-weight:800;" id="selectedStudentName">--</span>
+                            <button id="editStudentNameBtn" style="background:none;border:none;font-size:16px;cursor:pointer;color:#4f46e5;" title="Edit student name">✏️</button>
+                        </div>
+                        <div style="font-size:13px; color:#64748b;">${cls} | ${currentUser.name}</div>
+                    </div>
+                </div>
+
+                <div class="position-card" id="positionDisplay">
+                    <div class="pos-label">Overall Position</div>
+                    <div class="pos-number" id="positionNumber">--</div>
+                    <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
+                    <div class="pos-percentage" id="positionPercentage"></div>
+                </div>
+
+                <!-- SCORES TABLE -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">📖 Subject Scores</div>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr style="background:#f1f5f9;"><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr></thead>
+                            <tbody>
+                                ${currentSubjects.map(sub => `
+                                    <tr>
+                                        <td style="font-weight:600;">${sub}</td>
+                                        <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" /></td>
+                                        <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" /></td>
+                                        <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="background:#fefce8; font-weight:700;" /></td>
+                                        <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
+                                        <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- AFFECTIVE -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">⭐ Affective Domain</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
+                        ${['Attentiveness','Punctuality','Neatness','Honesty','Respectfulness','Diligence','Leadership','Self-Control','Cooperation','Politeness','Obedience'].map(t => `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                                <span style="font-size:11px; font-weight:600;">${t}</span>
+                                <select class="affective-select" data-trait="${t}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;">
+                                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                                </select>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- PSYCHOMOTOR -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">🤸 Psychomotor Domain</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
+                        ${['Handwriting','Drawing','Sports','Crafts','Music','Verbal','Fitness','Creative'].map(s => `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                                <span style="font-size:11px; font-weight:600;">${s}</span>
+                                <select class="psychomotor-select" data-skill="${s}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;">
+                                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                                </select>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- CLUBS -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">⚽ Clubs</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `
+                            <label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; cursor:pointer;">
+                                <input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- COMMENTARY -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">📝 Teacher's Comment</div>
+                    <textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
+                </div>
+
+                <!-- PRINCIPAL -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">👨‍💼 Principal's Remark</div>
+                    <textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
+                </div>
+
+                <!-- PROMOTION -->
+                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
+                    <div class="section-label">📈 Promotion</div>
+                    <select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;">
+                        <option value="">-- Select --</option>
+                        <option value="Promoted">✅ Promoted</option>
+                        <option value="Not Promoted">❌ Not Promoted</option>
+                        <option value="Probation">⚠️ Probation</option>
+                    </select>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
+                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
+                    <button class="btn-action btn-push" id="pushStudentBtn" style="font-size:13px; padding:10px 20px;">📤 Push to Admin</button>
+                    <button class="btn-action btn-danger" id="deleteStudentBtn" style="font-size:13px; padding:10px 20px;">🗑️ Delete Student</button>
+                    <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
+                </div>
+            </div>
+
+            <!-- BOTTOM ACTIONS -->
+            <div style="margin-top:20px; padding-top:15px; border-top:2px solid #e2e8f0; display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn-action btn-primary" id="calculatePositionsBtn" style="font-size:13px; padding:10px 20px;">🏆 Calculate Positions</button>
+                <button class="btn-action btn-push-all" id="pushAllBtn" style="font-size:13px; padding:10px 20px;">📤 Push All to Admin</button>
+            </div>
+        </div>`;
+
+        // =============================================================
+        // ATTACH EVENTS
+        // =============================================================
+
+        // Recover
+        document.getElementById('recoverBtn')?.addEventListener('click', async () => {
+            await recoverFirstSecondFromThirdTerm();
+            if (currentSelectedStudent) {
+                await loadStudentData(currentSelectedStudent, cls);
+            }
+        });
+
+        // Delete
+        document.getElementById('deleteStudentBtn')?.addEventListener('click', () => {
+            if (currentSelectedStudent) deleteStudent(currentSelectedStudent);
+        });
+
+        // Push Student
+        document.getElementById('pushStudentBtn')?.addEventListener('click', async () => {
+            await pushStudentToAdmin(currentSelectedStudent);
+        });
+
+        // Push All
+        document.getElementById('pushAllBtn')?.addEventListener('click', async () => {
+            await pushAllStudentsToAdmin();
+        });
+
+        // Edit Name
+        document.getElementById('editStudentNameBtn')?.addEventListener('click', async () => {
+            if (!currentSelectedStudent) return;
+            const newName = prompt('✏️ Edit student name:', currentSelectedStudent);
+            if (newName && newName.trim() && newName.trim() !== currentSelectedStudent) {
+                await renameStudent(currentSelectedStudent, newName.trim());
+            }
+        });
+
+        // Merge
+        document.getElementById('executeMergeBtn')?.addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.merge-check:checked');
+            const checkedNames = Array.from(checked).map(c => c.value);
+            const targetName = document.getElementById('mergeTargetSelect')?.value;
+            if (!targetName || checkedNames.length < 2) {
+                showToast('⚠️ Select at least 2 students and choose a target name.', 'error');
+                return;
+            }
+            const otherNames = checkedNames.filter(n => n !== targetName);
+            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?`)) return;
+            await mergeStudents(otherNames, targetName);
+        });
+
+        // Student Selector
+        const selector = document.getElementById('studentSelector');
+        const workArea = document.getElementById('studentWorkArea');
+        const newStudentInput = document.getElementById('newStudentInput');
+        const suggestionsDiv = document.getElementById('nameSuggestions');
+
+        newStudentInput?.addEventListener('input', async () => {
+            const query = newStudentInput.value.trim().toLowerCase();
+            if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
+            const snap = await db.collection('reportCards').where('class', '==', cls).get();
+            const matches = [];
+            snap.forEach(d => {
+                const name = d.data().studentName;
+                if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) matches.push(name);
+            });
+            const uniqueMatches = [...new Set(matches)];
+            if (uniqueMatches.length > 0) {
+                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n =>
+                    `<div class="suggestion-item" data-name="${n}">📋 ${n} (existing)</div>`
+                ).join('');
+                document.querySelectorAll('.suggestion-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const name = item.dataset.name;
+                        if (!reportStudentsList.includes(name)) {
+                            reportStudentsList.push(name);
+                            reportStudentsList.sort();
+                        }
+                        rebuildSelector();
+                        rebuildMergeList();
+                        updateStudentCount();
+                        selector.value = name;
+                        newStudentInput.value = '';
+                        suggestionsDiv.innerHTML = '';
+                        selector.dispatchEvent(new Event('change'));
+                        showToast(`📋 Loaded: ${name}`, 'success');
+                    });
+                });
+            } else {
+                suggestionsDiv.innerHTML = query.length >= 3 ?
+                    `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 Will add as new student</div>` : '';
+            }
+        });
+
+        // Add Student
+        document.getElementById('addStudentBtn')?.addEventListener('click', async () => {
+            const name = newStudentInput?.value.trim();
+            if (!name) return showToast('⚠️ Enter name.', 'warning');
+            if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
+
+            // Check if student already exists
+            const snap = await db.collection('reportCards').where('class', '==', cls).get();
+            let matchedName = null;
+            snap.forEach(d => {
+                const existing = d.data().studentName;
+                if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing;
+            });
+
+            if (matchedName && matchedName !== name) {
+                if (!reportStudentsList.includes(matchedName)) {
+                    reportStudentsList.push(matchedName);
+                    reportStudentsList.sort();
+                }
+                rebuildSelector();
+                rebuildMergeList();
+                updateStudentCount();
+                selector.value = matchedName;
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change'));
+                showToast(`📋 Using: "${matchedName}"`, 'warning');
+            } else if (!reportStudentsList.includes(name)) {
+                // Create a new student document
+                await db.collection('reportCards').doc(`${cls}_${name}`).set({
+                    class: cls,
+                    studentName: name,
+                    subjects: {},
+                    term: 'Third',
+                    session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
+                    schoolName: "COVENANT ARROWS' MODEL SCHOOL",
+                    teacherName: currentUser.name,
+                    createdAt: new Date()
+                });
+
+                reportStudentsList.push(name);
+                reportStudentsList.sort();
+                rebuildSelector();
+                rebuildMergeList();
+                updateStudentCount();
+                selector.value = name;
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change'));
+                showToast(`✅ Added "${name}"!`, 'success');
+            } else {
+                selector.value = name;
+                newStudentInput.value = '';
+                suggestionsDiv.innerHTML = '';
+                selector.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Selector Change
+        selector?.addEventListener('change', async () => {
+            const student = selector.value;
+            if (currentSelectedStudent) {
+                await saveCurrentStudent(cls);
+            }
+            if (!student) {
+                workArea.style.display = 'none';
+                currentSelectedStudent = null;
+                return;
+            }
+            currentSelectedStudent = student;
+            workArea.style.display = 'block';
+            document.getElementById('selectedStudentName').innerText = student;
+            await loadStudentData(student, cls);
+            updatePositionDisplay(student);
+        });
+
+        // Save
+        document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
+            await saveCurrentStudent(cls);
+            showToast('✅ Saved!', 'success');
+        });
+
+        // Next
+        document.getElementById('nextStudentBtn')?.addEventListener('click', async () => {
+            await saveCurrentStudent(cls);
+            const idx = reportStudentsList.indexOf(currentSelectedStudent);
+            if (idx < reportStudentsList.length - 1) {
+                selector.value = reportStudentsList[idx + 1];
+                selector.dispatchEvent(new Event('change'));
+            } else {
+                showToast('✅ Last student!', 'warning');
+            }
+        });
+
+        // Calculate Positions
+        document.getElementById('calculatePositionsBtn')?.addEventListener('click', async () => {
+            const btn = document.getElementById('calculatePositionsBtn');
+            btn.innerText = '⏳ Calculating...';
+            btn.disabled = true;
+            await saveCurrentStudent(cls);
+            await calculateAllPositions(cls);
+            btn.innerText = '🏆 Calculate Positions';
+            btn.disabled = false;
+            if (currentSelectedStudent) {
+                updatePositionDisplay(currentSelectedStudent);
+            }
+        });
+
+        // Auto-save on inputs
+        document.querySelectorAll('.score-input').forEach(input => {
+            input.addEventListener('focus', () => { input.dataset.touched = 'true'; });
+            input.addEventListener('input', () => {
+                input.dataset.touched = 'true';
+                calculateStudentScores();
+                updateSaveStatus('saving', 'Saving...');
+                triggerAutoSave(cls);
+            });
+            input.addEventListener('blur', () => { saveCurrentStudent(cls); });
+        });
+
+        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => {
+            el.addEventListener('change', () => {
+                el.dataset.touched = 'true';
+                updateSaveStatus('saving', 'Saving...');
+                triggerAutoSave(cls);
+            });
+        });
+
+        document.querySelectorAll('.club-check, .commentary-input, .principal-input, .promotion-select').forEach(el => {
+            el.addEventListener('input', () => {
+                updateSaveStatus('saving', 'Saving...');
+                triggerAutoSave(cls);
+            });
+            el.addEventListener('blur', () => { saveCurrentStudent(cls); });
+        });
+
+        // Rebuild merge list events
+        rebuildMergeList();
+    }
+
+    // =============================================================
+    // LOAD MASTER CLASS LIST
     // =============================================================
     async function loadMasterClassList() {
         try {
             const doc = await db.collection('classList').doc('allClasses').get();
-            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
+            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
             if (!doc.exists) await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
             populateDropdowns();
-        } catch (e) { masterClassList = ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6']; populateDropdowns(); }
+        } catch (e) {
+            masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+            populateDropdowns();
+        }
     }
 
     function populateDropdowns() {
@@ -786,58 +1540,178 @@
         if (currentUser.class) $('classSelect').value = currentUser.class;
     }
 
+    // =============================================================
+    // LOGIN
+    // =============================================================
     $('loginBtn').addEventListener('click', async () => {
-        const name = $('loginName').value.trim(), cls = $('loginClassSelect').value, err = $('loginErr');
+        const name = $('loginName').value.trim();
+        const cls = $('loginClassSelect').value;
+        const err = $('loginErr');
+
         if (!name) return err.innerText = '⚠️ Please enter your name.';
         if (!cls) return err.innerText = '⚠️ Please select a class.';
+
         currentUser = { name, class: cls };
         err.innerText = '';
+
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         $('dashboardPage').classList.add('active');
         $('sidebarName').innerText = name + ' 👨‍🏫';
         $('classSelect').value = cls;
+
         showToast(`👋 Welcome, ${name}!`, 'success');
+
         await loadSubjects(cls);
         await loadSchedule(cls);
-        setupRealTimeSync(cls);
-        await checkDataAndShowRecovery(cls);
-        const sessionData = sessionStorage.getItem('lastSession');
-        if (sessionData) {
-            try {
-                const data = JSON.parse(sessionData);
-                if (data.class === cls && data.student) {
-                    setTimeout(() => {
-                        const selector = document.getElementById('studentSelector');
-                        if (selector) {
-                            selector.value = data.student;
-                            selector.dispatchEvent(new Event('change'));
-                        }
-                    }, 1000);
-                }
-            } catch (e) {}
+        await loadResults(cls);
+
+        // Auto-load students if they exist
+        const resultsSnap = await db.collection('results').where('class', '==', cls).get();
+        if (!resultsSnap.empty) {
+            await loadStudentsFromResults(cls);
         }
     });
 
-    $('logoutBtn').addEventListener('click', () => {
-        if (syncUnsubscribe) { syncUnsubscribe(); syncUnsubscribe = null; }
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('loginPage').classList.add('active');
-        currentUser = {}; selectedSubject = null; reportStudentsList = []; currentSelectedStudent = null;
-        showToast('👋 Logged out.', 'warning');
-    });
+    // =============================================================
+    // LOAD STUDENTS FROM RESULTS
+    // =============================================================
+    async function loadStudentsFromResults(cls) {
+        const area = document.getElementById('reportBuilderArea');
+        area.innerHTML = `<div style="text-align:center; padding:20px;">⏳ Loading students...</div>`;
 
-    $('switchClassBtn').addEventListener('click', async () => {
-        const newClass = $('classSelect').value;
-        if (!newClass) return showToast('⚠️ Select class.', 'error');
-        if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
-        if (currentSelectedStudent) await saveCurrentStudent(currentUser.class);
-        if (syncUnsubscribe) { syncUnsubscribe(); syncUnsubscribe = null; }
-        currentUser.class = newClass; selectedSubject = null; reportStudentsList = []; currentSelectedStudent = null;
-        await loadSubjects(newClass); await loadSchedule(newClass);
-        setupRealTimeSync(newClass);
-        await checkDataAndShowRecovery(newClass);
-        showToast(`🔄 Switched to ${newClass}`, 'success');
-    });
+        try {
+            const resultsSnap = await db.collection('results').where('class', '==', cls).get();
+            if (resultsSnap.empty) {
+                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
+                return;
+            }
+
+            const rawEntries = [];
+            resultsSnap.forEach(d => {
+                const data = d.data();
+                rawEntries.push({
+                    originalName: (data.studentName || '').trim(),
+                    subject: data.subject,
+                    score: data.score || 0
+                });
+            });
+
+            // Group similar names
+            const groups = groupSimilarNames(rawEntries);
+            const mergedResults = {};
+            const canonicalNames = [];
+
+            groups.forEach((entries, canonicalName) => {
+                mergedResults[canonicalName] = {};
+                entries.forEach(entry => {
+                    const existing = mergedResults[canonicalName][entry.subject];
+                    if (!existing || entry.score > existing) {
+                        mergedResults[canonicalName][entry.subject] = entry.score;
+                    }
+                });
+                canonicalNames.push(canonicalName);
+            });
+
+            allStudentResults = mergedResults;
+
+            reportStudentsList = canonicalNames
+                .filter(name => name.trim().split(/\s+/).length >= 2 && name.length > 5)
+                .sort();
+
+            totalStudentsCount = reportStudentsList.length;
+            updateStudentCount();
+
+            if (reportStudentsList.length === 0) {
+                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No valid students found.</div>`;
+                return;
+            }
+
+            buildReportBuilderUI(cls);
+            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
+
+        } catch (e) {
+            console.error('Load students error:', e);
+            area.innerHTML = `<div style="text-align:center; padding:20px; color:#dc2626;">Error: ${e.message}</div>`;
+        }
+    }
+
+    // =============================================================
+    // NAME DEDUPLICATION
+    // =============================================================
+    function normalizeNameForGrouping(name) {
+        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
+    }
+
+    function levenshteinDistance(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1) ?
+                    matrix[i - 1][j - 1] :
+                    Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    function areNamesSamePerson(name1, name2) {
+        const n1 = normalizeNameForGrouping(name1);
+        const n2 = normalizeNameForGrouping(name2);
+        if (n1 === n2) return true;
+
+        const words1 = n1.split(' ').sort();
+        const words2 = n2.split(' ').sort();
+        if (words1.join(' ') === words2.join(' ')) return false;
+        if (n1.includes(n2) || n2.includes(n1)) return true;
+
+        const set1 = new Set(words1);
+        const set2 = new Set(words2);
+        let matches = 0;
+        set1.forEach(w => { if (set2.has(w)) matches++; });
+        const maxLen = Math.max(set1.size, set2.size);
+        const overlapRatio = matches / maxLen;
+
+        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
+        if (overlapRatio >= 0.5 && matches >= 1) {
+            if (levenshteinDistance(words1.join(''), words2.join('')) <= 2) return true;
+        }
+        return false;
+    }
+
+    function pickBestName(names) {
+        if (names.length === 1) return names[0];
+        return names.sort((a, b) => {
+            const aSpace = a.includes(' ') ? 1 : 0;
+            const bSpace = b.includes(' ') ? 1 : 0;
+            if (aSpace !== bSpace) return bSpace - aSpace;
+            if (a.length !== b.length) return b.length - a.length;
+            return ((b.match(/[A-Z]/g) || []).length) - ((a.match(/[A-Z]/g) || []).length);
+        })[0];
+    }
+
+    function groupSimilarNames(rawEntries) {
+        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
+        const groups = new Map();
+        const assigned = new Set();
+
+        allNames.forEach(name => {
+            if (assigned.has(name)) return;
+            const similarNames = allNames.filter(other => {
+                if (assigned.has(other)) return false;
+                return areNamesSamePerson(name, other);
+            });
+            const canonicalName = pickBestName(similarNames);
+            const groupEntries = [];
+            similarNames.forEach(sn => {
+                assigned.add(sn);
+                groupEntries.push(...rawEntries.filter(e => e.originalName === sn));
+            });
+            groups.set(canonicalName, groupEntries);
+        });
+        return groups;
+    }
 
     // =============================================================
     // SUBJECTS
@@ -853,7 +1727,8 @@
             renderSubjects();
             if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
             else { selectedSubject = null; clearQuestionPanel(); }
-            loadExamToggles(cls); loadResults(cls);
+            loadExamToggles(cls);
+            document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
         } catch (e) { showToast('❌ Error loading subjects.', 'error'); }
     }
 
@@ -865,7 +1740,7 @@
             return;
         }
         container.innerHTML = currentSubjects.map(sub => `
-            <div class="subject-item ${selectedSubject===sub?'active':''}" data-sub="${sub}">
+            <div class="subject-item ${selectedSubject === sub ? 'active' : ''}" data-sub="${sub}">
                 <span class="subject-name" data-sub="${sub}">📘 ${sub}</span>
                 <div>
                     <button class="edit-sub" data-sub="${sub}" title="Edit subject name">✏️</button>
@@ -897,7 +1772,7 @@
                 e.stopPropagation();
                 const sub = btn.dataset.sub;
                 if (!confirm(`Delete "${sub}"?`)) return;
-                const snap = await db.collection('questions').where('class','==',currentUser.class).where('subject','==',sub).get();
+                const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==', sub).get();
                 const batch = db.batch();
                 snap.forEach(d => batch.delete(d.ref));
                 await batch.commit();
@@ -905,6 +1780,7 @@
                 await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
                 if (selectedSubject === sub) { selectedSubject = null; clearQuestionPanel(); }
                 renderSubjects();
+                document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
                 showToast(`🗑️ Deleted "${sub}".`, 'warning');
             });
         });
@@ -914,19 +1790,19 @@
         try {
             currentSubjects = currentSubjects.map(s => s === oldName ? newName : s);
             await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
-            const questionsSnap = await db.collection('questions').where('class','==',currentUser.class).where('subject','==',oldName).get();
+
+            const questionsSnap = await db.collection('questions')
+                .where('class', '==', currentUser.class)
+                .where('subject', '==', oldName)
+                .get();
             const batch = db.batch();
             questionsSnap.forEach(doc => batch.update(doc.ref, { subject: newName }));
             await batch.commit();
-            const examStatus = await db.collection('examStatus').doc(currentUser.class).get();
-            if (examStatus.exists) {
-                const active = examStatus.data().activeSubjects || [];
-                const updated = active.map(s => s === oldName ? newName : s);
-                await db.collection('examStatus').doc(currentUser.class).update({ activeSubjects: updated });
-            }
+
             if (selectedSubject === oldName) selectedSubject = newName;
             renderSubjects();
             if (selectedSubject) await selectSubject(selectedSubject);
+            document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
             showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
         } catch (e) {
             showToast('❌ Rename failed: ' + e.message, 'error');
@@ -941,6 +1817,7 @@
         await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
         $('newSubjectInput').value = '';
         renderSubjects();
+        document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
         showToast(`✅ Added "${val}"!`, 'success');
     });
 
@@ -953,7 +1830,7 @@
         $('selectedSubjectName').innerText = subject;
         $('addQuestionArea').style.display = 'block';
         $('questionsContainer').innerHTML = '<p>⏳ Loading...</p>';
-        const snap = await db.collection('questions').where('class','==',currentUser.class).where('subject','==',subject.trim()).get();
+        const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==', subject.trim()).get();
         currentQuestions = [];
         snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
         renderQuestions();
@@ -970,7 +1847,7 @@
         let html = `<div class="question-grid">`;
         currentQuestions.forEach((q, idx) => {
             const opts = q.options ? q.options.join(' | ') : 'N/A';
-            html += `<div class="q-item"><div class="q-text">${idx+1}. ${q.question||''}</div><div class="q-meta"><span>${opts}</span><span class="points-badge">⭐ ${q.points||5}</span><span>✅ ${q.correct||'?'}</span><button class="q-del" data-id="${q.id}">✕</button></div></div>`;
+            html += `<div class="q-item"><div class="q-text">${idx + 1}. ${q.question || ''}</div><div class="q-meta"><span>${opts}</span><span class="points-badge">⭐ ${q.points || 5}</span><span>✅ ${q.correct || '?'}</span><button class="q-del" data-id="${q.id}">✕</button></div></div>`;
         });
         container.innerHTML = html + '</div>';
         container.querySelectorAll('.q-del').forEach(btn => btn.addEventListener('click', async () => {
@@ -994,32 +1871,31 @@
         const options = [$('optA').value.trim(), $('optB').value.trim(), $('optC').value.trim(), $('optD').value.trim()];
         if (!question || options.some(o => !o)) return showToast('⚠️ Fill all fields.', 'error');
         await db.collection('questions').add({
-            class: currentUser.class, subject: selectedSubject.trim(),
-            question, options, correct: $('correctAns').value,
-            points: parseInt($('qPoints').value) || 5, createdAt: new Date()
+            class: currentUser.class,
+            subject: selectedSubject.trim(),
+            question,
+            options,
+            correct: $('correctAns').value,
+            points: parseInt($('qPoints').value) || 5,
+            createdAt: new Date()
         });
         $('qText').value = '';
-        ['optA','optB','optC','optD'].forEach(id => $(id).value = '');
+        ['optA', 'optB', 'optC', 'optD'].forEach(id => $(id).value = '');
         await selectSubject(selectedSubject);
         showToast('✅ Question added!', 'success');
     });
 
-    // CSV functions (abbreviated)
-    $('pasteCsvBtn').addEventListener('click', async () => {});
-    $('downloadCsvBtn').addEventListener('click', () => {});
-    $('uploadCsvBtn').addEventListener('click', async () => {});
-    $('debugCsvBtn').addEventListener('click', () => {});
-    $('clearPasteBtn').addEventListener('click', () => {});
-
     // =============================================================
-    // EXAM PUBLISHING
+    // EXAM PUBLISHING (abbreviated)
     // =============================================================
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
         const active = status.exists ? status.data().activeSubjects || [] : [];
         const container = $('examToggles');
         if (!currentSubjects.length) return container.innerHTML = '<p>Add subjects first.</p>';
-        container.innerHTML = currentSubjects.map(s => `<label class="${active.includes(s)?'active-toggle':''}"><input type="checkbox" class="examCb" value="${s}" ${active.includes(s)?'checked':''} /> ${s}</label>`).join('');
+        container.innerHTML = currentSubjects.map(s =>
+            `<label class="${active.includes(s) ? 'active-toggle' : ''}"><input type="checkbox" class="examCb" value="${s}" ${active.includes(s) ? 'checked' : ''} /> ${s}</label>`
+        ).join('');
     }
 
     async function loadSchedule(cls) {
@@ -1027,25 +1903,15 @@
             const doc = await db.collection('examControls').doc(cls).get();
             if (doc.exists) {
                 const data = doc.data();
-                if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0,16);
-                if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0,16);
-                const durationVal = data.durationMinutes || 30;
-                document.getElementById('durationMinutes').value = durationVal;
-            } else {
-                document.getElementById('durationMinutes').value = 30;
+                if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0, 16);
+                if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0, 16);
+                document.getElementById('durationMinutes').value = data.durationMinutes || 30;
             }
-        } catch (e) {
-            document.getElementById('durationMinutes').value = 30;
-        }
+        } catch (e) {}
     }
 
-    $('publishWithScheduleBtn').addEventListener('click', async () => {});
-    $('forceStartBtn').addEventListener('click', async () => {});
-    $('stopExamBtn').addEventListener('click', async () => {});
-    $('clearScheduleBtn').addEventListener('click', async () => {});
-
     async function loadResults(cls) {
-        const snap = await db.collection('results').where('class','==',cls).get();
+        const snap = await db.collection('results').where('class', '==', cls).get();
         const container = $('resultsContainer');
         if (snap.empty) return container.innerHTML = '<p>No results yet.</p>';
         let html = '<table><tr><th>Student</th><th>Subject</th><th>Score</th></tr>';
@@ -1054,1049 +1920,83 @@
     }
 
     // =============================================================
-    // NAME DEDUPLICATION
-    // =============================================================
-    function normalizeNameForGrouping(name) {
-        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
-    }
-    function levenshteinDistance(a, b) {
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                matrix[i][j] = b.charAt(i-1) === a.charAt(j-1) ? matrix[i-1][j-1] : Math.min(matrix[i-1][j-1]+1, matrix[i][j-1]+1, matrix[i-1][j]+1);
-            }
-        }
-        return matrix[b.length][a.length];
-    }
-    function areNamesSamePerson(name1, name2) {
-        const n1 = normalizeNameForGrouping(name1);
-        const n2 = normalizeNameForGrouping(name2);
-        if (n1 === n2) return true;
-        const words1 = n1.split(' ').sort();
-        const words2 = n2.split(' ').sort();
-        if (words1.join(' ') === words2.join(' ')) return false;
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-        const set1 = new Set(words1);
-        const set2 = new Set(words2);
-        let matches = 0;
-        set1.forEach(w => { if (set2.has(w)) matches++; });
-        const maxLen = Math.max(set1.size, set2.size);
-        const overlapRatio = matches / maxLen;
-        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
-        if (overlapRatio >= 0.5 && matches >= 1) {
-            const str1 = words1.join('');
-            const str2 = words2.join('');
-            if (levenshteinDistance(str1, str2) <= 2) return true;
-        }
-        return false;
-    }
-    function pickBestName(names) {
-        if (names.length === 1) return names[0];
-        return names.sort((a, b) => {
-            const aSpace = a.includes(' ') ? 1 : 0;
-            const bSpace = b.includes(' ') ? 1 : 0;
-            if (aSpace !== bSpace) return bSpace - aSpace;
-            if (a.length !== b.length) return b.length - a.length;
-            return ((b.match(/[A-Z]/g)||[]).length) - ((a.match(/[A-Z]/g)||[]).length);
-        })[0];
-    }
-    function groupSimilarNames(rawEntries) {
-        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
-        const groups = new Map();
-        const assigned = new Set();
-        allNames.forEach(name => {
-            if (assigned.has(name)) return;
-            const similarNames = allNames.filter(other => { if (assigned.has(other)) return false; return areNamesSamePerson(name, other); });
-            const canonicalName = pickBestName(similarNames);
-            const groupEntries = [];
-            similarNames.forEach(sn => { assigned.add(sn); groupEntries.push(...rawEntries.filter(e => e.originalName === sn)); });
-            groups.set(canonicalName, groupEntries);
-        });
-        return groups;
-    }
-
-    // =============================================================
     // BUILD REPORT BUTTON
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
         const cls = currentUser.class;
-        const area = $('reportBuilderArea');
-        area.innerHTML = `<div class="card-panel" style="text-align:center; padding:30px;"><div style="font-size:36px;">🔄</div><p style="font-weight:700;">Loading students from results...</p><p id="loadingStep" style="color:#64748b;"></p></div>`;
-
-        try {
-            const resultsSnap = await db.collection('results').where('class','==',cls).get();
-            if (resultsSnap.empty && Object.keys(allStudentResults).length === 0) {
-                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No exam results found for ${cls}.</p><button class="btn-action btn-warning" onclick="recoverFirstSecondFromThirdTerm()" style="margin-top:10px;">🔄 Recovery</button></div>`;
-                return;
-            }
-
-            document.getElementById('loadingStep').innerText = 'Deduplicating student names...';
-
-            const rawEntries = [];
-            resultsSnap.forEach(d => {
-                const data = d.data();
-                rawEntries.push({ originalName: (data.studentName || '').trim(), subject: data.subject, score: data.score || 0 });
-            });
-
-            if (Object.keys(allStudentResults).length > 0) {
-                Object.keys(allStudentResults).forEach(student => {
-                    Object.keys(allStudentResults[student]).forEach(sub => {
-                        const exists = rawEntries.some(e => e.originalName === student && e.subject === sub);
-                        if (!exists) {
-                            rawEntries.push({ originalName: student, subject: sub, score: allStudentResults[student][sub] });
-                        }
-                    });
-                });
-            }
-
-            const nameGroups = groupSimilarNames(rawEntries);
-            const mergedResults = {};
-            const canonicalNames = [];
-
-            nameGroups.forEach((entries, canonicalName) => {
-                mergedResults[canonicalName] = {};
-                entries.forEach(entry => {
-                    const existing = mergedResults[canonicalName][entry.subject];
-                    if (!existing || entry.score > existing) {
-                        mergedResults[canonicalName][entry.subject] = entry.score;
-                    }
-                });
-                canonicalNames.push(canonicalName);
-            });
-
-            allStudentResults = mergedResults;
-
-            let uniqueStudents = canonicalNames.filter(name => {
-                const parts = name.trim().split(/\s+/);
-                return parts.length >= 2 && name.length > 5;
-            }).sort();
-
-            const totalRawNames = [...new Set(rawEntries.map(e => e.originalName))].length;
-            const mergedCount = totalRawNames - uniqueStudents.length;
-            document.getElementById('loadingStep').innerText = `${totalRawNames} raw entries → ${uniqueStudents.length} unique students (${mergedCount} duplicates merged)`;
-
-            if (uniqueStudents.length === 0) {
-                area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="font-size:48px;">📭</p><p style="color:#dc2626; font-weight:700;">No valid students found.</p><button class="btn-action btn-warning" onclick="recoverFirstSecondFromThirdTerm()" style="margin-top:10px;">🔄 Recovery</button></div>`;
-                return;
-            }
-
-            reportStudentsList = uniqueStudents;
-            totalStudentsCount = uniqueStudents.length;
-            await new Promise(r => setTimeout(r, 300));
-            buildReportBuilderUI(cls);
-            showToast(`✅ ${uniqueStudents.length} students loaded (${mergedCount} duplicates merged)`, 'success');
-
-        } catch (e) {
-            console.error('Error:', e);
-            area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;"><p style="color:#dc2626;">Error: ${e.message}</p><button class="btn-action btn-primary" onclick="document.getElementById('buildReportBtn').click()">🔄 Retry</button><button class="btn-action btn-warning" onclick="recoverFirstSecondFromThirdTerm()" style="margin-top:10px;">🔄 Recovery</button></div>`;
-        }
+        if (!cls) return showToast('⚠️ Login first.', 'error');
+        await loadStudentsFromResults(cls);
     });
 
     // =============================================================
-    // BUILD REPORT BUILDER UI
+    // SIDEBAR TOGGLE
     // =============================================================
-    function buildReportBuilderUI(cls) {
-        const area = $('reportBuilderArea');
-        let html = `
-        <div class="report-builder-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
-                <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
-                <span class="auto-save-badge" id="saveStatusBadge">💾 Auto-Save</span>
-            </div>
-            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects | <span style="color:#4f46e5;">🔄 Real-time sync active</span></p>
-
-            <div class="save-status-bar">
-                <span class="status-icon">💾</span>
-                <span class="status-text" style="color:#059669;">All changes saved</span>
-                <span class="last-saved">Last saved: Just now</span>
-            </div>
-
-            <div class="push-progress" id="pushProgress">
-                <div class="push-title">📤 Pushing to Admin</div>
-                <div class="push-bar"><div class="push-bar-fill" id="pushProgressFill"></div></div>
-                <div class="push-status" id="pushStatus">⏳ Starting...</div>
-            </div>
-
-            <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;">
-                <button class="btn-action btn-warning" id="recoverFirstSecondBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
-            </div>
-
-            <div class="merge-section" id="mergeSection">
-                <div class="merge-title">🔀 Merge Duplicate Students</div>
-                <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge. All their scores will combine under one name.</p>
-                <div id="mergeStudentList" style="max-height:200px; overflow-y:auto; margin-bottom:8px;">
-                    ${reportStudentsList.map(s => `
-                        <label class="merge-student-checkbox">
-                            <input type="checkbox" class="merge-check" value="${s}" /> ${s}
-                        </label>
-                    `).join('')}
-                </div>
-                <select class="merge-target-select" id="mergeTargetSelect" style="display:none;">
-                    <option value="">-- Choose which name to keep --</option>
-                </select>
-                <button class="merge-btn" id="executeMergeBtn" disabled>🔀 Merge Selected Students</button>
-                <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
-            </div>
-
-            <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                <label class="section-label">👤 Select Student:</label>
-                <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
-                    <option value="">-- Choose a student --</option>
-                    ${reportStudentsList.map(s => `<option value="${s}">${s}</option>`).join('')}
-                </select>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <input id="newStudentInput" placeholder="➕ Add student manually..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
-                    <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
-                </div>
-                <div id="nameSuggestions" style="margin-top:8px;"></div>
-            </div>
-
-            <div id="studentWorkArea" style="display:none;">
-                <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
-                    <div class="photo-container-small" style="width:90px; height:90px; position:relative;">
-                        <span style="font-size:40px;">👤</span>
-                        <img class="photo-img-small" src="" style="display:none; width:100%; height:100%; object-fit:cover;" />
-                    </div>
-                    <div style="flex:1; min-width:150px;">
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                            <span style="font-size:18px; font-weight:800;" id="selectedStudentName">--</span>
-                            <button id="editStudentNameBtn" style="background:none;border:none;font-size:16px;cursor:pointer;color:#4f46e5;" title="Edit student name">✏️</button>
-                            <span id="pushStatusBadge"></span>
-                        </div>
-                        <div style="font-size:13px; color:#64748b;">${cls} | ${currentUser.name}</div>
-                        <button id="uploadPhotoBtn" style="margin-top:6px; padding:6px 14px; background:white; border:2px solid #4f46e5; color:#4f46e5; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📷 Photo</button>
-                    </div>
-                </div>
-
-                <div class="position-card" id="positionDisplay">
-                    <div class="pos-label">Overall Position</div>
-                    <div class="pos-number" id="positionNumber">--</div>
-                    <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
-                    <div class="pos-percentage" id="positionPercentage"></div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📖 Subject Scores</div>
-                    <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;">
-                        <thead><tr style="background:#f1f5f9;"><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th><th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th></tr></thead>
-                        <tbody>${currentSubjects.map(sub => `<tr>
-                            <td style="padding:6px 10px; font-weight:600;">${sub}</td>
-                            <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                            <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                            <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fefce8; font-weight:700;" /></td>
-                            <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
-                            <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
-                        </tr>`).join('')}</tbody>
-                    </table></div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⭐ Affective Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Attentiveness','Punctuality','Neatness','Honesty','Respectfulness','Diligence','Leadership','Self-Control','Cooperation','Politeness','Obedience'].map(t => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${t}</span><select class="affective-select" data-trait="${t}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">🤸 Psychomotor Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Handwriting','Drawing','Sports','Crafts','Music','Verbal','Fitness','Creative'].map(s => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${s}</span><select class="psychomotor-select" data-skill="${s}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⚽ Clubs</div>
-                    <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `<label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; cursor:pointer;"><input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}</label>`).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📝 Teacher's Comment</div>
-                    <textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">👨‍💼 Principal's Remark</div>
-                    <textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📈 Promotion</div>
-                    <select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;">
-                        <option value="">-- Select --</option>
-                        <option value="Promoted">✅ Promoted</option>
-                        <option value="Not Promoted">❌ Not Promoted</option>
-                        <option value="Probation">⚠️ Probation</option>
-                    </select>
-                </div>
-
-                <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
-                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
-                    <button class="btn-action btn-push" id="pushStudentBtn" style="font-size:13px; padding:10px 20px;">📤 Push to Admin</button>
-                    <button class="btn-action btn-danger" id="deleteStudentBtn" style="font-size:13px; padding:10px 20px;">🗑️ Delete Student</button>
-                    <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
-                </div>
-            </div>
-
-            <div style="margin-top:20px; padding-top:15px; border-top:2px solid #e2e8f0; display:flex; flex-wrap:wrap; gap:8px;">
-                <button class="btn-action btn-primary" id="calculatePositionsBtn" style="font-size:13px; padding:10px 20px;">🏆 Calculate Positions</button>
-                <button class="btn-action btn-push-all" id="pushAllBtn" style="font-size:13px; padding:10px 20px;">📤 Push All to Admin</button>
-                <button class="btn-action btn-outline" id="printAllBtn" style="font-size:13px; padding:10px 20px;">🖨️ Print</button>
-            </div>
-        </div>`;
-        area.innerHTML = html;
-        attachBuilderEvents(cls);
-    }
-
-    // =============================================================
-    // ATTACH BUILDER EVENTS
-    // =============================================================
-    function attachBuilderEvents(cls) {
-        // RECOVER BUTTON
-        document.getElementById('recoverFirstSecondBtn')?.addEventListener('click', async () => {
-            await recoverFirstSecondFromThirdTerm();
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, cls);
-                calculateStudentScores();
-            }
-        });
-
-        // DELETE STUDENT
-        document.getElementById('deleteStudentBtn')?.addEventListener('click', () => {
-            if (currentSelectedStudent) deleteStudent(currentSelectedStudent);
-        });
-
-        // PUSH STUDENT
-        document.getElementById('pushStudentBtn')?.addEventListener('click', async () => {
-            await pushStudentToAdmin(currentSelectedStudent);
-        });
-
-        // PUSH ALL
-        document.getElementById('pushAllBtn')?.addEventListener('click', async () => {
-            await pushAllStudentsToAdmin();
-        });
-
-        // EDIT STUDENT NAME
-        document.getElementById('editStudentNameBtn')?.addEventListener('click', async () => {
-            if (!currentSelectedStudent) return;
-            const newName = prompt('✏️ Edit student name:', currentSelectedStudent);
-            if (newName && newName.trim() && newName.trim() !== currentSelectedStudent) {
-                await renameStudent(currentSelectedStudent, newName.trim());
-            }
-        });
-
-        // MERGE STUDENTS
-        const mergeChecks = document.querySelectorAll('.merge-check');
-        const mergeTarget = document.getElementById('mergeTargetSelect');
-        const mergeBtn = document.getElementById('executeMergeBtn');
-        const mergeStatus = document.getElementById('mergeStatus');
-
-        mergeChecks.forEach(check => {
-            check.addEventListener('change', () => {
-                const checked = document.querySelectorAll('.merge-check:checked');
-                const checkedNames = Array.from(checked).map(c => c.value);
-                if (checked.length >= 2) {
-                    mergeTarget.style.display = 'block';
-                    mergeTarget.innerHTML = '<option value="">-- Choose which name to keep --</option>' + 
-                        checkedNames.map(n => `<option value="${n}">${n}</option>`).join('');
-                    mergeBtn.disabled = false;
-                    if (mergeStatus) {
-                        mergeStatus.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
-                        mergeStatus.style.color = '#059669';
-                    }
-                } else {
-                    mergeTarget.style.display = 'none';
-                    mergeBtn.disabled = true;
-                    if (mergeStatus) {
-                        if (checked.length === 1) {
-                            mergeStatus.innerText = '⚠️ Select at least 2 students to merge.';
-                            mergeStatus.style.color = '#d97706';
-                        } else {
-                            mergeStatus.innerText = '';
-                        }
-                    }
-                }
-            });
-        });
-
-        document.getElementById('executeMergeBtn').addEventListener('click', async () => {
-            const checked = document.querySelectorAll('.merge-check:checked');
-            const checkedNames = Array.from(checked).map(c => c.value);
-            const targetName = mergeTarget.value;
-            if (!targetName || checkedNames.length < 2) {
-                if (mergeStatus) {
-                    mergeStatus.innerText = '⚠️ Select at least 2 students and choose a target name.';
-                    mergeStatus.style.color = '#dc2626';
-                }
-                return;
-            }
-            const otherNames = checkedNames.filter(n => n !== targetName);
-            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?`)) return;
-            await mergeStudents(otherNames, targetName);
-        });
-
-        // STUDENT SELECTOR
-        const selector = document.getElementById('studentSelector');
-        const workArea = document.getElementById('studentWorkArea');
-        const newStudentInput = document.getElementById('newStudentInput');
-        const suggestionsDiv = document.getElementById('nameSuggestions');
-
-        newStudentInput.addEventListener('input', async () => {
-            const query = newStudentInput.value.trim().toLowerCase();
-            if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
-            const snap = await db.collection('reportCards').where('class','==',cls).get();
-            const matches = [];
-            snap.forEach(d => { const name = d.data().studentName; if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) matches.push(name); });
-            const uniqueMatches = [...new Set(matches)];
-            if (uniqueMatches.length > 0) {
-                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n => `<div class="suggestion-item" data-name="${n}">📋 ${n} (existing)</div>`).join('');
-                document.querySelectorAll('.suggestion-item').forEach(item => item.addEventListener('click', () => {
-                    const name = item.dataset.name;
-                    if (!reportStudentsList.includes(name)) { 
-                        reportStudentsList.push(name); 
-                        reportStudentsList.sort(); 
-                    }
-                    rebuildSelector();
-                    rebuildMergeList();
-                    selector.value = name; 
-                    newStudentInput.value = ''; 
-                    suggestionsDiv.innerHTML = '';
-                    selector.dispatchEvent(new Event('change'));
-                    showToast(`📋 Loaded: ${name}`, 'success');
-                }));
-            } else {
-                suggestionsDiv.innerHTML = query.length >= 3 ? `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 Will add as new student</div>` : '';
-            }
-        });
-
-        document.getElementById('addStudentBtn').addEventListener('click', async () => {
-            const name = newStudentInput.value.trim();
-            if (!name) return showToast('⚠️ Enter name.', 'warning');
-            if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
-            
-            // Check if student already exists
-            const snap = await db.collection('reportCards').where('class','==',cls).get();
-            let matchedName = null;
-            snap.forEach(d => { 
-                const existing = d.data().studentName; 
-                if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing; 
-            });
-            
-            if (matchedName && matchedName !== name) {
-                if (!reportStudentsList.includes(matchedName)) { 
-                    reportStudentsList.push(matchedName); 
-                    reportStudentsList.sort(); 
-                }
-                rebuildSelector();
-                rebuildMergeList();
-                selector.value = matchedName; 
-                newStudentInput.value = ''; 
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`📋 Using: "${matchedName}"`, 'warning');
-            } else if (!reportStudentsList.includes(name)) {
-                reportStudentsList.push(name); 
-                reportStudentsList.sort();
-                rebuildSelector();
-                rebuildMergeList();
-                selector.value = name; 
-                newStudentInput.value = ''; 
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`✅ Added "${name}"!`, 'success');
-            } else {
-                selector.value = name; 
-                newStudentInput.value = ''; 
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-            }
-        });
-
-        selector.addEventListener('change', async () => {
-            const student = selector.value;
-            if (currentSelectedStudent) {
-                await saveCurrentStudent(cls);
-            }
-            if (!student) {
-                workArea.style.display = 'none';
-                currentSelectedStudent = null;
-                return;
-            }
-            currentSelectedStudent = student;
-            workArea.style.display = 'block';
-            document.getElementById('selectedStudentName').innerText = student;
-            await loadStudentData(student, cls);
-            const photoUrl = await getStudentPhoto(student);
-            updatePhotoDisplay(photoUrl);
-            updatePositionDisplay(student);
-            
-            const pushed = await checkPushStatus(student);
-            updatePushStatusUI(student, pushed);
-            
-            sessionStorage.setItem('lastSession', JSON.stringify({ class: cls, student: student }));
-        });
-
-        // PHOTO UPLOAD
-        const photoContainer = document.querySelector('.photo-container-small');
-        const uploadBtn = document.getElementById('uploadPhotoBtn');
-        const handlePhotoUpload = () => { if (!currentSelectedStudent) return; openCloudinaryWidget(currentSelectedStudent, (data) => updatePhotoDisplay(data.url)); };
-        if (photoContainer) photoContainer.addEventListener('click', handlePhotoUpload);
-        if (uploadBtn) uploadBtn.addEventListener('click', handlePhotoUpload);
-
-        // AUTO-SAVE ON ALL INPUTS
-        document.querySelectorAll('.score-input').forEach(input => {
-            input.addEventListener('focus', () => { input.dataset.touched = 'true'; });
-            input.addEventListener('input', () => {
-                input.dataset.touched = 'true';
-                calculateStudentScores();
-                lastModifiedTime = Date.now();
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-            input.addEventListener('blur', () => { saveCurrentStudent(cls); });
-        });
-
-        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => {
-            el.addEventListener('change', () => {
-                el.dataset.touched = 'true';
-                lastModifiedTime = Date.now();
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-        });
-
-        document.querySelectorAll('.club-check, .commentary-input, .principal-input, .promotion-select').forEach(el => {
-            el.addEventListener('input', () => {
-                lastModifiedTime = Date.now();
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-            el.addEventListener('blur', () => { saveCurrentStudent(cls); });
-        });
-
-        // SAVE BUTTON
-        document.getElementById('saveStudentBtn').addEventListener('click', async () => {
-            await saveCurrentStudent(cls);
-            showToast('✅ Saved!', 'success');
-        });
-
-        // NEXT BUTTON
-        document.getElementById('nextStudentBtn').addEventListener('click', async () => {
-            await saveCurrentStudent(cls);
-            const idx = reportStudentsList.indexOf(currentSelectedStudent);
-            if (idx < reportStudentsList.length - 1) {
-                selector.value = reportStudentsList[idx + 1];
-                selector.dispatchEvent(new Event('change'));
-            } else {
-                showToast('✅ Last student!', 'warning');
-            }
-        });
-
-        // CALCULATE POSITIONS
-        document.getElementById('calculatePositionsBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('calculatePositionsBtn');
-            btn.innerText = '⏳ Calculating...'; btn.disabled = true;
-            await saveCurrentStudent(cls);
-            await calculateAllPositions(cls);
-            btn.innerText = '🏆 Calculate Positions'; btn.disabled = false;
-            if (currentSelectedStudent) {
-                updatePositionDisplay(currentSelectedStudent);
-            }
-            showToast(`✅ Positions calculated for ${reportStudentsList.length} students!`, 'success');
-        });
-
-        document.getElementById('printAllBtn').addEventListener('click', () => window.print());
-    }
-
-    // =============================================================
-    // RENAME STUDENT & MERGE
-    // =============================================================
-    async function renameStudent(oldName, newName) {
-        try {
-            const oldDoc = await db.collection('reportCards').doc(`${currentUser.class}_${oldName}`).get();
-            if (!oldDoc.exists) { showToast('❌ Student not found.', 'error'); return; }
-            const data = oldDoc.data();
-            const newDoc = await db.collection('reportCards').doc(`${currentUser.class}_${newName}`).get();
-            if (newDoc.exists) {
-                if (confirm(`"${newName}" already exists. Merge "${oldName}" into "${newName}"?`)) {
-                    await mergeStudents([oldName], newName);
-                    return;
-                }
-                showToast('❌ Name already exists. Use merge instead.', 'error');
-                return;
-            }
-            await db.collection('reportCards').doc(`${currentUser.class}_${newName}`).set({
-                ...data,
-                studentName: newName,
-                previousName: oldName,
-                renamedAt: new Date(),
-                _version: firebase.firestore.FieldValue.increment(1)
-            }, { merge: true });
-            await db.collection('reportCards').doc(`${currentUser.class}_${oldName}`).delete();
-            const resultsSnap = await db.collection('results').where('class','==',currentUser.class).where('studentName','==',oldName).get();
-            const batch = db.batch();
-            resultsSnap.forEach(doc => batch.update(doc.ref, { studentName: newName, previousName: oldName, renamedAt: new Date() }));
-            await batch.commit();
-            reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
-            reportStudentsList.sort();
-            currentSelectedStudent = newName;
-            rebuildSelector();
-            rebuildMergeList();
-            buildReportBuilderUI(currentUser.class);
-            showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
-        } catch (e) {
-            showToast('❌ Rename failed: ' + e.message, 'error');
-        }
-    }
-
-    async function mergeStudents(fromNames, toName) {
-        try {
-            const toDoc = await db.collection('reportCards').doc(`${currentUser.class}_${toName}`).get();
-            let toData = toDoc.exists ? toDoc.data() : { subjects: {}, affectiveDomain: {}, psychomotorDomain: {}, extracurriculars: [] };
-            for (let fromName of fromNames) {
-                const fromDoc = await db.collection('reportCards').doc(`${currentUser.class}_${fromName}`).get();
-                if (!fromDoc.exists) continue;
-                const fromData = fromDoc.data();
-                if (fromData.subjects) {
-                    Object.keys(fromData.subjects).forEach(sub => {
-                        const fromSub = fromData.subjects[sub];
-                        if (!toData.subjects[sub]) toData.subjects[sub] = {};
-                        ['firstTerm','secondTerm','thirdTerm'].forEach(term => {
-                            if (fromSub[term] > (toData.subjects[sub][term] || 0)) {
-                                toData.subjects[sub][term] = fromSub[term];
-                            }
-                        });
-                        const scores = [toData.subjects[sub].firstTerm || 0, toData.subjects[sub].secondTerm || 0, toData.subjects[sub].thirdTerm || 0].filter(v => v > 0);
-                        toData.subjects[sub].average = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
-                        toData.subjects[sub].remark = getRemarkText(toData.subjects[sub].average);
-                    });
-                }
-                if (fromData.affectiveDomain) {
-                    if (!toData.affectiveDomain) toData.affectiveDomain = {};
-                    Object.keys(fromData.affectiveDomain).forEach(trait => {
-                        toData.affectiveDomain[trait] = Math.max(toData.affectiveDomain[trait] || 0, fromData.affectiveDomain[trait] || 0);
-                    });
-                }
-                if (fromData.psychomotorDomain) {
-                    if (!toData.psychomotorDomain) toData.psychomotorDomain = {};
-                    Object.keys(fromData.psychomotorDomain).forEach(skill => {
-                        toData.psychomotorDomain[skill] = Math.max(toData.psychomotorDomain[skill] || 0, fromData.psychomotorDomain[skill] || 0);
-                    });
-                }
-                if (fromData.extracurriculars) {
-                    if (!toData.extracurriculars) toData.extracurriculars = [];
-                    const combined = [...new Set([...(toData.extracurriculars || []), ...fromData.extracurriculars])];
-                    toData.extracurriculars = combined;
-                }
-                if (fromData.classTeacherCommentary && !toData.classTeacherCommentary) toData.classTeacherCommentary = fromData.classTeacherCommentary;
-                if (fromData.principalRemarks && !toData.principalRemarks) toData.principalRemarks = fromData.principalRemarks;
-
-                const resultsSnap = await db.collection('results').where('class','==',currentUser.class).where('studentName','==',fromName).get();
-                const batch = db.batch();
-                resultsSnap.forEach(doc => batch.update(doc.ref, { studentName: toName, mergedFrom: fromName, mergedAt: new Date() }));
-                await batch.commit();
-                await db.collection('reportCards').doc(`${currentUser.class}_${fromName}`).delete();
-                reportStudentsList = reportStudentsList.filter(s => s !== fromName);
-            }
-            toData.mergedFrom = [...(toData.mergedFrom || []), ...fromNames];
-            toData.mergedAt = new Date();
-            toData.studentName = toName;
-            toData._version = firebase.firestore.FieldValue.increment(1);
-            await db.collection('reportCards').doc(`${currentUser.class}_${toName}`).set(toData, { merge: true });
-            if (!reportStudentsList.includes(toName)) reportStudentsList.push(toName);
-            reportStudentsList.sort();
-            currentSelectedStudent = toName;
-            rebuildSelector();
-            rebuildMergeList();
-            buildReportBuilderUI(currentUser.class);
-            showToast(`✅ Merged ${fromNames.length} student(s) into "${toName}"!`, 'success');
-        } catch (e) {
-            showToast('❌ Merge failed: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // AUTO-SAVE & POSITION CALCULATIONS
-    // =============================================================
-    function triggerAutoSave(cls) {
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => { saveCurrentStudent(cls); }, 800);
-    }
-
-    function updatePositionDisplay(student) {
-        const posDisplay = document.getElementById('positionDisplay');
-        const posNumber = document.getElementById('positionNumber');
-        const posPercentage = document.getElementById('positionPercentage');
-        if (studentPositions[student]) {
-            posDisplay.style.display = 'block';
-            const pos = studentPositions[student].position;
-            const total = reportStudentsList.length || totalStudentsCount;
-            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + getOrdinalSuffix(pos) + '</small>';
-            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
-            const percentDisplay = total > 1 ? Math.round(percentage) : 100;
-            posPercentage.innerText = `📊 Top ${percentDisplay}% of ${total} students`;
-        } else {
-            posDisplay.style.display = 'none';
-        }
-    }
-
-    function rebuildSelector() {
-        const selector = document.getElementById('studentSelector');
-        if (!selector) return;
-        const currentVal = selector.value;
-        selector.innerHTML = '<option value="">-- Choose --</option>' + reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
-    }
-
-    function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
-
-    async function calculateAllPositions(cls) {
-        studentPositions = {};
-        const studentAverages = [];
-        for (let student of reportStudentsList) {
-            await saveCurrentStudent(cls);
-        }
-        for (let student of reportStudentsList) {
-            const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
-            if (!doc.exists) continue;
-            const data = doc.data();
-            if (!data.subjects) continue;
-            let totalAvg = 0, count = 0;
-            Object.values(data.subjects).forEach(sd => {
-                if (sd.average && sd.average > 0) {
-                    totalAvg += sd.average;
-                    count++;
-                }
-            });
-            if (count > 0) {
-                studentAverages.push({ student, overallAvg: totalAvg / count });
-            }
-        }
-        studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
-        const totalStudents = reportStudentsList.length;
-        let position = 1;
-        for (let i = 0; i < studentAverages.length; i++) {
-            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i-1].overallAvg) {
-                position = i + 1;
-            }
-            studentPositions[studentAverages[i].student] = {
-                position: position,
-                average: studentAverages[i].overallAvg
-            };
-            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
-                overallPosition: position,
-                overallAverage: studentAverages[i].overallAvg,
-                totalStudents: totalStudents,
-                _version: firebase.firestore.FieldValue.increment(1)
-            }).catch(()=>{});
-        }
-    }
-
-    // =============================================================
-    // LOAD STUDENT DATA
-    // =============================================================
-    async function loadStudentData(student, cls) {
-        const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
-        document.querySelectorAll('.score-input').forEach(el => {
-            el.value = '';
-            el.dataset.touched = 'false';
-        });
-        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => el.dataset.touched = 'false');
-        document.querySelectorAll('.club-check').forEach(el => el.checked = false);
-        const ce = document.querySelector('.commentary-input'); if (ce) ce.value = '';
-        const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
-        const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
-
-        if (doc.exists) {
-            const data = doc.data();
-            docVersions.set(student, data._version || 0);
-            if (data.subjects) {
-                Object.keys(data.subjects).forEach(sub => {
-                    const sd = data.subjects[sub];
-                    const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
-                    if (fi) fi.value = sd.firstTerm || '';
-                    const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
-                    if (si) si.value = sd.secondTerm || '';
-                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti) { ti.value = sd.thirdTerm || ''; ti.style.background = '#fefce8'; ti.style.fontWeight = '700'; }
-                });
-            }
-            if (data.affectiveDomain) {
-                Object.keys(data.affectiveDomain).forEach(t => {
-                    const s = document.querySelector(`.affective-select[data-trait="${t}"]`);
-                    if (s) s.value = data.affectiveDomain[t];
-                });
-            }
-            if (data.psychomotorDomain) {
-                Object.keys(data.psychomotorDomain).forEach(sk => {
-                    const s = document.querySelector(`.psychomotor-select[data-skill="${sk}"]`);
-                    if (s) s.value = data.psychomotorDomain[sk];
-                });
-            }
-            if (data.extracurriculars) {
-                data.extracurriculars.forEach(c => {
-                    const cb = document.querySelector(`.club-check[value="${c}"]`);
-                    if (cb) cb.checked = true;
-                });
-            }
-            if (data.classTeacherCommentary && ce) ce.value = data.classTeacherCommentary;
-            if (data.principalRemarks && pe) pe.value = data.principalRemarks;
-            if (data.promotionStatus && pr) pr.value = data.promotionStatus;
-            if (data.overallPosition) {
-                studentPositions[student] = { position: data.overallPosition, average: data.overallAverage || 0 };
-            }
-            if (data.pushedToAdmin) {
-                updatePushStatusUI(student, true);
-            }
-        }
-
-        // Auto-fill 3rd term from results
-        if (allStudentResults[student]) {
-            currentSubjects.forEach(sub => {
-                if (allStudentResults[student][sub] !== undefined) {
-                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti && (!ti.value || ti.value === '')) {
-                        ti.value = allStudentResults[student][sub];
-                        ti.style.background = '#fef08a';
-                        ti.style.fontWeight = '700';
-                    }
-                }
-            });
-        }
-
-        const studentLower = student.toLowerCase();
-        Object.keys(allStudentResults).forEach(resultName => {
-            if (resultName.toLowerCase() === studentLower && resultName !== student) {
-                if (!allStudentResults[student]) allStudentResults[student] = {};
-                Object.keys(allStudentResults[resultName]).forEach(sub => {
-                    if (!allStudentResults[student][sub] || allStudentResults[resultName][sub] > allStudentResults[student][sub]) {
-                        allStudentResults[student][sub] = allStudentResults[resultName][sub];
-                    }
-                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti && (!ti.value || ti.value === '')) {
-                        ti.value = allStudentResults[student][sub];
-                        ti.style.background = '#fef08a';
-                        ti.style.fontWeight = '700';
-                    }
-                });
-            }
-        });
-        calculateStudentScores();
-        updateSaveStatus('saved', 'Data loaded');
-    }
-
-    function calculateStudentScores() {
-        currentSubjects.forEach(sub => {
-            const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
-            const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
-            const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
-            const scores = [f, s, t].filter(v => v > 0);
-            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-            const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`);
-            if (ac) ac.innerText = avg > 0 ? avg.toFixed(1) + '%' : '--';
-            const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`);
-            if (rc) rc.innerText = avg > 0 ? getRemarkText(avg) : '--';
-        });
-    }
-
-    function getRemarkText(avg) {
-        if (avg >= 75) return 'Distinction';
-        if (avg >= 70) return 'Excellent';
-        if (avg >= 65) return 'Very Good';
-        if (avg >= 60) return 'Good';
-        if (avg >= 55) return 'Above Avg';
-        if (avg >= 50) return 'Average';
-        if (avg >= 45) return 'Below Avg';
-        if (avg >= 40) return 'Weak Pass';
-        return 'Fail';
-    }
-
-    function updateSaveStatus(status, message) {
-        const icon = document.querySelector('.save-status-bar .status-icon');
-        const text = document.querySelector('.save-status-bar .status-text');
-        const timeEl = document.querySelector('.save-status-bar .last-saved');
-        if (icon) {
-            const icons = { saved: '💾', saving: '⏳', error: '❌', synced: '🔄' };
-            icon.textContent = icons[status] || '💾';
-        }
-        if (text) {
-            const colors = { saved: '#059669', saving: '#f59e0b', error: '#dc2626', synced: '#4f46e5' };
-            text.textContent = message || 'All changes saved';
-            text.style.color = colors[status] || '#64748b';
-        }
-        if (timeEl && status !== 'saving') {
-            timeEl.textContent = `Last saved: ${new Date().toLocaleTimeString()}`;
-        }
-        if (status === 'saved' || status === 'synced') {
-            lastSavedTime = Date.now();
-        }
-    }
-
-    // =============================================================
-    // SAVE CURRENT STUDENT - PATCHED
-    // =============================================================
-    async function saveCurrentStudent(cls) {
-        if (!currentSelectedStudent) return;
-        if (isSaving) return;
-
-        isSaving = true;
-        try {
-            const docRef = db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`);
-            const docSnap = await docRef.get();
-            const existingData = docSnap.exists ? docSnap.data() : {};
-            const existingSubjects = existingData.subjects || {};
-
-            const subjectsData = {};
-            currentSubjects.forEach(sub => {
-                const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
-                const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
-                const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-
-                const existingSub = existingSubjects[sub] || {};
-                const oldFirst = existingSub.firstTerm || 0;
-                const oldSecond = existingSub.secondTerm || 0;
-                const oldThird = existingSub.thirdTerm || 0;
-
-                const newFirst = fi ? parseFloat(fi.value) : 0;
-                const newSecond = si ? parseFloat(si.value) : 0;
-                const newThird = ti ? parseFloat(ti.value) : 0;
-
-                const firstVal = (fi && fi.dataset.touched === 'true') ? newFirst : oldFirst;
-                const secondVal = (si && si.dataset.touched === 'true') ? newSecond : oldSecond;
-                const thirdVal = (ti && ti.dataset.touched === 'true') ? newThird : oldThird;
-
-                if (firstVal !== oldFirst || secondVal !== oldSecond || thirdVal !== oldThird) {
-                    const scores = [firstVal, secondVal, thirdVal].filter(v => v > 0);
-                    const avg = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
-                    const remark = getRemarkText(avg);
-                    subjectsData[sub] = {
-                        firstTerm: firstVal,
-                        secondTerm: secondVal,
-                        thirdTerm: thirdVal,
-                        average: avg,
-                        remark: remark
-                    };
-                } else {
-                    subjectsData[sub] = existingSub;
-                }
-            });
-
-            const affective = {};
-            document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value) || 3);
-            const psychomotor = {};
-            document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value) || 3);
-            const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
-            const commentary = document.querySelector('.commentary-input')?.value || '';
-            const principal = document.querySelector('.principal-input')?.value || '';
-            const promotion = document.querySelector('.promotion-select')?.value || '';
-
-            const currentVersion = docVersions.get(currentSelectedStudent) || 0;
-
-            await docRef.set({
-                class: cls,
-                studentName: currentSelectedStudent,
-                term: 'Third',
-                session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
-                schoolName: "COVENANT ARROWS' MODEL SCHOOL",
-                teacherName: currentUser.name,
-                dateOfIssue: new Date().toISOString().slice(0, 10),
-                category: 'Day',
-                attendance: { daysOpened: 90, daysPresent: 85, daysAbsent: 5 },
-                subjects: subjectsData,
-                affectiveDomain: affective,
-                psychomotorDomain: psychomotor,
-                extracurriculars: clubs,
-                classTeacherCommentary: commentary,
-                principalRemarks: principal,
-                promotionStatus: promotion,
-                totalStudents: reportStudentsList.length || totalStudentsCount,
-                _version: currentVersion + 1,
-                updatedAt: new Date()
-            }, { merge: true });
-
-            docVersions.set(currentSelectedStudent, currentVersion + 1);
-            lastSavedTime = Date.now();
-            updateSaveStatus('saved', 'All changes saved');
-
-        } catch (e) {
-            console.error('Save error:', e);
-            updateSaveStatus('error', 'Save failed: ' + e.message);
-            showToast('❌ Save failed: ' + e.message, 'error');
-        } finally {
-            isSaving = false;
-        }
-    }
-
-    function updatePhotoDisplay(photoUrl) {
-        const placeholder = document.querySelector('.photo-container-small span');
-        const img = document.querySelector('.photo-img-small');
-        if (photoUrl && img) {
-            img.src = photoUrl;
-            img.style.display = 'block';
-            if (placeholder) placeholder.style.display = 'none';
-        } else if (img) {
-            img.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'block';
-        }
-    }
-
-    // =============================================================
-    // TAB SWITCHING & SIDEBAR
-    // =============================================================
-    document.querySelectorAll('.main-tab').forEach(tab => tab.addEventListener('click', () => {
-        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(tab.dataset.tab).classList.add('active');
-        if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
-        if (tab.dataset.tab === 'tabResults') loadResults(currentUser.class);
-    }));
-
     document.getElementById('sidebarToggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('expanded');
     });
 
-    // BEFOREUNLOAD
-    window.addEventListener('beforeunload', async (e) => {
-        if (currentSelectedStudent) {
-            await saveCurrentStudent(currentUser.class);
-        }
+    // =============================================================
+    // LOGOUT
+    // =============================================================
+    $('logoutBtn').addEventListener('click', () => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        $('loginPage').classList.add('active');
+        currentUser = {};
+        reportStudentsList = [];
+        currentSelectedStudent = null;
+        showToast('👋 Logged out.', 'warning');
     });
 
-    // Recovery button events
-    document.getElementById('recoverScoresBtn')?.addEventListener('click', async () => {
-        await recoverFirstSecondFromThirdTerm();
-        if (currentSelectedStudent) {
-            await loadStudentData(currentSelectedStudent, currentUser.class);
-            calculateStudentScores();
-        }
-        document.getElementById('recoveryBanner').style.display = 'none';
-    });
-    document.getElementById('dismissRecoveryBtn')?.addEventListener('click', () => {
-        document.getElementById('recoveryBanner').style.display = 'none';
+    // =============================================================
+    // SWITCH CLASS
+    // =============================================================
+    $('switchClassBtn').addEventListener('click', async () => {
+        const newClass = $('classSelect').value;
+        if (!newClass) return showToast('⚠️ Select class.', 'error');
+        if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
+
+        if (currentSelectedStudent) await saveCurrentStudent(currentUser.class);
+
+        currentUser.class = newClass;
+        currentSelectedStudent = null;
+        reportStudentsList = [];
+
+        await loadSubjects(newClass);
+        await loadSchedule(newClass);
+        await loadResults(newClass);
+
+        const area = document.getElementById('reportBuilderArea');
+        area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Click "Load Students" to see results.</div>`;
+        document.getElementById('studentCountBadge').innerText = '0 Students';
+        document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
+
+        showToast(`🔄 Switched to ${newClass}`, 'success');
     });
 
-    // Make functions global
-    window.recoverFirstSecondFromThirdTerm = recoverFirstSecondFromThirdTerm;
-    window.pushStudentToAdmin = pushStudentToAdmin;
-    window.pushAllStudentsToAdmin = pushAllStudentsToAdmin;
-    window.deleteStudent = deleteStudent;
-    window.rebuildMergeList = rebuildMergeList;
+    // =============================================================
+    // TAB SWITCHING
+    // =============================================================
+    document.querySelectorAll('.main-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab.dataset.tab).classList.add('active');
+            if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
+            if (tab.dataset.tab === 'tabResults') loadResults(currentUser.class);
+        });
+    });
 
+    // =============================================================
     // INIT
+    // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
 
-    console.log('✅ Teacher Dashboard with ALL fixes is ready!');
-    console.log('📌 Features:');
-    console.log('  ✏️ Edit student name (pencil icon)');
-    console.log('  ➕ Add student (input + Add button)');
-    console.log('  🗑️ Delete student (Delete Student button)');
-    console.log('  🔀 Merge students (select + merge)');
-    console.log('  📤 Push to Admin (individual & all)');
-    console.log('  🔄 Recover scores (button)');
-    console.log('  🏆 Calculate positions');
+    console.log('✅ Teacher Dashboard - FIXED VERSION');
+    console.log('📌 Features: Add, Edit, Delete, Merge, Push, Recover');
+    console.log('🔄 All data is saved to Firestore');
 </script>
 </body>
 </html>
