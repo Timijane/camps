@@ -29,6 +29,7 @@
         .login-box input:focus, .login-box select:focus { border-color: #4f46e5; background: white; }
         .login-box button { width: 100%; padding: 16px; background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; border: none; border-radius: 60px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
+        .login-box button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
 
         .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 30px; }
@@ -117,12 +118,9 @@
         .q-item { background: white; border-radius: 16px; padding: 14px 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: 0.15s; }
         .q-item:hover { border-color: #c7d2fe; }
         
-        /* Data protection badge */
         .data-protected-badge { background: #10b981; color: white; padding: 4px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
-        
         .conflict-banner { background: #fee2e2; border: 2px solid #dc2626; border-radius: 12px; padding: 12px 16px; margin: 10px 0; display: none; font-weight: 600; color: #991b1b; }
         
-        /* Rest of existing styles preserved */
         .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
@@ -152,28 +150,46 @@
 <div id="app">
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="page active">
         <div class="login-box">
             <h2>👨‍🏫 Teacher Login</h2>
             <p>Select your class from the list below.</p>
-            <input id="loginName" placeholder="👤 Your Full Name" />
-            <select id="loginClassSelect"><option value="">-- Loading Classes --</option></select>
+            <input id="loginName" placeholder="👤 Your Full Name" autocomplete="name" />
+            <select id="loginClassSelect">
+                <option value="">-- Loading Classes --</option>
+            </select>
             <button id="loginBtn">🚀 Enter Dashboard</button>
             <p id="loginErr" class="login-error"></p>
         </div>
     </div>
 
+    <!-- DASHBOARD PAGE -->
     <div id="dashboardPage" class="page">
         <div class="sidebar" id="sidebar">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div class="brand">🏫 <span>Covenant</span> Arrows</div>
                 <button class="sidebar-toggle" id="sidebarToggle">☰</button>
             </div>
-            <div class="user-info"><span class="name" id="sidebarName">Teacher</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
-            <div class="class-switcher"><select id="classSelect"><option value="">-- Select Class --</option></select><button id="switchClassBtn">Switch</button></div>
-            <div class="sidebar-title"><span>📚 Subjects</span><span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span></div>
-            <div class="add-subject-row"><input id="newSubjectInput" placeholder="New Subject..." /><button id="addSubjectBtn">➕</button></div>
-            <div class="subject-list" id="subjectListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div></div>
+            <div class="user-info">
+                <span class="name" id="sidebarName">Teacher</span>
+                <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+            </div>
+            <div class="class-switcher">
+                <select id="classSelect"><option value="">-- Select Class --</option></select>
+                <button id="switchClassBtn">Switch</button>
+            </div>
+            <div class="sidebar-title">
+                <span>📚 Subjects</span>
+                <span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span>
+            </div>
+            <div class="add-subject-row">
+                <input id="newSubjectInput" placeholder="New Subject..." />
+                <button id="addSubjectBtn">➕</button>
+            </div>
+            <div class="subject-list" id="subjectListContainer">
+                <div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div>
+            </div>
         </div>
 
         <div class="main-panel">
@@ -200,1065 +216,1007 @@
                 <div id="addQuestionArea" style="display:none;" class="add-q-form">
                     <h4>✏️ Add New Question</h4>
                     <div class="form-row"><textarea id="qText" placeholder="Type your question here..."></textarea></div>
-                    <div class="form-row"><input id="optA" placeholder="Option A" /><input id="optB" placeholder="Option B" /><input id="optC" placeholder="Option C" /><input id="optD" placeholder="Option D" /></div>
-                    <div class="form-row"><select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select><input id="qPoints" type="number" placeholder="Points" value="5" min="1" /><button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button></div>
-                    <div class="csv-paste-section">
-                        <h4 style="font-weight:700;">📋 Bulk Paste CSV</h4>
-                        <textarea id="csvPasteArea" placeholder="Paste your CSV here..."></textarea>
-                        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                            <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
-                            <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
-                            <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px;">🗑️ Clear</button>
-                        </div>
+                    <div class="form-row">
+                        <input id="optA" placeholder="Option A" />
+                        <input id="optB" placeholder="Option B" />
+                        <input id="optC" placeholder="Option C" />
+                        <input id="optD" placeholder="Option D" />
                     </div>
-                    <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
+                    <div class="form-row">
+                        <select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+                        <input id="qPoints" type="number" placeholder="Points" value="5" min="1" />
+                        <button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button>
+                    </div>
                 </div>
             </div>
 
             <div id="tabPublish" class="tab-content">
-                <div class="card-panel"><h4>📢 Publish Exams</h4><div id="examToggles" class="toggle-group">Loading...</div>
-                    <div class="schedule-grid">
-                        <label>📅 Start <input type="datetime-local" id="startDateTime" /></label>
-                        <label>📅 End <input type="datetime-local" id="endDateTime" /></label>
-                        <label>⏱️ Duration <input type="number" id="durationMinutes" value="30" min="1" max="180" /></label>
-                    </div>
-                    <div class="flex-actions"><button class="btn-action btn-success" id="publishWithScheduleBtn">📤 Publish</button><button class="btn-action btn-danger" id="stopExamBtn">🛑 Stop</button><button class="btn-action btn-outline" id="clearScheduleBtn">🗑️ Clear</button></div>
+                <div class="card-panel">
+                    <h4>📢 Publish Exams</h4>
+                    <div id="examToggles" class="toggle-group">Loading...</div>
                 </div>
             </div>
 
-            <div id="tabResults" class="tab-content"><div class="card-panel"><h4>📊 Student Results</h4><div id="resultsContainer">No results yet.</div></div></div>
+            <div id="tabResults" class="tab-content">
+                <div class="card-panel">
+                    <h4>📊 Student Results</h4>
+                    <div id="resultsContainer">No results yet.</div>
+                </div>
+            </div>
 
             <div id="tabReports" class="tab-content">
-                <div class="card-panel"><h4>📋 Build Report Cards</h4><p style="color:#64748b; margin-bottom:15px;"><span class="data-protected-badge">🛡️ Data Protected</span> <span class="sync-indicator">🔄 Real-time sync with versioning</span></p>
-                <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button><div id="reportBuilderArea"></div></div>
+                <div class="card-panel">
+                    <h4>📋 Build Report Cards</h4>
+                    <p style="color:#64748b; margin-bottom:15px;">
+                        <span class="data-protected-badge">🛡️ Data Protected</span> 
+                        <span class="sync-indicator">🔄 Real-time sync with versioning</span>
+                    </p>
+                    <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
+                    <div id="reportBuilderArea"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // =============================================================
-    // FIREBASE CONFIG & INITIALIZATION
-    // =============================================================
-    const firebaseConfig = { 
-        apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc", 
-        authDomain: "scholars-a8087.firebaseapp.com", 
-        projectId: "scholars-a8087", 
-        storageBucket: "scholars-a8087.firebasestorage.app", 
-        messagingSenderId: "406251764422", 
-        appId: "1:406251764422:web:28422145b6cb4a6eabf5c7", 
-        measurementId: "G-TEFG74LD7J" 
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    // Enable offline persistence for data protection
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-        if (err.code === 'failed-precondition') {
-            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-        } else if (err.code === 'unimplemented') {
-            console.warn('Browser doesn\'t support persistence');
+// =============================================================
+// FIREBASE INITIALIZATION
+// =============================================================
+const firebaseConfig = { 
+    apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc", 
+    authDomain: "scholars-a8087.firebaseapp.com", 
+    projectId: "scholars-a8087", 
+    storageBucket: "scholars-a8087.firebasestorage.app", 
+    messagingSenderId: "406251764422", 
+    appId: "1:406251764422:web:28422145b6cb4a6eabf5c7", 
+    measurementId: "G-TEFG74LD7J" 
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Enable offline persistence
+db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+    console.warn('Persistence error:', err.code);
+});
+
+// Sign in anonymously
+auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
+
+// =============================================================
+// GLOBAL STATE
+// =============================================================
+const $ = (id) => document.getElementById(id);
+let currentUser = { name: '', class: '' };
+let currentSubjects = [];
+let selectedSubject = null;
+let currentQuestions = [];
+let masterClassList = [];
+let allStudentResults = {};
+let reportStudentsList = [];
+let currentSelectedStudent = null;
+let studentPositions = {};
+let isSaving = false;
+let totalStudentsCount = 0;
+let externalChangeDetected = false;
+let syncUnsubscribe = null;
+
+// =============================================================
+// DATA PROTECTION SYSTEM (VERSIONING)
+// =============================================================
+const DataProtection = {
+    versionCollection: 'reportCardVersions',
+    maxVersions: 10,
+
+    async saveVersion(cls, studentName, data) {
+        try {
+            const versionId = `${cls}_${studentName}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            await db.collection(this.versionCollection).doc(versionId).set({
+                versionId,
+                class: cls,
+                studentName,
+                data: JSON.parse(JSON.stringify(data)),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                teacherName: currentUser.name
+            });
+            
+            // Cleanup old versions
+            const snapshot = await db.collection(this.versionCollection)
+                .where('class', '==', cls)
+                .where('studentName', '==', studentName)
+                .orderBy('timestamp', 'desc')
+                .get();
+            
+            if (snapshot.docs.length > this.maxVersions) {
+                const batch = db.batch();
+                snapshot.docs.slice(this.maxVersions).forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            }
+            
+            return versionId;
+        } catch (error) {
+            console.error('Version save failed:', error);
+            return null;
         }
+    },
+
+    async getVersionHistory(cls, studentName) {
+        try {
+            const snapshot = await db.collection(this.versionCollection)
+                .where('class', '==', cls)
+                .where('studentName', '==', studentName)
+                .orderBy('timestamp', 'desc')
+                .limit(this.maxVersions)
+                .get();
+            
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp?.toDate() || new Date()
+            }));
+        } catch (error) {
+            console.error('Version history failed:', error);
+            return [];
+        }
+    },
+
+    async retrieveVersion(versionId) {
+        const doc = await db.collection(this.versionCollection).doc(versionId).get();
+        if (!doc.exists) throw new Error('Version not found');
+        return doc.data().data;
+    }
+};
+
+// =============================================================
+// UTILITY FUNCTIONS
+// =============================================================
+function showToast(message, type = "success") {
+    const container = document.getElementById('toastContainer');
+    const icons = { success: '✅', error: '❌', warning: '⚠️', sync: '🔄' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => { 
+        toast.classList.add('hide'); 
+        setTimeout(() => toast.remove(), 400); 
+    }, 4000);
+}
+
+function showSyncToast(message) {
+    showToast(message, 'sync');
+}
+
+function updateSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    const text = document.getElementById('syncText');
+    if (!el || !text) return;
+    el.className = 'sync-status ' + status;
+    const labels = { connected: 'Live ✓', connecting: 'Connecting...', disconnected: 'Offline ✗' };
+    text.innerText = labels[status] || 'Live';
+}
+
+function getRemarkText(avg) { 
+    if (avg >= 75) return 'Distinction'; 
+    if (avg >= 70) return 'Excellent'; 
+    if (avg >= 65) return 'Very Good'; 
+    if (avg >= 60) return 'Good'; 
+    if (avg >= 55) return 'Above Avg'; 
+    if (avg >= 50) return 'Average'; 
+    if (avg >= 45) return 'Below Avg'; 
+    if (avg >= 40) return 'Weak Pass'; 
+    return 'Fail'; 
+}
+
+function rebuildSelector() {
+    const selector = document.getElementById('studentSelector');
+    if (!selector) return;
+    const currentVal = selector.value;
+    selector.innerHTML = '<option value="">-- Choose --</option>' + 
+        reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
+}
+
+// =============================================================
+// LOAD MASTER CLASS LIST
+// =============================================================
+async function loadMasterClassList() {
+    try {
+        const doc = await db.collection('classList').doc('allClasses').get();
+        masterClassList = doc.exists ? doc.data().classes || [] : 
+            ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
+        
+        if (!doc.exists) {
+            await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
+        }
+        
+        // Populate login dropdown
+        const loginSelect = document.getElementById('loginClassSelect');
+        loginSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            loginSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+        
+        // Populate sidebar dropdown
+        const sidebarSelect = document.getElementById('classSelect');
+        sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+        
+        if (currentUser.class) {
+            sidebarSelect.value = currentUser.class;
+        }
+        
+        console.log('✅ Classes loaded:', masterClassList.length);
+    } catch (e) {
+        console.error('Failed to load classes:', e);
+        masterClassList = ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
+        
+        // Still populate even if fetch fails
+        const loginSelect = document.getElementById('loginClassSelect');
+        loginSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            loginSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+        
+        const sidebarSelect = document.getElementById('classSelect');
+        sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        masterClassList.forEach(cls => {
+            sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+    }
+}
+
+// =============================================================
+// LOGIN FUNCTIONALITY
+// =============================================================
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    const name = document.getElementById('loginName').value.trim();
+    const cls = document.getElementById('loginClassSelect').value;
+    const err = document.getElementById('loginErr');
+    
+    if (!name) {
+        err.innerText = '⚠️ Please enter your name.';
+        return;
+    }
+    if (!cls) {
+        err.innerText = '⚠️ Please select a class.';
+        return;
+    }
+    
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerText = '⏳ Logging in...';
+    err.innerText = '';
+    
+    try {
+        currentUser = { name, class: cls };
+        
+        // Switch pages
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('dashboardPage').classList.add('active');
+        
+        // Update UI
+        document.getElementById('sidebarName').innerText = name + ' 👨‍🏫';
+        document.getElementById('classSelect').value = cls;
+        
+        showToast(`👋 Welcome, ${name}!`, 'success');
+        
+        // Load data
+        await loadSubjects(cls);
+        
+        // Setup real-time sync
+        setupRealTimeSync(cls);
+        
+    } catch (e) {
+        err.innerText = '❌ Login failed: ' + e.message;
+        console.error('Login error:', e);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = '🚀 Enter Dashboard';
+    }
+});
+
+// Also allow Enter key to login
+document.getElementById('loginName').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+
+// =============================================================
+// LOGOUT
+// =============================================================
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (syncUnsubscribe) {
+        syncUnsubscribe();
+        syncUnsubscribe = null;
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('loginPage').classList.add('active');
+    currentUser = {}; 
+    selectedSubject = null; 
+    reportStudentsList = []; 
+    currentSelectedStudent = null;
+    showToast('👋 Logged out.', 'warning');
+});
+
+// =============================================================
+// CLASS SWITCHING
+// =============================================================
+document.getElementById('switchClassBtn').addEventListener('click', async () => {
+    const newClass = document.getElementById('classSelect').value;
+    if (!newClass) return showToast('⚠️ Select class.', 'error');
+    if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
+    
+    if (syncUnsubscribe) {
+        syncUnsubscribe();
+        syncUnsubscribe = null;
+    }
+    
+    currentUser.class = newClass; 
+    selectedSubject = null; 
+    reportStudentsList = []; 
+    currentSelectedStudent = null;
+    
+    await loadSubjects(newClass);
+    setupRealTimeSync(newClass);
+    
+    showToast(`🔄 Switched to ${newClass}`, 'success');
+});
+
+// =============================================================
+// SUBJECTS MANAGEMENT
+// =============================================================
+async function loadSubjects(cls) {
+    try {
+        const doc = await db.collection('classes').doc(cls).get();
+        currentSubjects = doc.exists ? doc.data().subjects || [] : [];
+        
+        if (!doc.exists || !currentSubjects.length) {
+            currentSubjects = ['English', 'Mathematics', 'Science'];
+            await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
+        }
+        
+        renderSubjects();
+        
+        if (selectedSubject && currentSubjects.includes(selectedSubject)) {
+            selectSubject(selectedSubject);
+        } else {
+            selectedSubject = null;
+            clearQuestionPanel();
+        }
+    } catch (e) {
+        showToast('❌ Error loading subjects.', 'error');
+        console.error(e);
+    }
+}
+
+function renderSubjects() {
+    const container = document.getElementById('subjectListContainer');
+    document.getElementById('subjectCount').innerText = currentSubjects.length;
+    
+    if (!currentSubjects.length) {
+        container.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:20px;">No subjects.</div>';
+        return;
+    }
+    
+    container.innerHTML = currentSubjects.map(sub => 
+        `<div class="subject-item ${selectedSubject===sub?'active':''}" data-sub="${sub}">
+            <span>📘 ${sub}</span>
+            <button class="del-sub" data-sub="${sub}">✕</button>
+        </div>`
+    ).join('');
+    
+    // Subject click handlers
+    container.querySelectorAll('.subject-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.classList.contains('del-sub')) return;
+            selectSubject(el.dataset.sub);
+        });
     });
     
-    auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
-
-    // =============================================================
-    // GLOBAL STATE WITH VERSION CONTROL
-    // =============================================================
-    const $ = (id) => document.getElementById(id);
-    let currentUser = { name: '', class: '' };
-    let currentSubjects = [];
-    let selectedSubject = null;
-    let currentQuestions = [];
-    let masterClassList = [];
-    let allStudentResults = {};
-    let reportStudentsList = [];
-    let currentSelectedStudent = null;
-    let studentPositions = {};
-    let isSaving = false;
-    let totalStudentsCount = 0;
-    
-    // Version control system
-    let currentVersionId = null;
-    let versionHistory = [];
-    let dataVersion = 0;
-    let lastSavedSnapshot = null;
-    
-    // Real-time sync control
-    let syncUnsubscribe = null;
-    let isRealTimeSyncActive = false;
-    let pendingChanges = false;
-    let externalChangeDetected = false;
-
-    // =============================================================
-    // VERSION CONTROL & DATA PROTECTION SYSTEM
-    // =============================================================
-    class DataProtectionManager {
-        constructor() {
-            this.versionCollection = 'reportCardVersions';
-            this.maxVersions = 10; // Keep last 10 versions
-        }
-
-        // Save a version of student data before any modification
-        async saveVersion(cls, studentName, data) {
+    // Delete subject handlers
+    container.querySelectorAll('.del-sub').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const sub = btn.dataset.sub;
+            if (!confirm(`Delete "${sub}"? This will also delete all questions for this subject.`)) return;
+            
             try {
-                const versionId = `${cls}_${studentName}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                const versionData = {
-                    versionId,
-                    class: cls,
-                    studentName,
-                    data: JSON.parse(JSON.stringify(data)), // Deep clone
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    teacherName: currentUser.name,
-                    version: (data.version || 0) + 1
-                };
-
-                await db.collection(this.versionCollection).doc(versionId).set(versionData);
-                
-                // Clean up old versions
-                await this.cleanupOldVersions(cls, studentName);
-                
-                return versionId;
-            } catch (error) {
-                console.error('Failed to save version:', error);
-                return null;
-            }
-        }
-
-        // Get version history for a student
-        async getVersionHistory(cls, studentName) {
-            try {
-                const snapshot = await db.collection(this.versionCollection)
-                    .where('class', '==', cls)
-                    .where('studentName', '==', studentName)
-                    .orderBy('timestamp', 'desc')
-                    .limit(this.maxVersions)
+                // Delete questions
+                const snap = await db.collection('questions')
+                    .where('class','==',currentUser.class)
+                    .where('subject','==',sub)
                     .get();
-
-                return snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    timestamp: doc.data().timestamp?.toDate() || new Date()
-                }));
-            } catch (error) {
-                console.error('Failed to get version history:', error);
-                return [];
-            }
-        }
-
-        // Retrieve a specific version
-        async retrieveVersion(versionId) {
-            try {
-                const doc = await db.collection(this.versionCollection).doc(versionId).get();
-                if (!doc.exists) {
-                    throw new Error('Version not found');
-                }
-                return doc.data().data;
-            } catch (error) {
-                console.error('Failed to retrieve version:', error);
-                throw error;
-            }
-        }
-
-        // Clean up old versions (keep only last maxVersions)
-        async cleanupOldVersions(cls, studentName) {
-            try {
-                const snapshot = await db.collection(this.versionCollection)
-                    .where('class', '==', cls)
-                    .where('studentName', '==', studentName)
-                    .orderBy('timestamp', 'desc')
-                    .get();
-
-                if (snapshot.docs.length > this.maxVersions) {
-                    const batch = db.batch();
-                    const toDelete = snapshot.docs.slice(this.maxVersions);
-                    toDelete.forEach(doc => batch.delete(doc.ref));
-                    await batch.commit();
-                }
-            } catch (error) {
-                console.error('Failed to cleanup versions:', error);
-            }
-        }
-    }
-
-    const dataProtection = new DataProtectionManager();
-
-    // =============================================================
-    // ENHANCED REAL-TIME SYNC WITH CONFLICT DETECTION
-    // =============================================================
-    function setupRealTimeSync(cls) {
-        if (syncUnsubscribe) {
-            syncUnsubscribe();
-            syncUnsubscribe = null;
-        }
-
-        updateSyncStatus('connecting', 'Connecting...');
-
-        syncUnsubscribe = db.collection('reportCards')
-            .where('class', '==', cls)
-            .onSnapshot((snapshot) => {
-                updateSyncStatus('connected', 'Live');
-
-                snapshot.docChanges().forEach(change => {
-                    if (change.type === 'modified' && !isSaving) {
-                        const data = change.doc.data();
-                        const studentName = data.studentName;
-                        
-                        // Check if current student was modified by another teacher
-                        if (studentName === currentSelectedStudent && data.lastModifiedBy !== currentUser.name) {
-                            externalChangeDetected = true;
-                            showConflictBanner(studentName);
-                            showSyncToast(`⚠️ "${studentName}" was modified by ${data.lastModifiedBy || 'another teacher'}`);
-                        }
-                        
-                        // Update student list if needed
-                        if (data.studentName && !reportStudentsList.includes(data.studentName)) {
-                            reportStudentsList.push(data.studentName);
-                            reportStudentsList.sort();
-                            if (document.getElementById('studentSelector')) {
-                                rebuildSelector();
-                            }
-                        }
-                    }
-                    
-                    if (change.type === 'removed' && !isSaving) {
-                        const data = change.doc.data();
-                        if (data.studentName === currentSelectedStudent) {
-                            showSyncToast(`⚠️ "${data.studentName}" was deleted by another teacher. Data backed up in versions.`);
-                        }
-                    }
-                });
-            }, (error) => {
-                console.error('Real-time sync error:', error);
-                updateSyncStatus('disconnected', 'Offline');
-                showToast('⚠️ Real-time sync disconnected. Working offline.', 'error');
                 
-                setTimeout(() => {
-                    setupRealTimeSync(cls);
-                }, 5000);
-            });
-    }
-
-    // =============================================================
-    // CONFLICT DETECTION & RESOLUTION
-    // =============================================================
-    function showConflictBanner(studentName) {
-        const area = document.getElementById('reportBuilderArea');
-        if (!area) return;
-        
-        const existingBanner = document.getElementById('conflictBanner');
-        if (existingBanner) existingBanner.remove();
-        
-        const banner = document.createElement('div');
-        banner.id = 'conflictBanner';
-        banner.className = 'conflict-banner';
-        banner.style.display = 'block';
-        banner.innerHTML = `
-            ⚠️ <strong>External Change Detected!</strong> "${studentName}" was modified by another teacher. 
-            <button onclick="resolveConflict('${studentName}')" style="margin-left:10px; padding:4px 12px; background:#dc2626; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700;">Keep Mine</button>
-            <button onclick="loadLatestVersion('${studentName}')" style="margin-left:6px; padding:4px 12px; background:#4f46e5; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:700;">Accept External</button>
-        `;
-        
-        const workArea = document.getElementById('studentWorkArea');
-        if (workArea) {
-            workArea.insertBefore(banner, workArea.firstChild);
-        }
-    }
-
-    async function resolveConflict(studentName) {
-        externalChangeDetected = false;
-        const banner = document.getElementById('conflictBanner');
-        if (banner) banner.remove();
-        showToast('✅ Your changes preserved.', 'success');
-    }
-
-    async function loadLatestVersion(studentName) {
-        externalChangeDetected = false;
-        const banner = document.getElementById('conflictBanner');
-        if (banner) banner.remove();
-        await loadStudentData(studentName, currentUser.class);
-        showToast('✅ External changes loaded.', 'success');
-    }
-
-    // =============================================================
-    // ENHANCED SAVE WITH VERSIONING
-    // =============================================================
-    async function saveCurrentStudent(cls) {
-        if (!currentSelectedStudent || isSaving) return null;
-        
-        isSaving = true;
-        const si = document.getElementById('saveIndicator');
-        const sb = document.getElementById('saveStatusBadge');
-        
-        try {
-            // Build current data snapshot
-            const currentData = buildStudentDataObject(cls);
-            
-            // Save version before update if data exists
-            const existingDoc = await db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`).get();
-            if (existingDoc.exists) {
-                const oldData = existingDoc.data();
-                await dataProtection.saveVersion(cls, currentSelectedStudent, oldData);
-                lastSavedSnapshot = oldData;
-            }
-            
-            // Save current data with version increment
-            currentData.version = (existingDoc.exists ? (existingDoc.data().version || 0) : 0) + 1;
-            currentData.lastModifiedBy = currentUser.name;
-            currentData.lastModifiedAt = firebase.firestore.FieldValue.serverTimestamp();
-            currentData.totalStudents = reportStudentsList.length || totalStudentsCount;
-            
-            // Use transaction for atomic save
-            await db.runTransaction(async (transaction) => {
-                const docRef = db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`);
-                const doc = await transaction.get(docRef);
+                const batch = db.batch();
+                snap.forEach(d => batch.delete(d.ref));
+                await batch.commit();
                 
-                // Check for conflicts
-                if (doc.exists && externalChangeDetected) {
-                    const serverData = doc.data();
-                    if (serverData.lastModifiedBy !== currentUser.name) {
-                        // Conflict detected, save as new version
-                        currentData.conflictResolution = {
-                            resolvedAt: new Date(),
-                            previousVersion: serverData.version,
-                            resolvedBy: currentUser.name
-                        };
-                    }
+                // Update subjects list
+                currentSubjects = currentSubjects.filter(s => s !== sub);
+                await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
+                
+                if (selectedSubject === sub) { 
+                    selectedSubject = null; 
+                    clearQuestionPanel(); 
                 }
                 
-                transaction.set(docRef, currentData, { merge: true });
-            });
-            
-            externalChangeDetected = false;
-            
-            if (si) { 
-                si.innerText = `✅ Saved v${currentData.version} at ${new Date().toLocaleTimeString()}`; 
-                si.className = 'save-indicator-success';
+                renderSubjects();
+                showToast(`🗑️ Deleted "${sub}".`, 'warning');
+            } catch (e) {
+                showToast('❌ Delete failed.', 'error');
             }
-            if (sb) { 
-                sb.style.background = '#10b981'; 
-                sb.innerText = `💾 v${currentData.version}`;
-            }
-            
-            return currentData.version;
-            
-        } catch (e) { 
-            console.error('Save error:', e);
-            if (si) { 
-                si.innerText = '❌ Save failed: ' + e.message; 
-                si.className = 'save-indicator-error';
-            } 
-            showToast('❌ Save failed. Data preserved in local state.', 'error');
-            return null;
-        } finally {
-            isSaving = false;
-        }
-    }
+        });
+    });
+}
 
-    function buildStudentDataObject(cls) {
-        const subjectsData = {};
-        
-        currentSubjects.forEach(sub => {
-            const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
-            const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
-            const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
-            const scores = [f, s, t].filter(v => v > 0);
-            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-            const remark = getRemarkText(avg);
-            
-            subjectsData[sub] = {
-                firstTerm: f,
-                secondTerm: s,
-                thirdTerm: t,
-                average: avg,
-                remark: remark
-            };
-        });
-        
-        // Merge with existing exam results
-        if (allStudentResults[currentSelectedStudent]) {
-            Object.keys(allStudentResults[currentSelectedStudent]).forEach(sub => {
-                if (currentSubjects.includes(sub)) {
-                    if (!subjectsData[sub]) {
-                        subjectsData[sub] = { firstTerm: 0, secondTerm: 0, thirdTerm: 0, average: 0, remark: '' };
-                    }
-                    if (!subjectsData[sub].thirdTerm) {
-                        subjectsData[sub].thirdTerm = allStudentResults[currentSelectedStudent][sub];
-                        const scores = [subjectsData[sub].firstTerm, subjectsData[sub].secondTerm, subjectsData[sub].thirdTerm].filter(v => v > 0);
-                        subjectsData[sub].average = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-                        subjectsData[sub].remark = getRemarkText(subjectsData[sub].average);
-                    }
-                }
-            });
-        }
-        
-        const affective = {};
-        document.querySelectorAll('.affective-select').forEach(el => {
-            affective[el.dataset.trait] = parseInt(el.value) || 3;
-        });
-        
-        const psychomotor = {};
-        document.querySelectorAll('.psychomotor-select').forEach(el => {
-            psychomotor[el.dataset.skill] = parseInt(el.value) || 3;
-        });
-        
-        const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
-        
-        return {
-            class: cls,
-            studentName: currentSelectedStudent,
-            term: 'Third',
-            session: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
-            schoolName: "COVENANT ARROWS' MODEL SCHOOL",
-            teacherName: currentUser.name,
-            dateOfIssue: new Date().toISOString().slice(0, 10),
-            category: 'Day',
-            attendance: { daysOpened: 90, daysPresent: 85, daysAbsent: 5 },
-            subjects: subjectsData,
-            affectiveDomain: affective,
-            psychomotorDomain: psychomotor,
-            extracurriculars: clubs,
-            classTeacherCommentary: document.querySelector('.commentary-input')?.value || '',
-            principalRemarks: document.querySelector('.principal-input')?.value || '',
-            promotionStatus: document.querySelector('.promotion-select')?.value || '',
-            totalStudents: reportStudentsList.length || totalStudentsCount,
-            updatedAt: new Date()
-        };
-    }
+document.getElementById('addSubjectBtn').addEventListener('click', async () => {
+    const val = document.getElementById('newSubjectInput').value.trim();
+    if (!val) return showToast('⚠️ Enter name.', 'warning');
+    if (currentSubjects.includes(val)) return showToast('⚠️ Already exists.', 'warning');
+    
+    currentSubjects = [...currentSubjects, val];
+    await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
+    document.getElementById('newSubjectInput').value = '';
+    renderSubjects();
+    showToast(`✅ "${val}" added!`, 'success');
+});
 
-    // =============================================================
-    // VERSION RETRIEVAL UI
-    // =============================================================
-    async function showVersionHistory(studentName) {
-        const history = await dataProtection.getVersionHistory(currentUser.class, studentName);
-        versionHistory = history;
-        
-        const existingPanel = document.getElementById('versionHistoryPanel');
-        if (existingPanel) existingPanel.remove();
-        
-        const panel = document.createElement('div');
-        panel.id = 'versionHistoryPanel';
-        panel.className = 'version-history-panel';
-        panel.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <strong>📜 Version History for ${studentName}</strong>
-                <button onclick="document.getElementById('versionHistoryPanel').remove()" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
-            </div>
-            <div id="versionList" style="max-height:300px; overflow-y:auto;">
-                ${history.length === 0 ? '<p style="color:#64748b; text-align:center;">No previous versions found.</p>' : ''}
-            </div>
-            <div style="margin-top:10px; display:flex; gap:8px;">
-                <button id="retrieveSelectedVersionBtn" class="retrieve-btn" disabled>🔄 Retrieve Selected Version</button>
-                <button id="cancelRetrieveBtn" class="btn-outline" style="padding:8px 16px; border-radius:60px;">Cancel</button>
-            </div>
-        `;
-        
-        const workArea = document.getElementById('studentWorkArea');
-        if (workArea) {
-            workArea.appendChild(panel);
-        }
-        
-        // Render version items
-        const versionList = document.getElementById('versionList');
-        history.forEach((version, index) => {
-            const item = document.createElement('div');
-            item.className = 'version-item';
-            item.dataset.versionId = version.versionId;
-            item.innerHTML = `
-                <div>
-                    <div style="font-weight:700;">Version ${version.version || index + 1}</div>
-                    <div style="font-size:11px; color:#64748b;">
-                        Saved by ${version.teacherName || 'Unknown'} · 
-                        ${version.timestamp?.toLocaleString() || 'Unknown date'}
-                    </div>
+// =============================================================
+// QUESTIONS MANAGEMENT
+// =============================================================
+async function selectSubject(subject) {
+    selectedSubject = subject;
+    renderSubjects();
+    document.getElementById('selectedSubjectName').innerText = subject;
+    document.getElementById('addQuestionArea').style.display = 'block';
+    document.getElementById('questionsContainer').innerHTML = '<p>⏳ Loading...</p>';
+    
+    const snap = await db.collection('questions')
+        .where('class','==',currentUser.class)
+        .where('subject','==',subject.trim())
+        .get();
+    
+    currentQuestions = [];
+    snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
+    renderQuestions();
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+    const totalPoints = currentQuestions.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
+    document.getElementById('totalPointsBadge').innerHTML = `⭐ Total Points: ${totalPoints}`;
+    
+    if (!currentQuestions.length) {
+        container.innerHTML = '<div class="empty-state"><h3>📭 No questions</h3></div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="question-grid">' + 
+        currentQuestions.map((q, idx) => {
+            const opts = q.options ? q.options.join(' | ') : 'N/A';
+            return `<div class="q-item">
+                <div class="q-text">${idx+1}. ${q.question||''}</div>
+                <div class="q-meta">
+                    <span>${opts}</span>
+                    <span class="points-badge">⭐ ${q.points||5}</span>
+                    <span>✅ ${q.correct||'?'}</span>
+                    <button class="q-del" data-id="${q.id}">✕</button>
                 </div>
-                <div style="color:#4f46e5; font-weight:700;">v${version.version || index + 1}</div>
-            `;
-            
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.version-item').forEach(i => i.classList.remove('selected'));
-                item.classList.add('selected');
-                document.getElementById('retrieveSelectedVersionBtn').disabled = false;
-            });
-            
-            versionList.appendChild(item);
+            </div>`;
+        }).join('') + '</div>';
+    
+    container.querySelectorAll('.q-del').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('Delete this question?')) return;
+            await db.collection('questions').doc(btn.dataset.id).delete();
+            currentQuestions = currentQuestions.filter(q => q.id !== btn.dataset.id);
+            renderQuestions();
         });
-        
-        // Retrieve button handler
-        document.getElementById('retrieveSelectedVersionBtn').addEventListener('click', async () => {
-            const selected = document.querySelector('.version-item.selected');
-            if (!selected) return;
-            
-            const versionId = selected.dataset.versionId;
-            await retrieveVersion(versionId, studentName);
-        });
-        
-        document.getElementById('cancelRetrieveBtn').addEventListener('click', () => {
-            panel.remove();
-        });
-    }
+    });
+}
 
-    async function retrieveVersion(versionId, studentName) {
-        if (!confirm(`Restore this version for ${studentName}? Current unsaved changes will be lost.`)) return;
+function clearQuestionPanel() {
+    document.getElementById('selectedSubjectName').innerText = 'Select a Subject';
+    document.getElementById('totalPointsBadge').innerHTML = '⭐ Total Points: 0';
+    document.getElementById('questionsContainer').innerHTML = '<div class="empty-state"><h3>👈 Select a subject</h3></div>';
+    document.getElementById('addQuestionArea').style.display = 'none';
+}
+
+document.getElementById('addQuestionBtn').addEventListener('click', async () => {
+    if (!selectedSubject) return showToast('⚠️ Select subject.', 'warning');
+    
+    const question = document.getElementById('qText').value.trim();
+    const options = [
+        document.getElementById('optA').value.trim(),
+        document.getElementById('optB').value.trim(),
+        document.getElementById('optC').value.trim(),
+        document.getElementById('optD').value.trim()
+    ];
+    
+    if (!question || options.some(o => !o)) return showToast('⚠️ Fill all fields.', 'error');
+    
+    await db.collection('questions').add({
+        class: currentUser.class,
+        subject: selectedSubject.trim(),
+        question,
+        options,
+        correct: document.getElementById('correctAns').value,
+        points: parseInt(document.getElementById('qPoints').value) || 5,
+        createdAt: new Date()
+    });
+    
+    document.getElementById('qText').value = '';
+    ['optA','optB','optC','optD'].forEach(id => document.getElementById(id).value = '');
+    
+    await selectSubject(selectedSubject);
+    showToast('✅ Question added!', 'success');
+});
+
+// =============================================================
+// REPORT BUILDER
+// =============================================================
+document.getElementById('buildReportBtn').addEventListener('click', async () => {
+    const cls = currentUser.class;
+    const area = document.getElementById('reportBuilderArea');
+    area.innerHTML = '<div class="card-panel" style="text-align:center; padding:30px;">⏳ Loading students...</div>';
+    
+    try {
+        const resultsSnap = await db.collection('results').where('class','==',cls).get();
         
-        try {
-            const data = await dataProtection.retrieveVersion(versionId);
-            
-            // Save current state as version before restoring
-            await saveCurrentStudent(currentUser.class);
-            
-            // Restore the data
-            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).set({
-                ...data,
-                restoredFromVersion: versionId,
-                restoredAt: new Date(),
-                restoredBy: currentUser.name
-            });
-            
-            // Reload the student
-            await loadStudentData(studentName, currentUser.class);
-            
-            // Remove version panel
-            const panel = document.getElementById('versionHistoryPanel');
-            if (panel) panel.remove();
-            
-            showToast(`✅ Version restored successfully for ${studentName}`, 'success');
-        } catch (error) {
-            showToast('❌ Failed to restore version: ' + error.message, 'error');
+        // Collect unique student names
+        const names = new Set();
+        resultsSnap.forEach(d => {
+            const name = (d.data().studentName || '').trim();
+            if (name && name.split(/\s+/).length >= 2) names.add(name);
+        });
+        
+        reportStudentsList = [...names].sort();
+        
+        if (reportStudentsList.length === 0) {
+            area.innerHTML = '<div class="card-panel" style="text-align:center; padding:40px;">📭 No students found. Add students manually.</div>';
+            buildReportBuilderUI(cls);
+            return;
         }
+        
+        // Get existing report cards
+        const cardsSnap = await db.collection('reportCards').where('class','==',cls).get();
+        cardsSnap.forEach(d => {
+            const name = d.data().studentName;
+            if (name && !reportStudentsList.includes(name)) {
+                reportStudentsList.push(name);
+            }
+        });
+        reportStudentsList.sort();
+        
+        totalStudentsCount = reportStudentsList.length;
+        buildReportBuilderUI(cls);
+        showToast(`✅ ${reportStudentsList.length} students loaded.`, 'success');
+        
+    } catch (e) {
+        console.error('Build report error:', e);
+        area.innerHTML = `<div class="card-panel" style="text-align:center; padding:40px;">❌ Error: ${e.message}</div>`;
     }
+});
 
-    // =============================================================
-    // ENHANCED REPORT BUILDER WITH EDITABLE FIELDS
-    // =============================================================
-    function buildReportBuilderUI(cls) {
-        const area = $('reportBuilderArea');
-        let html = `
+function buildReportBuilderUI(cls) {
+    const area = document.getElementById('reportBuilderArea');
+    area.innerHTML = `
         <div class="report-builder-container">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                 <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span class="data-protected-badge">🛡️ Auto-Versioning</span>
-                    <span class="auto-save-badge" id="saveStatusBadge">💾 Ready</span>
-                </div>
+                <span class="data-protected-badge">🛡️ Auto-Versioning</span>
             </div>
-            <p style="color:#64748b; font-size:13px; margin-bottom:10px;">📊 <strong>${reportStudentsList.length}</strong> Students | 📚 <strong>${currentSubjects.length}</strong> Subjects | 🔄 Real-time sync with versioning</p>
-
-            <div class="merge-section" id="mergeSection">
-                <div class="merge-title">🔀 Merge & Manage Students</div>
-                <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge. All data is preserved with versioning.</p>
-                <div id="mergeStudentList" style="max-height:200px; overflow-y:auto; margin-bottom:8px;">
-                    ${reportStudentsList.map(s => `
-                        <label class="merge-student-checkbox">
-                            <input type="checkbox" class="merge-check" value="${s}" /> ${s}
-                        </label>
-                    `).join('')}
-                </div>
-                <select class="merge-target-select" id="mergeTargetSelect" style="display:none;">
-                    <option value="">-- Choose which name to keep --</option>
-                </select>
-                <button class="merge-btn" id="executeMergeBtn" disabled>🔀 Merge Selected Students</button>
-                <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
-            </div>
-
+            
+            <!-- STUDENT SELECTOR -->
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                <label class="section-label">👤 Student Management:</label>
-                
-                <!-- Editable Student Name -->
                 <div class="editable-field" style="margin-bottom:10px;">
                     <label style="font-weight:600; font-size:13px; min-width:80px;">Student:</label>
                     <select id="studentSelector" style="flex:1; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
                         <option value="">-- Choose --</option>
                         ${reportStudentsList.map(s => `<option value="${s}">${s}</option>`).join('')}
                     </select>
-                    <button id="editStudentNameBtn" class="btn-edit" style="padding:8px 12px; white-space:nowrap;" title="Edit student name">✏️</button>
+                    <button id="editStudentNameBtn" class="btn-edit" style="padding:8px 12px; white-space:nowrap;">✏️ Rename</button>
                 </div>
-                
-                <!-- Editable Subject Names -->
-                <div style="margin-top:10px;">
-                    <label style="font-weight:600; font-size:13px; display:block; margin-bottom:6px;">📚 Edit Subject Names:</label>
-                    <div id="editableSubjectsList" style="display:flex; flex-wrap:wrap; gap:6px;">
-                        ${currentSubjects.map(sub => `
-                            <div class="editable-field" style="background:white; padding:6px 10px; border-radius:30px; border:1px solid #e2e8f0;">
-                                <input type="text" value="${sub}" data-original="${sub}" class="subject-edit-input" style="border:none; background:transparent; font-size:12px; width:auto; min-width:60px;" />
-                                <button class="btn-save-edit save-subject-edit" data-original="${sub}" style="font-size:11px; padding:4px 8px;">💾</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                    <input id="newStudentInput" placeholder="➕ Add student manually..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
-                    <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
+                    <input id="newStudentInput" placeholder="➕ Add student..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
+                    <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer;">➕ Add</button>
                 </div>
-                <div id="nameSuggestions" style="margin-top:8px;"></div>
             </div>
-
+            
+            <!-- STUDENT WORK AREA -->
             <div id="studentWorkArea" style="display:none;">
-                <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
-                    <div class="photo-container-small" style="width:90px; height:90px;"><span style="font-size:40px;">👤</span><img class="photo-img-small" src="" style="display:none; width:100%; height:100%; object-fit:cover;" /></div>
-                    <div style="flex:1; min-width:150px;">
+                <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px;">
+                    <div>
                         <div style="font-size:18px; font-weight:800;" id="selectedStudentName">--</div>
                         <div style="font-size:13px; color:#64748b;">${cls} | ${currentUser.name}</div>
-                        <div style="display:flex; gap:6px; margin-top:6px;">
-                            <button id="uploadPhotoBtn" style="padding:6px 14px; background:white; border:2px solid #4f46e5; color:#4f46e5; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📷 Photo</button>
-                            <button id="viewVersionsBtn" style="padding:6px 14px; background:white; border:2px solid #f59e0b; color:#92400e; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📜 Versions</button>
-                        </div>
+                        <button id="viewVersionsBtn" style="margin-top:6px; padding:6px 14px; background:white; border:2px solid #f59e0b; color:#92400e; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📜 Version History</button>
                     </div>
                 </div>
-
-                <div class="position-card" id="positionDisplay">
-                    <div class="pos-label">Overall Position</div>
-                    <div class="pos-number" id="positionNumber">--</div>
-                    <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
-                    <div class="pos-percentage" id="positionPercentage"></div>
-                </div>
-
+                
+                <!-- SUBJECT SCORES TABLE -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">📖 Subject Scores</div>
-                    <div style="overflow-x:auto;"><table style="width:100%; font-size:13px; border-collapse:collapse;">
-                        <thead><tr style="background:#f1f5f9;"><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px; width:60px;">1st</th><th style="padding:8px; width:60px;">2nd</th><th style="padding:8px; width:60px;">3rd</th><th style="padding:8px; width:60px;">Avg%</th><th style="padding:8px;">Remark</th></tr></thead>
-                        <tbody>${currentSubjects.map(sub => `<tr>
-                            <td style="padding:6px 10px; font-weight:600;">${sub}</td>
-                            <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                            <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
-                            <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fefce8; font-weight:700;" /></td>
-                            <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
-                            <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
-                        </tr>`).join('')}</tbody>
-                    </table></div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⭐ Affective Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Attentiveness','Punctuality','Neatness','Honesty','Respectfulness','Diligence','Leadership','Self-Control','Cooperation','Politeness','Obedience'].map(t => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${t}</span><select class="affective-select" data-trait="${t}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; font-size:13px; border-collapse:collapse;">
+                            <thead><tr style="background:#f1f5f9;">
+                                <th style="padding:8px; text-align:left;">Subject</th>
+                                <th style="padding:8px; width:60px;">1st</th>
+                                <th style="padding:8px; width:60px;">2nd</th>
+                                <th style="padding:8px; width:60px;">3rd</th>
+                                <th style="padding:8px; width:60px;">Avg%</th>
+                                <th style="padding:8px;">Remark</th>
+                            </tr></thead>
+                            <tbody>
+                                ${currentSubjects.map(sub => `<tr>
+                                    <td style="padding:6px 10px; font-weight:600;">${sub}</td>
+                                    <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
+                                    <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px;" /></td>
+                                    <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" style="width:50px; padding:5px; text-align:center; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; background:#fefce8; font-weight:700;" /></td>
+                                    <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
+                                    <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">🤸 Psychomotor Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Handwriting','Drawing','Sports','Crafts','Music','Verbal','Fitness','Creative'].map(s => `<div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;"><span style="font-size:11px; font-weight:600;">${s}</span><select class="psychomotor-select" data-skill="${s}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>`).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⚽ Clubs</div>
-                    <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `<label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; cursor:pointer;"><input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}</label>`).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">📝 Teacher's Comment</div><textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea></div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">👨‍💼 Principal's Remark</div><textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea></div>
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;"><div class="section-label">📈 Promotion</div><select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;"><option value="">-- Select --</option><option value="Promoted">✅ Promoted</option><option value="Not Promoted">❌ Not Promoted</option><option value="Probation">⚠️ Probation</option></select></div>
-
+                
+                <!-- SAVE BUTTON -->
                 <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
-                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
-                    <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
+                    <button class="btn-action btn-success" id="saveStudentBtn">💾 Save Now</button>
+                    <button class="btn-action btn-outline" id="nextStudentBtn">Next ➡</button>
                 </div>
+                <p id="saveIndicator" style="margin-top:8px; font-size:12px; color:#64748b;"></p>
             </div>
+        </div>
+    `;
+    
+    attachBuilderEvents(cls);
+}
 
-            <div style="margin-top:20px; padding-top:15px; border-top:2px solid #e2e8f0; display:flex; flex-wrap:wrap; gap:8px;">
-                <button class="btn-action btn-primary" id="calculatePositionsBtn" style="font-size:13px; padding:10px 20px;">🏆 Calculate Positions</button>
-                <button class="btn-action btn-warning" id="pushAllAdminBtn" style="font-size:13px; padding:10px 20px;">📤 Push All</button>
-                <button class="btn-action btn-outline" id="printAllBtn" style="font-size:13px; padding:10px 20px;">🖨️ Print</button>
-            </div>
-            <p id="saveIndicator" style="margin-top:8px; font-size:12px; color:#64748b;"></p>
-        </div>`;
-        area.innerHTML = html;
-        attachBuilderEvents(cls);
-    }
-
-    // =============================================================
-    // ENHANCED BUILDER EVENTS WITH EDITABLE FIELDS
-    // =============================================================
-    function attachBuilderEvents(cls) {
-        // Edit student name functionality
-        const editStudentNameBtn = document.getElementById('editStudentNameBtn');
-        const studentSelector = document.getElementById('studentSelector');
-        
-        if (editStudentNameBtn && studentSelector) {
-            editStudentNameBtn.addEventListener('click', async () => {
-                const currentName = studentSelector.value;
-                if (!currentName) {
-                    showToast('⚠️ Select a student first.', 'warning');
-                    return;
-                }
-                
-                const newName = prompt('Enter new name for student:', currentName);
-                if (!newName || newName === currentName) return;
-                
-                if (!newName.trim() || newName.split(/\s+/).length < 2) {
-                    showToast('⚠️ First AND last name required.', 'warning');
-                    return;
-                }
-                
-                await renameStudent(currentName, newName.trim(), cls);
-            });
+function attachBuilderEvents(cls) {
+    const studentSelector = document.getElementById('studentSelector');
+    const workArea = document.getElementById('studentWorkArea');
+    
+    // Student selection
+    studentSelector.addEventListener('change', async () => {
+        if (currentSelectedStudent && currentSelectedStudent !== studentSelector.value) {
+            await saveCurrentStudent(cls);
         }
         
-        // Edit subject names functionality
-        document.querySelectorAll('.save-subject-edit').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const input = btn.parentElement.querySelector('.subject-edit-input');
-                const originalName = btn.dataset.original;
-                const newName = input.value.trim();
-                
-                if (!newName || newName === originalName) return;
-                
-                await renameSubject(originalName, newName, cls);
+        currentSelectedStudent = studentSelector.value;
+        
+        if (!currentSelectedStudent) {
+            workArea.style.display = 'none';
+            return;
+        }
+        
+        workArea.style.display = 'block';
+        document.getElementById('selectedStudentName').innerText = currentSelectedStudent;
+        await loadStudentData(currentSelectedStudent, cls);
+    });
+    
+    // Add student
+    document.getElementById('addStudentBtn').addEventListener('click', async () => {
+        const name = document.getElementById('newStudentInput').value.trim();
+        if (!name) return showToast('⚠️ Enter name.', 'warning');
+        if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
+        
+        if (!reportStudentsList.includes(name)) {
+            reportStudentsList.push(name);
+            reportStudentsList.sort();
+        }
+        
+        rebuildSelector();
+        studentSelector.value = name;
+        document.getElementById('newStudentInput').value = '';
+        studentSelector.dispatchEvent(new Event('change'));
+        showToast(`✅ "${name}" added!`, 'success');
+    });
+    
+    // Rename student
+    document.getElementById('editStudentNameBtn').addEventListener('click', async () => {
+        const oldName = studentSelector.value;
+        if (!oldName) return showToast('⚠️ Select student first.', 'warning');
+        
+        const newName = prompt('Enter new name:', oldName);
+        if (!newName || newName === oldName) return;
+        if (newName.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
+        
+        await renameStudent(oldName, newName.trim(), cls);
+    });
+    
+    // Version history
+    document.getElementById('viewVersionsBtn').addEventListener('click', async () => {
+        if (!currentSelectedStudent) return;
+        await showVersionHistory(currentSelectedStudent);
+    });
+    
+    // Auto-calculate scores
+    document.querySelectorAll('.score-input').forEach(input => {
+        input.addEventListener('input', () => calculateStudentScores());
+    });
+    
+    // Save button
+    document.getElementById('saveStudentBtn').addEventListener('click', async () => {
+        await saveCurrentStudent(cls);
+        showToast('✅ Saved!', 'success');
+    });
+    
+    // Next student
+    document.getElementById('nextStudentBtn').addEventListener('click', async () => {
+        await saveCurrentStudent(cls);
+        const idx = reportStudentsList.indexOf(currentSelectedStudent);
+        if (idx < reportStudentsList.length - 1) {
+            studentSelector.value = reportStudentsList[idx + 1];
+            studentSelector.dispatchEvent(new Event('change'));
+        } else {
+            showToast('✅ Last student!', 'warning');
+        }
+    });
+}
+
+// =============================================================
+// STUDENT DATA OPERATIONS
+// =============================================================
+async function loadStudentData(student, cls) {
+    const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
+    
+    // Clear all inputs
+    document.querySelectorAll('.score-input').forEach(el => el.value = '');
+    
+    if (doc.exists) {
+        const data = doc.data();
+        if (data.subjects) {
+            Object.keys(data.subjects).forEach(sub => {
+                const sd = data.subjects[sub];
+                const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
+                if (fi) fi.value = sd.firstTerm || '';
+                const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
+                if (si) si.value = sd.secondTerm || '';
+                const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
+                if (ti) ti.value = sd.thirdTerm || '';
             });
+        }
+    }
+    
+    calculateStudentScores();
+}
+
+function calculateStudentScores() {
+    currentSubjects.forEach(sub => {
+        const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
+        const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
+        const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
+        const scores = [f, s, t].filter(v => v > 0);
+        const avg = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+        
+        const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`);
+        if (ac) ac.innerText = avg > 0 ? avg.toFixed(1) + '%' : '--';
+        
+        const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`);
+        if (rc) rc.innerText = avg > 0 ? getRemarkText(avg) : '--';
+    });
+}
+
+async function saveCurrentStudent(cls) {
+    if (!currentSelectedStudent || isSaving) return;
+    
+    isSaving = true;
+    const si = document.getElementById('saveIndicator');
+    
+    try {
+        // Build data
+        const subjectsData = {};
+        currentSubjects.forEach(sub => {
+            const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
+            const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
+            const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
+            const scores = [f, s, t].filter(v => v > 0);
+            const avg = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+            
+            subjectsData[sub] = {
+                firstTerm: f,
+                secondTerm: s,
+                thirdTerm: t,
+                average: avg,
+                remark: getRemarkText(avg)
+            };
         });
         
-        // Version history button
-        const viewVersionsBtn = document.getElementById('viewVersionsBtn');
-        if (viewVersionsBtn) {
-            viewVersionsBtn.addEventListener('click', () => {
-                if (!currentSelectedStudent) {
-                    showToast('⚠️ Select a student first.', 'warning');
-                    return;
-                }
-                showVersionHistory(currentSelectedStudent);
-            });
+        // Save version of existing data
+        const existingDoc = await db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`).get();
+        if (existingDoc.exists) {
+            await DataProtection.saveVersion(cls, currentSelectedStudent, existingDoc.data());
         }
         
-        // Rest of existing event handlers...
-        attachExistingEvents(cls);
-    }
-
-    // =============================================================
-    // RENAME FUNCTIONS WITH DATA PRESERVATION
-    // =============================================================
-    async function renameStudent(oldName, newName, cls) {
-        if (!confirm(`Rename "${oldName}" to "${newName}"? All data will be preserved.`)) return;
+        // Save current data
+        await db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`).set({
+            class: cls,
+            studentName: currentSelectedStudent,
+            term: 'Third',
+            session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
+            teacherName: currentUser.name,
+            subjects: subjectsData,
+            totalStudents: reportStudentsList.length,
+            updatedAt: new Date(),
+            lastModifiedBy: currentUser.name
+        }, { merge: true });
         
-        try {
-            // Save current data with versioning
-            await saveCurrentStudent(cls);
-            
-            // Get all data for old student
-            const oldDoc = await db.collection('reportCards').doc(`${cls}_${oldName}`).get();
-            const oldData = oldDoc.exists ? oldDoc.data() : {};
-            
-            // Save version of old name
-            await dataProtection.saveVersion(cls, oldName, oldData);
-            
-            // Create/update new student document
+        if (si) {
+            si.innerText = `✅ Saved at ${new Date().toLocaleTimeString()}`;
+            si.style.color = '#059669';
+        }
+        
+    } catch (e) {
+        console.error('Save error:', e);
+        if (si) {
+            si.innerText = '❌ ' + e.message;
+            si.style.color = '#dc2626';
+        }
+    } finally {
+        isSaving = false;
+    }
+}
+
+// =============================================================
+// RENAME & VERSION FUNCTIONS
+// =============================================================
+async function renameStudent(oldName, newName, cls) {
+    if (!confirm(`Rename "${oldName}" to "${newName}"?`)) return;
+    
+    try {
+        await saveCurrentStudent(cls);
+        
+        const oldDoc = await db.collection('reportCards').doc(`${cls}_${oldName}`).get();
+        if (oldDoc.exists) {
+            await DataProtection.saveVersion(cls, oldName, oldDoc.data());
             await db.collection('reportCards').doc(`${cls}_${newName}`).set({
-                ...oldData,
+                ...oldDoc.data(),
                 studentName: newName,
                 previousName: oldName,
-                renamedAt: new Date(),
-                renamedBy: currentUser.name
-            }, { merge: true });
-            
-            // Update results documents
-            const resultsSnap = await db.collection('results')
-                .where('class', '==', cls)
-                .where('studentName', '==', oldName)
-                .get();
-            
-            const batch = db.batch();
-            resultsSnap.forEach(doc => {
-                batch.update(doc.ref, { studentName: newName });
+                renamedAt: new Date()
             });
-            await batch.commit();
-            
-            // Update photo document
-            const photoDoc = await db.collection('studentPhotos').doc(`${cls}_${oldName}`).get();
-            if (photoDoc.exists) {
-                await db.collection('studentPhotos').doc(`${cls}_${newName}`).set(photoDoc.data());
-                await db.collection('studentPhotos').doc(`${cls}_${oldName}`).delete();
-            }
-            
-            // Update local state
-            const index = reportStudentsList.indexOf(oldName);
-            if (index > -1) {
-                reportStudentsList[index] = newName;
-                reportStudentsList.sort();
-            }
-            
-            if (currentSelectedStudent === oldName) {
-                currentSelectedStudent = newName;
-            }
-            
-            // Rebuild UI
-            buildReportBuilderUI(cls);
-            studentSelector.value = newName;
-            studentSelector.dispatchEvent(new Event('change'));
-            
-            showToast(`✅ Renamed "${oldName}" to "${newName}". All data preserved.`, 'success');
-            
-        } catch (error) {
-            console.error('Rename error:', error);
-            showToast('❌ Rename failed: ' + error.message, 'error');
+            await db.collection('reportCards').doc(`${cls}_${oldName}`).delete();
         }
-    }
-
-    async function renameSubject(oldName, newName, cls) {
-        if (!confirm(`Rename subject "${oldName}" to "${newName}"? All scores will be preserved.`)) return;
         
-        try {
-            // Update subjects list
-            const index = currentSubjects.indexOf(oldName);
-            if (index > -1) {
-                currentSubjects[index] = newName;
-            }
-            
-            // Update class document
-            await db.collection('classes').doc(cls).update({ subjects: currentSubjects });
-            
-            // Update all student report cards with new subject name
-            const studentsSnap = await db.collection('reportCards')
-                .where('class', '==', cls)
-                .get();
-            
-            const batch = db.batch();
-            studentsSnap.forEach(doc => {
-                const data = doc.data();
-                if (data.subjects && data.subjects[oldName]) {
-                    const updatedSubjects = { ...data.subjects };
-                    updatedSubjects[newName] = updatedSubjects[oldName];
-                    delete updatedSubjects[oldName];
-                    batch.update(doc.ref, { subjects: updatedSubjects });
-                }
-            });
-            await batch.commit();
-            
-            // Update questions
-            const questionsSnap = await db.collection('questions')
-                .where('class', '==', cls)
-                .where('subject', '==', oldName)
-                .get();
-            
-            const qBatch = db.batch();
-            questionsSnap.forEach(doc => {
-                qBatch.update(doc.ref, { subject: newName });
-            });
-            await qBatch.commit();
-            
-            // Rebuild UI
-            renderSubjects();
-            buildReportBuilderUI(cls);
-            
-            showToast(`✅ Renamed subject "${oldName}" to "${newName}". All data preserved.`, 'success');
-            
-        } catch (error) {
-            console.error('Rename subject error:', error);
-            showToast('❌ Rename failed: ' + error.message, 'error');
-        }
+        // Update list
+        const idx = reportStudentsList.indexOf(oldName);
+        if (idx > -1) reportStudentsList[idx] = newName;
+        reportStudentsList.sort();
+        
+        if (currentSelectedStudent === oldName) currentSelectedStudent = newName;
+        
+        buildReportBuilderUI(cls);
+        document.getElementById('studentSelector').value = newName;
+        document.getElementById('studentSelector').dispatchEvent(new Event('change'));
+        
+        showToast(`✅ Renamed to "${newName}"`, 'success');
+    } catch (e) {
+        showToast('❌ Rename failed: ' + e.message, 'error');
     }
+}
 
-    // =============================================================
-    // ENHANCED MERGE WITH NEW STUDENT SUPPORT
-    // =============================================================
-    async function mergeStudents(targetName, otherNames, cls) {
-        try {
-            // Save versions before merge
-            for (let name of [targetName, ...otherNames]) {
-                const doc = await db.collection('reportCards').doc(`${cls}_${name}`).get();
-                if (doc.exists) {
-                    await dataProtection.saveVersion(cls, name, doc.data());
-                }
+async function showVersionHistory(studentName) {
+    const history = await DataProtection.getVersionHistory(currentUser.class, studentName);
+    
+    const existingPanel = document.getElementById('versionHistoryPanel');
+    if (existingPanel) existingPanel.remove();
+    
+    const panel = document.createElement('div');
+    panel.id = 'versionHistoryPanel';
+    panel.className = 'version-history-panel';
+    panel.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong>📜 Versions for ${studentName}</strong>
+            <button onclick="document.getElementById('versionHistoryPanel').remove()" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+        <div style="max-height:300px; overflow-y:auto;">
+            ${history.length === 0 ? '<p style="color:#64748b;">No previous versions.</p>' :
+                history.map((v, i) => `
+                    <div class="version-item" data-version-id="${v.id}" style="cursor:pointer;">
+                        <div>
+                            <div style="font-weight:700;">Version ${i+1}</div>
+                            <div style="font-size:11px; color:#64748b;">
+                                ${v.teacherName || 'Unknown'} · ${v.timestamp?.toLocaleString() || 'Unknown'}
+                            </div>
+                        </div>
+                        <button class="retrieve-btn" data-version-id="${v.id}">🔄 Retrieve</button>
+                    </div>
+                `).join('')
             }
+        </div>
+    `;
+    
+    const workArea = document.getElementById('studentWorkArea');
+    if (workArea) workArea.appendChild(panel);
+    
+    // Retrieve button handlers
+    panel.querySelectorAll('.retrieve-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('Restore this version? Current data will be replaced.')) return;
             
-            // Get or create target document
-            const targetDoc = await db.collection('reportCards').doc(`${cls}_${targetName}`).get();
-            let targetData = targetDoc.exists ? targetDoc.data() : {
-                class: cls,
-                studentName: targetName,
-                subjects: {},
-                createdAt: new Date()
-            };
-            
-            // Merge all other students into target
-            for (let otherName of otherNames) {
-                const otherDoc = await db.collection('reportCards').doc(`${cls}_${otherName}`).get();
+            try {
+                await saveCurrentStudent(currentUser.class); // Save current first
+                const data = await DataProtection.retrieveVersion(btn.dataset.versionId);
                 
-                if (otherDoc.exists) {
-                    const otherData = otherDoc.data();
-                    
-                    // Merge subjects - keep highest scores
-                    if (otherData.subjects) {
-                        Object.keys(otherData.subjects).forEach(sub => {
-                            const otherSub = otherData.subjects[sub];
-                            if (!targetData.subjects[sub]) targetData.subjects[sub] = {};
-                            const existing = targetData.subjects[sub];
-                            existing.firstTerm = Math.max(existing.firstTerm || 0, otherSub.firstTerm || 0);
-                            existing.secondTerm = Math.max(existing.secondTerm || 0, otherSub.secondTerm || 0);
-                            existing.thirdTerm = Math.max(existing.thirdTerm || 0, otherSub.thirdTerm || 0);
-                            const scores = [existing.firstTerm, existing.secondTerm, existing.thirdTerm].filter(v => v > 0);
-                            existing.average = scores.length > 0 ? scores.reduce((a,b) => a+b, 0) / scores.length : 0;
-                            existing.remark = getRemarkText(existing.average);
-                        });
-                    }
-                    
-                    // Merge other domains
-                    if (otherData.affectiveDomain) {
-                        if (!targetData.affectiveDomain) targetData.affectiveDomain = {};
-                        Object.keys(otherData.affectiveDomain).forEach(trait => {
-                            targetData.affectiveDomain[trait] = Math.max(
-                                targetData.affectiveDomain[trait] || 0,
-                                otherData.affectiveDomain[trait] || 0
-                            );
-                        });
-                    }
-                    
-                    if (otherData.psychomotorDomain) {
-                        if (!targetData.psychomotorDomain) targetData.psychomotorDomain = {};
-                        Object.keys(otherData.psychomotorDomain).forEach(skill => {
-                            targetData.psychomotorDomain[skill] = Math.max(
-                                targetData.psychomotorDomain[skill] || 0,
-                                otherData.psychomotorDomain[skill] || 0
-                            );
-                        });
-                    }
-                    
-                    if (otherData.extracurriculars) {
-                        if (!targetData.extracurriculars) targetData.extracurriculars = [];
-                        targetData.extracurriculars = [...new Set([...targetData.extracurriculars, ...otherData.extracurriculars])];
-                    }
-                }
-                
-                // Update results documents
-                const resultsSnap = await db.collection('results')
-                    .where('class', '==', cls)
-                    .where('studentName', '==', otherName)
-                    .get();
-                
-                const batch = db.batch();
-                resultsSnap.forEach(doc => {
-                    batch.update(doc.ref, { 
-                        studentName: targetName,
-                        mergedFrom: doc.data().studentName,
-                        mergedAt: new Date()
-                    });
+                await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).set({
+                    ...data,
+                    restoredFromVersion: btn.dataset.versionId,
+                    restoredAt: new Date(),
+                    restoredBy: currentUser.name
                 });
-                await batch.commit();
                 
-                // Delete old report card (version is already saved)
-                await db.collection('reportCards').doc(`${cls}_${otherName}`).delete();
-                
-                // Remove from list
-                reportStudentsList = reportStudentsList.filter(s => s !== otherName);
+                panel.remove();
+                await loadStudentData(studentName, currentUser.class);
+                showToast('✅ Version restored!', 'success');
+            } catch (e) {
+                showToast('❌ Restore failed: ' + e.message, 'error');
             }
-            
-            // Save merged data
-            targetData.mergedFrom = [...(targetData.mergedFrom || []), ...otherNames];
-            targetData.mergedAt = new Date();
-            targetData.totalStudents = reportStudentsList.length;
-            
-            await db.collection('reportCards').doc(`${cls}_${targetName}`).set(targetData, { merge: true });
-            
-            // Add target to list if not present
-            if (!reportStudentsList.includes(targetName)) {
-                reportStudentsList.push(targetName);
-                reportStudentsList.sort();
-            }
-            
-            totalStudentsCount = reportStudentsList.length;
-            
-            return true;
-            
-        } catch (error) {
-            console.error('Merge error:', error);
-            throw error;
-        }
-    }
-
-    // =============================================================
-    // UTILITY FUNCTIONS
-    // =============================================================
-    function updateSyncStatus(status, message) {
-        const el = document.getElementById('syncStatus');
-        const text = document.getElementById('syncText');
-        if (!el || !text) return;
-        el.className = 'sync-status ' + status;
-        const labels = { connected: 'Live ✓', connecting: 'Connecting...', disconnected: 'Offline ✗' };
-        text.innerText = labels[status] || message || 'Live';
-    }
-
-    function showSyncToast(message) {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = 'toast sync';
-        toast.innerHTML = `<span class="icon">🔄</span> ${message}`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 3000);
-    }
-
-    function showToast(message, type = "success") {
-        const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️', sync: '🔄' };
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 4000);
-    }
-
-    function getRemarkText(avg) { 
-        if (avg >= 75) return 'Distinction'; 
-        if (avg >= 70) return 'Excellent'; 
-        if (avg >= 65) return 'Very Good'; 
-        if (avg >= 60) return 'Good'; 
-        if (avg >= 55) return 'Above Avg'; 
-        if (avg >= 50) return 'Average'; 
-        if (avg >= 45) return 'Below Avg'; 
-        if (avg >= 40) return 'Weak Pass'; 
-        return 'Fail'; 
-    }
-
-    function rebuildSelector() {
-        const selector = document.getElementById('studentSelector');
-        if (!selector) return;
-        const currentVal = selector.value;
-        selector.innerHTML = '<option value="">-- Choose --</option>' + reportStudentsList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
-    }
-
-    function getOrdinalSuffix(n) { 
-        const s = ['th','st','nd','rd']; 
-        const v = n % 100; 
-        return s[(v-20)%10] || s[v] || s[0]; 
-    }
-
-    // =============================================================
-    // INITIALIZATION
-    // =============================================================
-    document.getElementById('sidebarToggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('expanded');
+        });
     });
+}
 
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('loginPage').classList.add('active');
+// =============================================================
+// REAL-TIME SYNC
+// =============================================================
+function setupRealTimeSync(cls) {
+    if (syncUnsubscribe) syncUnsubscribe();
     
-    // Load master class list on startup
-    (async () => {
-        try {
-            const doc = await db.collection('classList').doc('allClasses').get();
-            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
-            if (!doc.exists) await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
-            
-            // Populate login dropdown
-            const loginSelect = document.getElementById('loginClassSelect');
-            loginSelect.innerHTML = '<option value="">-- Select Class --</option>';
-            masterClassList.forEach(cls => loginSelect.innerHTML += `<option value="${cls}">${cls}</option>`);
-            
-            const sidebarSelect = document.getElementById('classSelect');
-            sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
-            masterClassList.forEach(cls => sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`);
-        } catch (e) {
-            console.error('Failed to load classes:', e);
-        }
-    })();
+    updateSyncStatus('connecting');
     
-    console.log('✅ Enhanced Teacher Dashboard with Data Protection is ready!');
-    console.log('🛡️ Features: Auto-Versioning, Conflict Detection, Editable Names, Data Retrieval');
+    syncUnsubscribe = db.collection('reportCards')
+        .where('class', '==', cls)
+        .onSnapshot((snapshot) => {
+            updateSyncStatus('connected');
+            
+            if (!isSaving) {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'modified') {
+                        const data = change.doc.data();
+                        if (data.studentName === currentSelectedStudent && 
+                            data.lastModifiedBy !== currentUser.name) {
+                            showSyncToast(`⚠️ "${data.studentName}" modified by another teacher. Check version history.`);
+                        }
+                    }
+                });
+            }
+        }, (error) => {
+            updateSyncStatus('disconnected');
+            setTimeout(() => setupRealTimeSync(cls), 5000);
+        });
+}
+
+// =============================================================
+// TAB SWITCHING
+// =============================================================
+document.querySelectorAll('.main-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+});
+
+// =============================================================
+// SIDEBAR TOGGLE (Mobile)
+// =============================================================
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('expanded');
+});
+
+// =============================================================
+// INITIALIZATION
+// =============================================================
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById('loginPage').classList.add('active');
+loadMasterClassList();
+
+console.log('✅ Teacher Dashboard Ready - Data Protected with Versioning');
+console.log('🔑 Login should work now - Select class and enter name');
 </script>
 </body>
 </html>
