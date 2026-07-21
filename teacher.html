@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Teacher Dashboard · Fixed</title>
+    <title>Teacher Dashboard · Complete</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- ✅ CLOUDINARY ADDED BACK -->
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
     <style>
         /* ===== RESET & BASE ===== */
@@ -399,10 +403,79 @@
     const $ = (id) => document.getElementById(id);
 
     // =============================================================
+    // CLOUDINARY - PHOTO UPLOAD (ADDED BACK)
+    // =============================================================
+    const cloudinaryConfig = {
+        cloudName: 'dmbjrohtn',
+        uploadPreset: 'pelumi',
+        folder: 'student_photos',
+        maxFileSize: 5000000,
+        allowedFormats: ['jpg', 'jpeg', 'png', 'webp']
+    };
+
+    function openCloudinaryWidget(studentName, callback) {
+        if (typeof cloudinary === 'undefined') {
+            showToast('❌ Cloudinary not loaded. Please check internet.', 'error');
+            return;
+        }
+        const widget = cloudinary.createUploadWidget({
+            cloudName: cloudinaryConfig.cloudName,
+            uploadPreset: cloudinaryConfig.uploadPreset,
+            folder: `${cloudinaryConfig.folder}/${currentUser.class || 'general'}`,
+            maxFileSize: cloudinaryConfig.maxFileSize,
+            allowedFormats: cloudinaryConfig.allowedFormats,
+            cropping: true,
+            croppingAspectRatio: 1,
+            showSkipCropButton: false,
+            multiple: false,
+            singleUploadAutoClose: true,
+            publicId: `${currentUser.class || 'general'}_${studentName.replace(/\s+/g, '_')}_${Date.now()}`
+        }, (error, result) => {
+            if (error) {
+                showToast('❌ Upload failed: ' + error.message, 'error');
+                return;
+            }
+            if (result && result.event === "success") {
+                const photoData = {
+                    url: result.info.secure_url,
+                    publicId: result.info.public_id,
+                    uploadedAt: new Date().toISOString()
+                };
+                saveStudentPhoto(studentName, photoData);
+                if (callback) callback(photoData);
+                showToast('📸 Photo uploaded successfully!', 'success');
+            }
+        });
+        widget.open();
+    }
+
+    async function saveStudentPhoto(studentName, photoData) {
+        try {
+            await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).set({
+                className: currentUser.class,
+                studentName: studentName,
+                photoUrl: photoData.url,
+                publicId: photoData.publicId,
+                updatedAt: new Date()
+            }, { merge: true });
+        } catch (e) {
+            console.error('Save photo error:', e);
+        }
+    }
+
+    async function getStudentPhoto(studentName) {
+        try {
+            const doc = await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).get();
+            return doc.exists ? doc.data().photoUrl || null : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // =============================================================
     // CORE FUNCTIONS
     // =============================================================
 
-    // ---- GET REMARK ----
     function getRemarkText(avg) {
         if (avg >= 75) return 'Distinction';
         if (avg >= 70) return 'Excellent';
@@ -415,7 +488,6 @@
         return 'Fail';
     }
 
-    // ---- CALCULATE STUDENT SCORES ----
     function calculateStudentScores() {
         currentSubjects.forEach(sub => {
             const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
@@ -430,7 +502,9 @@
         });
     }
 
-    // ---- SAVE CURRENT STUDENT ----
+    // =============================================================
+    // SAVE CURRENT STUDENT - WITH VERSIONING
+    // =============================================================
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
         if (isSaving) return;
@@ -441,6 +515,7 @@
             const docSnap = await docRef.get();
             const existingData = docSnap.exists ? docSnap.data() : {};
             const existingSubjects = existingData.subjects || {};
+            const currentVersion = existingData._version || 0;
 
             const subjectsData = {};
             currentSubjects.forEach(sub => {
@@ -457,7 +532,7 @@
                 const newSecond = si ? parseFloat(si.value) : 0;
                 const newThird = ti ? parseFloat(ti.value) : 0;
 
-                // Only update if the input was actually touched
+                // CRITICAL: Only update touched fields
                 const firstVal = (fi && fi.dataset.touched === 'true') ? newFirst : oldFirst;
                 const secondVal = (si && si.dataset.touched === 'true') ? newSecond : oldSecond;
                 const thirdVal = (ti && ti.dataset.touched === 'true') ? newThird : oldThird;
@@ -504,6 +579,7 @@
                 principalRemarks: principal,
                 promotionStatus: promotion,
                 totalStudents: reportStudentsList.length,
+                _version: currentVersion + 1,
                 updatedAt: new Date()
             }, { merge: true });
 
@@ -517,7 +593,6 @@
         }
     }
 
-    // ---- UPDATE SAVE STATUS ----
     function updateSaveStatus(status, message) {
         const text = document.querySelector('.save-status-bar .status-text');
         if (text) {
@@ -531,17 +606,18 @@
         }
     }
 
-    // ---- TRIGGER AUTO-SAVE ----
     function triggerAutoSave(cls) {
         clearTimeout(saveTimeout);
+        updateSaveStatus('saving', 'Saving...');
         saveTimeout = setTimeout(() => { saveCurrentStudent(cls); }, 800);
     }
 
-    // ---- LOAD STUDENT DATA ----
+    // =============================================================
+    // LOAD STUDENT DATA
+    // =============================================================
     async function loadStudentData(student, cls) {
         const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
 
-        // Reset all inputs
         document.querySelectorAll('.score-input').forEach(el => {
             el.value = '';
             el.dataset.touched = 'false';
@@ -613,7 +689,105 @@
         updateSaveStatus('saved', 'Data loaded');
     }
 
-    // ---- REBUILD SELECTOR ----
+    // =============================================================
+    // CALCULATE POSITIONS - FOR ALL STUDENTS (PERFECT)
+    // =============================================================
+    async function calculateAllPositions(cls) {
+        studentPositions = {};
+        const studentAverages = [];
+
+        // Save current student first
+        if (currentSelectedStudent) {
+            await saveCurrentStudent(cls);
+        }
+
+        // Calculate averages for ALL students in the class
+        for (let student of reportStudentsList) {
+            const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
+            if (!doc.exists) continue;
+            const data = doc.data();
+            if (!data.subjects) continue;
+
+            let totalAvg = 0;
+            let count = 0;
+            Object.values(data.subjects).forEach(sd => {
+                if (sd.average && sd.average > 0) {
+                    totalAvg += sd.average;
+                    count++;
+                }
+            });
+            if (count > 0) {
+                studentAverages.push({ student, overallAvg: totalAvg / count });
+            }
+        }
+
+        // Sort by average descending (highest first)
+        studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
+
+        // Assign positions
+        const totalStudents = reportStudentsList.length;
+        let position = 1;
+        for (let i = 0; i < studentAverages.length; i++) {
+            // If same average as previous, same position
+            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i - 1].overallAvg) {
+                position = i + 1;
+            }
+            studentPositions[studentAverages[i].student] = {
+                position: position,
+                average: studentAverages[i].overallAvg
+            };
+            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
+                overallPosition: position,
+                overallAverage: studentAverages[i].overallAvg,
+                totalStudents: totalStudents,
+                _version: firebase.firestore.FieldValue.increment(1)
+            }).catch(() => {});
+        }
+
+        // Update display for current student
+        if (currentSelectedStudent) {
+            updatePositionDisplay(currentSelectedStudent);
+        }
+        showToast(`✅ Positions calculated for ${studentAverages.length} students`, 'success');
+    }
+
+    // =============================================================
+    // UPDATE POSITION DISPLAY - SHOWS PERCENTAGE
+    // =============================================================
+    function updatePositionDisplay(student) {
+        const posDisplay = document.getElementById('positionDisplay');
+        const posNumber = document.getElementById('positionNumber');
+        const posPercentage = document.getElementById('positionPercentage');
+
+        if (studentPositions[student]) {
+            posDisplay.style.display = 'block';
+            const pos = studentPositions[student].position;
+            const total = reportStudentsList.length;
+
+            // Show position with suffix
+            const suffixes = ['th', 'st', 'nd', 'rd'];
+            const v = pos % 100;
+            const suffix = suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
+            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + suffix + '</small>';
+
+            // Calculate percentage: Top X% of students
+            // Example: 1st out of 10 = Top 100%, 5th out of 10 = Top 55%
+            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
+            posPercentage.innerText = `📊 Top ${Math.round(percentage)}% of ${total} students`;
+        } else {
+            posDisplay.style.display = 'none';
+        }
+    }
+
+    function getOrdinalSuffix(n) {
+        const s = ['th', 'st', 'nd', 'rd'];
+        const v = n % 100;
+        return s[(v - 20) % 10] || s[v] || s[0];
+    }
+
+    // =============================================================
+    // REBUILD SELECTOR & MERGE LIST
+    // =============================================================
     function rebuildSelector() {
         const selector = document.getElementById('studentSelector');
         if (!selector) return;
@@ -622,7 +796,6 @@
             reportStudentsList.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
     }
 
-    // ---- REBUILD MERGE LIST ----
     function rebuildMergeList() {
         const container = document.getElementById('mergeStudentList');
         if (!container) return;
@@ -632,7 +805,6 @@
             </label>
         `).join('');
 
-        // Re-attach events
         document.querySelectorAll('.merge-check').forEach(cb => {
             cb.addEventListener('change', () => {
                 const checked = document.querySelectorAll('.merge-check:checked');
@@ -664,7 +836,6 @@
         });
     }
 
-    // ---- UPDATE STUDENT COUNT ----
     function updateStudentCount() {
         const badge = document.getElementById('studentCountBadge');
         if (badge) {
@@ -672,31 +843,8 @@
         }
     }
 
-    // ---- UPDATE POSITION DISPLAY ----
-    function updatePositionDisplay(student) {
-        const posDisplay = document.getElementById('positionDisplay');
-        const posNumber = document.getElementById('positionNumber');
-        const posPercentage = document.getElementById('positionPercentage');
-        if (studentPositions[student]) {
-            posDisplay.style.display = 'block';
-            const pos = studentPositions[student].position;
-            const total = reportStudentsList.length;
-            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + getOrdinalSuffix(pos) + '</small>';
-            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
-            posPercentage.innerText = `📊 Top ${Math.round(percentage)}% of ${total} students`;
-        } else {
-            posDisplay.style.display = 'none';
-        }
-    }
-
-    function getOrdinalSuffix(n) {
-        const s = ['th', 'st', 'nd', 'rd'];
-        const v = n % 100;
-        return s[(v - 20) % 10] || s[v] || s[0];
-    }
-
     // =============================================================
-    // DELETE STUDENT (FIXED)
+    // DELETE STUDENT
     // =============================================================
     async function deleteStudent(studentName) {
         if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
@@ -721,7 +869,7 @@
     }
 
     // =============================================================
-    // RENAME STUDENT (FIXED - No Permission Issue)
+    // RENAME STUDENT
     // =============================================================
     async function renameStudent(oldName, newName) {
         if (!newName || newName.trim().length < 2) {
@@ -739,7 +887,6 @@
 
             const data = oldDoc.data();
 
-            // Check if new name already exists
             const newDoc = await db.collection('reportCards').doc(`${cls}_${newName}`).get();
             if (newDoc.exists) {
                 if (confirm(`"${newName}" already exists. Merge "${oldName}" into "${newName}"?`)) {
@@ -750,18 +897,16 @@
                 return;
             }
 
-            // Create new document
             await db.collection('reportCards').doc(`${cls}_${newName}`).set({
                 ...data,
                 studentName: newName,
                 previousName: oldName,
-                renamedAt: new Date()
+                renamedAt: new Date(),
+                _version: (data._version || 0) + 1
             }, { merge: true });
 
-            // Delete old document
             await db.collection('reportCards').doc(`${cls}_${oldName}`).delete();
 
-            // Update results collection
             const resultsSnap = await db.collection('results')
                 .where('class', '==', cls)
                 .where('studentName', '==', oldName)
@@ -777,17 +922,14 @@
             });
             await batch.commit();
 
-            // Update local list
             reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
             reportStudentsList.sort();
             currentSelectedStudent = newName;
 
-            // Rebuild UI
             rebuildSelector();
             rebuildMergeList();
             updateStudentCount();
 
-            // Reload the student data
             await loadStudentData(newName, cls);
             document.getElementById('selectedStudentName').innerText = newName;
 
@@ -807,13 +949,13 @@
             const cls = currentUser.class;
             const toDoc = await db.collection('reportCards').doc(`${cls}_${toName}`).get();
             let toData = toDoc.exists ? toDoc.data() : { subjects: {} };
+            const toVersion = toData._version || 0;
 
             for (let fromName of fromNames) {
                 const fromDoc = await db.collection('reportCards').doc(`${cls}_${fromName}`).get();
                 if (!fromDoc.exists) continue;
                 const fromData = fromDoc.data();
 
-                // Merge subjects
                 if (fromData.subjects) {
                     Object.keys(fromData.subjects).forEach(sub => {
                         const fromSub = fromData.subjects[sub];
@@ -829,7 +971,6 @@
                     });
                 }
 
-                // Merge affective
                 if (fromData.affectiveDomain) {
                     if (!toData.affectiveDomain) toData.affectiveDomain = {};
                     Object.keys(fromData.affectiveDomain).forEach(trait => {
@@ -837,7 +978,6 @@
                     });
                 }
 
-                // Merge psychomotor
                 if (fromData.psychomotorDomain) {
                     if (!toData.psychomotorDomain) toData.psychomotorDomain = {};
                     Object.keys(fromData.psychomotorDomain).forEach(skill => {
@@ -845,14 +985,12 @@
                     });
                 }
 
-                // Merge clubs
                 if (fromData.extracurriculars) {
                     if (!toData.extracurriculars) toData.extracurriculars = [];
                     const combined = [...new Set([...(toData.extracurriculars || []), ...fromData.extracurriculars])];
                     toData.extracurriculars = combined;
                 }
 
-                // Update results
                 const resultsSnap = await db.collection('results')
                     .where('class', '==', cls)
                     .where('studentName', '==', fromName)
@@ -875,6 +1013,7 @@
             toData.mergedFrom = [...(toData.mergedFrom || []), ...fromNames];
             toData.mergedAt = new Date();
             toData.studentName = toName;
+            toData._version = toVersion + 1;
 
             await db.collection('reportCards').doc(`${cls}_${toName}`).set(toData, { merge: true });
 
@@ -897,69 +1036,7 @@
     }
 
     // =============================================================
-    // CALCULATE POSITIONS (FIXED - Uses actual averages)
-    // =============================================================
-    async function calculateAllPositions(cls) {
-        studentPositions = {};
-        const studentAverages = [];
-
-        // Save all students first
-        for (let student of reportStudentsList) {
-            if (currentSelectedStudent === student) {
-                await saveCurrentStudent(cls);
-            }
-        }
-
-        // Calculate averages
-        for (let student of reportStudentsList) {
-            const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
-            if (!doc.exists) continue;
-            const data = doc.data();
-            if (!data.subjects) continue;
-
-            let totalAvg = 0;
-            let count = 0;
-            Object.values(data.subjects).forEach(sd => {
-                if (sd.average && sd.average > 0) {
-                    totalAvg += sd.average;
-                    count++;
-                }
-            });
-            if (count > 0) {
-                studentAverages.push({ student, overallAvg: totalAvg / count });
-            }
-        }
-
-        // Sort by average descending
-        studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
-
-        // Assign positions
-        const totalStudents = reportStudentsList.length;
-        let position = 1;
-        for (let i = 0; i < studentAverages.length; i++) {
-            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i - 1].overallAvg) {
-                position = i + 1;
-            }
-            studentPositions[studentAverages[i].student] = {
-                position: position,
-                average: studentAverages[i].overallAvg
-            };
-            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
-                overallPosition: position,
-                overallAverage: studentAverages[i].overallAvg,
-                totalStudents: totalStudents
-            }).catch(() => {});
-        }
-
-        // Update display
-        if (currentSelectedStudent) {
-            updatePositionDisplay(currentSelectedStudent);
-        }
-        showToast(`✅ Positions calculated for ${studentAverages.length} students`, 'success');
-    }
-
-    // =============================================================
-    // RECOVER SCORES (Copy 3rd → 1st & 2nd)
+    // RECOVER SCORES
     // =============================================================
     async function recoverFirstSecondFromThirdTerm() {
         const cls = currentUser.class;
@@ -999,16 +1076,15 @@
                 if (changed) {
                     await doc.ref.update({
                         subjects: data.subjects,
+                        _version: firebase.firestore.FieldValue.increment(1),
                         updatedAt: new Date()
                     });
                     count++;
                 }
             }
 
-            // Recalculate positions after recovery
             await calculateAllPositions(cls);
 
-            // Reload current student
             if (currentSelectedStudent) {
                 await loadStudentData(currentSelectedStudent, cls);
             }
@@ -1029,11 +1105,16 @@
 
         try {
             await saveCurrentStudent(currentUser.class);
-            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).update({
+            const docRef = db.collection('reportCards').doc(`${currentUser.class}_${studentName}`);
+            const doc = await docRef.get();
+            const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
+
+            await docRef.update({
                 pushedToAdmin: true,
                 pushedAt: new Date(),
                 pushedBy: currentUser.name,
-                approved: false
+                approved: false,
+                _version: currentVersion + 1
             });
             showToast(`✅ "${studentName}" pushed to Admin!`, 'push');
         } catch (e) {
@@ -1064,11 +1145,16 @@
             for (let i = 0; i < total; i++) {
                 const student = reportStudentsList[i];
                 try {
-                    await db.collection('reportCards').doc(`${currentUser.class}_${student}`).update({
+                    const docRef = db.collection('reportCards').doc(`${currentUser.class}_${student}`);
+                    const doc = await docRef.get();
+                    const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
+
+                    await docRef.update({
                         pushedToAdmin: true,
                         pushedAt: new Date(),
                         pushedBy: currentUser.name,
-                        approved: false
+                        approved: false,
+                        _version: currentVersion + 1
                     });
                     pushed++;
                     const progress = Math.round(((i + 1) / total) * 100);
@@ -1093,6 +1179,145 @@
         } catch (e) {
             showToast('❌ Push all failed: ' + e.message, 'error');
         }
+    }
+
+    // =============================================================
+    // LOAD STUDENTS FROM RESULTS
+    // =============================================================
+    async function loadStudentsFromResults(cls) {
+        const area = document.getElementById('reportBuilderArea');
+        area.innerHTML = `<div style="text-align:center; padding:20px;">⏳ Loading students...</div>`;
+
+        try {
+            const resultsSnap = await db.collection('results').where('class', '==', cls).get();
+            if (resultsSnap.empty) {
+                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
+                return;
+            }
+
+            const rawEntries = [];
+            resultsSnap.forEach(d => {
+                const data = d.data();
+                rawEntries.push({
+                    originalName: (data.studentName || '').trim(),
+                    subject: data.subject,
+                    score: data.score || 0
+                });
+            });
+
+            const groups = groupSimilarNames(rawEntries);
+            const mergedResults = {};
+            const canonicalNames = [];
+
+            groups.forEach((entries, canonicalName) => {
+                mergedResults[canonicalName] = {};
+                entries.forEach(entry => {
+                    const existing = mergedResults[canonicalName][entry.subject];
+                    if (!existing || entry.score > existing) {
+                        mergedResults[canonicalName][entry.subject] = entry.score;
+                    }
+                });
+                canonicalNames.push(canonicalName);
+            });
+
+            allStudentResults = mergedResults;
+
+            reportStudentsList = canonicalNames
+                .filter(name => name.trim().split(/\s+/).length >= 2 && name.length > 5)
+                .sort();
+
+            updateStudentCount();
+
+            if (reportStudentsList.length === 0) {
+                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No valid students found.</div>`;
+                return;
+            }
+
+            buildReportBuilderUI(cls);
+            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
+
+        } catch (e) {
+            console.error('Load students error:', e);
+            area.innerHTML = `<div style="text-align:center; padding:20px; color:#dc2626;">Error: ${e.message}</div>`;
+        }
+    }
+
+    // =============================================================
+    // NAME DEDUPLICATION
+    // =============================================================
+    function normalizeNameForGrouping(name) {
+        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
+    }
+
+    function levenshteinDistance(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1) ?
+                    matrix[i - 1][j - 1] :
+                    Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    function areNamesSamePerson(name1, name2) {
+        const n1 = normalizeNameForGrouping(name1);
+        const n2 = normalizeNameForGrouping(name2);
+        if (n1 === n2) return true;
+
+        const words1 = n1.split(' ').sort();
+        const words2 = n2.split(' ').sort();
+        if (words1.join(' ') === words2.join(' ')) return false;
+        if (n1.includes(n2) || n2.includes(n1)) return true;
+
+        const set1 = new Set(words1);
+        const set2 = new Set(words2);
+        let matches = 0;
+        set1.forEach(w => { if (set2.has(w)) matches++; });
+        const maxLen = Math.max(set1.size, set2.size);
+        const overlapRatio = matches / maxLen;
+
+        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
+        if (overlapRatio >= 0.5 && matches >= 1) {
+            if (levenshteinDistance(words1.join(''), words2.join('')) <= 2) return true;
+        }
+        return false;
+    }
+
+    function pickBestName(names) {
+        if (names.length === 1) return names[0];
+        return names.sort((a, b) => {
+            const aSpace = a.includes(' ') ? 1 : 0;
+            const bSpace = b.includes(' ') ? 1 : 0;
+            if (aSpace !== bSpace) return bSpace - aSpace;
+            if (a.length !== b.length) return b.length - a.length;
+            return ((b.match(/[A-Z]/g) || []).length) - ((a.match(/[A-Z]/g) || []).length);
+        })[0];
+    }
+
+    function groupSimilarNames(rawEntries) {
+        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
+        const groups = new Map();
+        const assigned = new Set();
+
+        allNames.forEach(name => {
+            if (assigned.has(name)) return;
+            const similarNames = allNames.filter(other => {
+                if (assigned.has(other)) return false;
+                return areNamesSamePerson(name, other);
+            });
+            const canonicalName = pickBestName(similarNames);
+            const groupEntries = [];
+            similarNames.forEach(sn => {
+                assigned.add(sn);
+                groupEntries.push(...rawEntries.filter(e => e.originalName === sn));
+            });
+            groups.set(canonicalName, groupEntries);
+        });
+        return groups;
     }
 
     // =============================================================
@@ -1169,6 +1394,7 @@
                             <button id="editStudentNameBtn" style="background:none;border:none;font-size:16px;cursor:pointer;color:#4f46e5;" title="Edit student name">✏️</button>
                         </div>
                         <div style="font-size:13px; color:#64748b;">${cls} | ${currentUser.name}</div>
+                        <button id="uploadPhotoBtn" style="margin-top:6px; padding:6px 14px; background:white; border:2px solid #4f46e5; color:#4f46e5; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📷 Photo</button>
                     </div>
                 </div>
 
@@ -1338,6 +1564,47 @@
         const newStudentInput = document.getElementById('newStudentInput');
         const suggestionsDiv = document.getElementById('nameSuggestions');
 
+        // === PHOTO UPLOAD - ADDED BACK ===
+        const photoContainer = document.querySelector('.photo-container-small');
+        const uploadBtn = document.getElementById('uploadPhotoBtn');
+
+        async function handlePhotoUpload() {
+            if (!currentSelectedStudent) {
+                showToast('⚠️ Please select a student first.', 'warning');
+                return;
+            }
+            // Show loading
+            showToast('📸 Opening camera...', 'warning');
+            openCloudinaryWidget(currentSelectedStudent, (data) => {
+                updatePhotoDisplay(data.url);
+            });
+        }
+
+        if (photoContainer) photoContainer.addEventListener('click', handlePhotoUpload);
+        if (uploadBtn) uploadBtn.addEventListener('click', handlePhotoUpload);
+
+        // === LOAD PHOTO WHEN STUDENT SELECTED ===
+        async function loadPhotoForStudent(student) {
+            if (!student) return;
+            const photoUrl = await getStudentPhoto(student);
+            updatePhotoDisplay(photoUrl);
+        }
+
+        // === UPDATE PHOTO DISPLAY ===
+        function updatePhotoDisplay(photoUrl) {
+            const placeholder = document.querySelector('.photo-container-small span');
+            const img = document.querySelector('.photo-img-small');
+            if (photoUrl && img) {
+                img.src = photoUrl;
+                img.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
+            } else if (img) {
+                img.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'block';
+            }
+        }
+
+        // === SUGGESTIONS ===
         newStudentInput?.addEventListener('input', async () => {
             const query = newStudentInput.value.trim().toLowerCase();
             if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
@@ -1375,13 +1642,12 @@
             }
         });
 
-        // Add Student
+        // === ADD STUDENT ===
         document.getElementById('addStudentBtn')?.addEventListener('click', async () => {
             const name = newStudentInput?.value.trim();
             if (!name) return showToast('⚠️ Enter name.', 'warning');
             if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
 
-            // Check if student already exists
             const snap = await db.collection('reportCards').where('class', '==', cls).get();
             let matchedName = null;
             snap.forEach(d => {
@@ -1403,7 +1669,6 @@
                 selector.dispatchEvent(new Event('change'));
                 showToast(`📋 Using: "${matchedName}"`, 'warning');
             } else if (!reportStudentsList.includes(name)) {
-                // Create a new student document
                 await db.collection('reportCards').doc(`${cls}_${name}`).set({
                     class: cls,
                     studentName: name,
@@ -1412,7 +1677,8 @@
                     session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
                     schoolName: "COVENANT ARROWS' MODEL SCHOOL",
                     teacherName: currentUser.name,
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    _version: 1
                 });
 
                 reportStudentsList.push(name);
@@ -1433,7 +1699,7 @@
             }
         });
 
-        // Selector Change
+        // === SELECTOR CHANGE ===
         selector?.addEventListener('change', async () => {
             const student = selector.value;
             if (currentSelectedStudent) {
@@ -1448,16 +1714,17 @@
             workArea.style.display = 'block';
             document.getElementById('selectedStudentName').innerText = student;
             await loadStudentData(student, cls);
+            await loadPhotoForStudent(student);
             updatePositionDisplay(student);
         });
 
-        // Save
+        // === SAVE ===
         document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
             await saveCurrentStudent(cls);
             showToast('✅ Saved!', 'success');
         });
 
-        // Next
+        // === NEXT ===
         document.getElementById('nextStudentBtn')?.addEventListener('click', async () => {
             await saveCurrentStudent(cls);
             const idx = reportStudentsList.indexOf(currentSelectedStudent);
@@ -1469,7 +1736,7 @@
             }
         });
 
-        // Calculate Positions
+        // === CALCULATE POSITIONS ===
         document.getElementById('calculatePositionsBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('calculatePositionsBtn');
             btn.innerText = '⏳ Calculating...';
@@ -1483,7 +1750,7 @@
             }
         });
 
-        // Auto-save on inputs
+        // === AUTO-SAVE ===
         document.querySelectorAll('.score-input').forEach(input => {
             input.addEventListener('focus', () => { input.dataset.touched = 'true'; });
             input.addEventListener('input', () => {
@@ -1511,8 +1778,8 @@
             el.addEventListener('blur', () => { saveCurrentStudent(cls); });
         });
 
-        // Rebuild merge list events
         rebuildMergeList();
+        updateStudentCount();
     }
 
     // =============================================================
@@ -1538,179 +1805,6 @@
         sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
         masterClassList.forEach(cls => sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`);
         if (currentUser.class) $('classSelect').value = currentUser.class;
-    }
-
-    // =============================================================
-    // LOGIN
-    // =============================================================
-    $('loginBtn').addEventListener('click', async () => {
-        const name = $('loginName').value.trim();
-        const cls = $('loginClassSelect').value;
-        const err = $('loginErr');
-
-        if (!name) return err.innerText = '⚠️ Please enter your name.';
-        if (!cls) return err.innerText = '⚠️ Please select a class.';
-
-        currentUser = { name, class: cls };
-        err.innerText = '';
-
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('dashboardPage').classList.add('active');
-        $('sidebarName').innerText = name + ' 👨‍🏫';
-        $('classSelect').value = cls;
-
-        showToast(`👋 Welcome, ${name}!`, 'success');
-
-        await loadSubjects(cls);
-        await loadSchedule(cls);
-        await loadResults(cls);
-
-        // Auto-load students if they exist
-        const resultsSnap = await db.collection('results').where('class', '==', cls).get();
-        if (!resultsSnap.empty) {
-            await loadStudentsFromResults(cls);
-        }
-    });
-
-    // =============================================================
-    // LOAD STUDENTS FROM RESULTS
-    // =============================================================
-    async function loadStudentsFromResults(cls) {
-        const area = document.getElementById('reportBuilderArea');
-        area.innerHTML = `<div style="text-align:center; padding:20px;">⏳ Loading students...</div>`;
-
-        try {
-            const resultsSnap = await db.collection('results').where('class', '==', cls).get();
-            if (resultsSnap.empty) {
-                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
-                return;
-            }
-
-            const rawEntries = [];
-            resultsSnap.forEach(d => {
-                const data = d.data();
-                rawEntries.push({
-                    originalName: (data.studentName || '').trim(),
-                    subject: data.subject,
-                    score: data.score || 0
-                });
-            });
-
-            // Group similar names
-            const groups = groupSimilarNames(rawEntries);
-            const mergedResults = {};
-            const canonicalNames = [];
-
-            groups.forEach((entries, canonicalName) => {
-                mergedResults[canonicalName] = {};
-                entries.forEach(entry => {
-                    const existing = mergedResults[canonicalName][entry.subject];
-                    if (!existing || entry.score > existing) {
-                        mergedResults[canonicalName][entry.subject] = entry.score;
-                    }
-                });
-                canonicalNames.push(canonicalName);
-            });
-
-            allStudentResults = mergedResults;
-
-            reportStudentsList = canonicalNames
-                .filter(name => name.trim().split(/\s+/).length >= 2 && name.length > 5)
-                .sort();
-
-            totalStudentsCount = reportStudentsList.length;
-            updateStudentCount();
-
-            if (reportStudentsList.length === 0) {
-                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No valid students found.</div>`;
-                return;
-            }
-
-            buildReportBuilderUI(cls);
-            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
-
-        } catch (e) {
-            console.error('Load students error:', e);
-            area.innerHTML = `<div style="text-align:center; padding:20px; color:#dc2626;">Error: ${e.message}</div>`;
-        }
-    }
-
-    // =============================================================
-    // NAME DEDUPLICATION
-    // =============================================================
-    function normalizeNameForGrouping(name) {
-        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
-    }
-
-    function levenshteinDistance(a, b) {
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1) ?
-                    matrix[i - 1][j - 1] :
-                    Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
-            }
-        }
-        return matrix[b.length][a.length];
-    }
-
-    function areNamesSamePerson(name1, name2) {
-        const n1 = normalizeNameForGrouping(name1);
-        const n2 = normalizeNameForGrouping(name2);
-        if (n1 === n2) return true;
-
-        const words1 = n1.split(' ').sort();
-        const words2 = n2.split(' ').sort();
-        if (words1.join(' ') === words2.join(' ')) return false;
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-
-        const set1 = new Set(words1);
-        const set2 = new Set(words2);
-        let matches = 0;
-        set1.forEach(w => { if (set2.has(w)) matches++; });
-        const maxLen = Math.max(set1.size, set2.size);
-        const overlapRatio = matches / maxLen;
-
-        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
-        if (overlapRatio >= 0.5 && matches >= 1) {
-            if (levenshteinDistance(words1.join(''), words2.join('')) <= 2) return true;
-        }
-        return false;
-    }
-
-    function pickBestName(names) {
-        if (names.length === 1) return names[0];
-        return names.sort((a, b) => {
-            const aSpace = a.includes(' ') ? 1 : 0;
-            const bSpace = b.includes(' ') ? 1 : 0;
-            if (aSpace !== bSpace) return bSpace - aSpace;
-            if (a.length !== b.length) return b.length - a.length;
-            return ((b.match(/[A-Z]/g) || []).length) - ((a.match(/[A-Z]/g) || []).length);
-        })[0];
-    }
-
-    function groupSimilarNames(rawEntries) {
-        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
-        const groups = new Map();
-        const assigned = new Set();
-
-        allNames.forEach(name => {
-            if (assigned.has(name)) return;
-            const similarNames = allNames.filter(other => {
-                if (assigned.has(other)) return false;
-                return areNamesSamePerson(name, other);
-            });
-            const canonicalName = pickBestName(similarNames);
-            const groupEntries = [];
-            similarNames.forEach(sn => {
-                assigned.add(sn);
-                groupEntries.push(...rawEntries.filter(e => e.originalName === sn));
-            });
-            groups.set(canonicalName, groupEntries);
-        });
-        return groups;
     }
 
     // =============================================================
@@ -1988,15 +2082,48 @@
     });
 
     // =============================================================
+    // LOGIN
+    // =============================================================
+    $('loginBtn').addEventListener('click', async () => {
+        const name = $('loginName').value.trim();
+        const cls = $('loginClassSelect').value;
+        const err = $('loginErr');
+
+        if (!name) return err.innerText = '⚠️ Please enter your name.';
+        if (!cls) return err.innerText = '⚠️ Please select a class.';
+
+        currentUser = { name, class: cls };
+        err.innerText = '';
+
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        $('dashboardPage').classList.add('active');
+        $('sidebarName').innerText = name + ' 👨‍🏫';
+        $('classSelect').value = cls;
+
+        showToast(`👋 Welcome, ${name}!`, 'success');
+
+        await loadSubjects(cls);
+        await loadSchedule(cls);
+        await loadResults(cls);
+
+        const resultsSnap = await db.collection('results').where('class', '==', cls).get();
+        if (!resultsSnap.empty) {
+            await loadStudentsFromResults(cls);
+        }
+    });
+
+    // =============================================================
     // INIT
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
 
-    console.log('✅ Teacher Dashboard - FIXED VERSION');
-    console.log('📌 Features: Add, Edit, Delete, Merge, Push, Recover');
-    console.log('🔄 All data is saved to Firestore');
+    console.log('✅ Teacher Dashboard - COMPLETE VERSION');
+    console.log('📌 Features: Add, Edit, Delete, Merge, Push, Recover, Photos');
+    console.log('🔄 All data is saved to Firestore with versioning');
+    console.log('📸 Photo upload is active with Cloudinary');
+    console.log('🏆 Positions calculate for ALL students in the class');
 </script>
 </body>
 </html>
