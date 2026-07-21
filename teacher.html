@@ -333,12 +333,11 @@
                         <span class="sync-indicator" id="syncIndicator">🔄 Real-time sync active</span>
                     </p>
                     
-                    <!-- Recovery Banner -->
                     <div class="recovery-banner" id="recoveryBanner">
                         <div class="recovery-title">⚠️ Data Recovery Available</div>
-                        <p style="font-size:13px; color:#64748b; margin:4px 0;">Your scores may be in Firestore. Click below to restore them.</p>
+                        <p style="font-size:13px; color:#64748b; margin:4px 0;">Click below to restore missing scores.</p>
                         <div class="recovery-actions">
-                            <button class="btn-action btn-warning" id="recoverScoresBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover from Third Term</button>
+                            <button class="btn-action btn-warning" id="recoverScoresBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
                             <button class="btn-action btn-outline" id="dismissRecoveryBtn" style="font-size:12px; padding:8px 16px;">✕ Dismiss</button>
                         </div>
                     </div>
@@ -407,6 +406,83 @@
     const $ = (id) => document.getElementById(id);
 
     // =============================================================
+    // DELETE STUDENT
+    // =============================================================
+    async function deleteStudent(studentName) {
+        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
+        if (!confirm(`⚠️ Are you sure you want to delete "${studentName}"?\n\nThis will permanently remove their report card and all scores.\nThis CANNOT be undone!`)) return;
+        
+        try {
+            // Delete report card
+            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).delete();
+            
+            // Remove from list
+            reportStudentsList = reportStudentsList.filter(s => s !== studentName);
+            totalStudentsCount = reportStudentsList.length;
+            
+            // Clear if currently selected
+            if (currentSelectedStudent === studentName) {
+                currentSelectedStudent = null;
+                const workArea = document.getElementById('studentWorkArea');
+                if (workArea) workArea.style.display = 'none';
+            }
+            
+            // Rebuild UI
+            rebuildSelector();
+            rebuildMergeList();
+            showToast(`🗑️ Deleted "${studentName}"`, 'warning');
+            
+        } catch (e) {
+            console.error('Delete error:', e);
+            showToast('❌ Delete failed: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // REBUILD MERGE LIST
+    // =============================================================
+    function rebuildMergeList() {
+        const container = document.getElementById('mergeStudentList');
+        if (!container) return;
+        container.innerHTML = reportStudentsList.map(s => `
+            <label class="merge-student-checkbox">
+                <input type="checkbox" class="merge-check" value="${s}" /> ${s}
+            </label>
+        `).join('');
+        
+        // Re-attach events
+        document.querySelectorAll('.merge-check').forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checked = document.querySelectorAll('.merge-check:checked');
+                const target = document.getElementById('mergeTargetSelect');
+                const btn = document.getElementById('executeMergeBtn');
+                const status = document.getElementById('mergeStatus');
+                if (checked.length >= 2) {
+                    target.style.display = 'block';
+                    target.innerHTML = '<option value="">-- Choose which name to keep --</option>' + 
+                        Array.from(checked).map(c => `<option value="${c.value}">${c.value}</option>`).join('');
+                    btn.disabled = false;
+                    if (status) {
+                        status.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
+                        status.style.color = '#059669';
+                    }
+                } else {
+                    target.style.display = 'none';
+                    btn.disabled = true;
+                    if (status) {
+                        if (checked.length === 1) {
+                            status.innerText = '⚠️ Select at least 2 students to merge.';
+                            status.style.color = '#d97706';
+                        } else {
+                            status.innerText = '';
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    // =============================================================
     // PUSH TO ADMIN FUNCTIONS
     // =============================================================
     async function pushStudentToAdmin(studentName) {
@@ -414,22 +490,15 @@
         const cls = currentUser.class;
         if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
 
-        // Confirm
-        if (!confirm(`📤 Push "${studentName}" to Admin for approval?\n\nThis will mark the report card as ready for admin review.`)) return;
+        if (!confirm(`📤 Push "${studentName}" to Admin for approval?`)) return;
 
         try {
             showToast(`⏳ Pushing "${studentName}"...`, 'warning');
-            
-            // First save current data
             await saveCurrentStudent(cls);
             
             const docRef = db.collection('reportCards').doc(`${cls}_${studentName}`);
             const doc = await docRef.get();
-            
-            if (!doc.exists) {
-                showToast('❌ Student not found.', 'error');
-                return;
-            }
+            if (!doc.exists) { showToast('❌ Student not found.', 'error'); return; }
             
             const data = doc.data();
             const currentVersion = data._version || 0;
@@ -443,16 +512,11 @@
                 updatedAt: new Date()
             });
             
-            // Update local state
             docVersions.set(studentName, currentVersion + 1);
-            
-            // Update UI if this is the current student
             if (currentSelectedStudent === studentName) {
                 updatePushStatusUI(studentName, true);
             }
-            
             showToast(`✅ "${studentName}" pushed to Admin!`, 'push');
-            
         } catch (e) {
             console.error('Push error:', e);
             showToast('❌ Push failed: ' + e.message, 'error');
@@ -464,8 +528,7 @@
         if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
         if (reportStudentsList.length === 0) { showToast('⚠️ No students to push.', 'error'); return; }
 
-        // Confirm
-        if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?\n\nThis will mark ALL report cards as ready for admin review.`)) return;
+        if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?`)) return;
 
         const progressEl = document.getElementById('pushProgress');
         const progressFill = document.getElementById('pushProgressFill');
@@ -480,25 +543,17 @@
         const total = reportStudentsList.length;
 
         try {
-            // First save all current data
-            for (let i = 0; i < total; i++) {
-                const student = reportStudentsList[i];
-                if (currentSelectedStudent === student) {
-                    await saveCurrentStudent(cls);
-                }
+            // First save current data
+            if (currentSelectedStudent) {
+                await saveCurrentStudent(cls);
             }
 
-            // Push each student
             for (let i = 0; i < total; i++) {
                 const student = reportStudentsList[i];
                 try {
                     const docRef = db.collection('reportCards').doc(`${cls}_${student}`);
                     const doc = await docRef.get();
-                    
-                    if (!doc.exists) {
-                        failed++;
-                        continue;
-                    }
+                    if (!doc.exists) { failed++; continue; }
                     
                     const data = doc.data();
                     const currentVersion = data._version || 0;
@@ -515,18 +570,15 @@
                     docVersions.set(student, currentVersion + 1);
                     pushed++;
                     
-                    // Update progress
                     const progress = Math.round(((i + 1) / total) * 100);
                     if (progressFill) progressFill.style.width = progress + '%';
                     if (progressStatus) progressStatus.innerText = `📤 ${pushed}/${total} pushed (${failed} failed)`;
-                    
                 } catch (e) {
                     console.error(`Failed to push ${student}:`, e);
                     failed++;
                 }
             }
 
-            // Update UI
             if (currentSelectedStudent) {
                 updatePushStatusUI(currentSelectedStudent, true);
             }
@@ -553,14 +605,9 @@
     async function checkPushStatus(studentName) {
         try {
             const doc = await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).get();
-            if (doc.exists) {
-                const data = doc.data();
-                return data.pushedToAdmin || false;
-            }
+            if (doc.exists) return doc.data().pushedToAdmin || false;
             return false;
-        } catch (e) {
-            return false;
-        }
+        } catch (e) { return false; }
     }
 
     function updatePushStatusUI(studentName, pushed) {
@@ -618,6 +665,19 @@
                 }
             }
             showToast(`✅ Recovered ${count} student records. Refresh to see changes.`, 'success');
+            
+            // Reload current student if selected
+            if (currentSelectedStudent) {
+                await loadStudentData(currentSelectedStudent, cls);
+                calculateStudentScores();
+            }
+            
+            // Recalculate positions
+            await calculateAllPositions(cls);
+            if (currentSelectedStudent) {
+                updatePositionDisplay(currentSelectedStudent);
+            }
+            
         } catch (e) {
             showToast('❌ Recovery failed: ' + e.message, 'error');
         }
@@ -644,7 +704,7 @@
     }
 
     // =============================================================
-    // CLOUDINARY CONFIG
+    // CLOUDINARY
     // =============================================================
     const cloudinaryConfig = { cloudName: 'dmbjrohtn', uploadPreset: 'pelumi', folder: 'student_photos', maxFileSize: 5000000, allowedFormats: ['jpg','jpeg','png','webp'] };
 
@@ -1153,14 +1213,12 @@
                 <span class="last-saved">Last saved: Just now</span>
             </div>
 
-            <!-- Push Progress Bar -->
             <div class="push-progress" id="pushProgress">
                 <div class="push-title">📤 Pushing to Admin</div>
                 <div class="push-bar"><div class="push-bar-fill" id="pushProgressFill"></div></div>
                 <div class="push-status" id="pushStatus">⏳ Starting...</div>
             </div>
 
-            <!-- Recovery button -->
             <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;">
                 <button class="btn-action btn-warning" id="recoverFirstSecondBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
             </div>
@@ -1276,6 +1334,7 @@
                 <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
                     <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
                     <button class="btn-action btn-push" id="pushStudentBtn" style="font-size:13px; padding:10px 20px;">📤 Push to Admin</button>
+                    <button class="btn-action btn-danger" id="deleteStudentBtn" style="font-size:13px; padding:10px 20px;">🗑️ Delete Student</button>
                     <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
                 </div>
             </div>
@@ -1294,7 +1353,7 @@
     // ATTACH BUILDER EVENTS
     // =============================================================
     function attachBuilderEvents(cls) {
-        // Recovery button
+        // RECOVER BUTTON
         document.getElementById('recoverFirstSecondBtn')?.addEventListener('click', async () => {
             await recoverFirstSecondFromThirdTerm();
             if (currentSelectedStudent) {
@@ -1303,12 +1362,17 @@
             }
         });
 
-        // Push Student button
+        // DELETE STUDENT
+        document.getElementById('deleteStudentBtn')?.addEventListener('click', () => {
+            if (currentSelectedStudent) deleteStudent(currentSelectedStudent);
+        });
+
+        // PUSH STUDENT
         document.getElementById('pushStudentBtn')?.addEventListener('click', async () => {
             await pushStudentToAdmin(currentSelectedStudent);
         });
 
-        // Push All button
+        // PUSH ALL
         document.getElementById('pushAllBtn')?.addEventListener('click', async () => {
             await pushAllStudentsToAdmin();
         });
@@ -1337,16 +1401,20 @@
                     mergeTarget.innerHTML = '<option value="">-- Choose which name to keep --</option>' + 
                         checkedNames.map(n => `<option value="${n}">${n}</option>`).join('');
                     mergeBtn.disabled = false;
-                    mergeStatus.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
-                    mergeStatus.style.color = '#059669';
+                    if (mergeStatus) {
+                        mergeStatus.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
+                        mergeStatus.style.color = '#059669';
+                    }
                 } else {
                     mergeTarget.style.display = 'none';
                     mergeBtn.disabled = true;
-                    if (checked.length === 1) {
-                        mergeStatus.innerText = '⚠️ Select at least 2 students to merge.';
-                        mergeStatus.style.color = '#d97706';
-                    } else {
-                        mergeStatus.innerText = '';
+                    if (mergeStatus) {
+                        if (checked.length === 1) {
+                            mergeStatus.innerText = '⚠️ Select at least 2 students to merge.';
+                            mergeStatus.style.color = '#d97706';
+                        } else {
+                            mergeStatus.innerText = '';
+                        }
                     }
                 }
             });
@@ -1357,8 +1425,10 @@
             const checkedNames = Array.from(checked).map(c => c.value);
             const targetName = mergeTarget.value;
             if (!targetName || checkedNames.length < 2) {
-                mergeStatus.innerText = '⚠️ Select at least 2 students and choose a target name.';
-                mergeStatus.style.color = '#dc2626';
+                if (mergeStatus) {
+                    mergeStatus.innerText = '⚠️ Select at least 2 students and choose a target name.';
+                    mergeStatus.style.color = '#dc2626';
+                }
                 return;
             }
             const otherNames = checkedNames.filter(n => n !== targetName);
@@ -1383,8 +1453,15 @@
                 suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n => `<div class="suggestion-item" data-name="${n}">📋 ${n} (existing)</div>`).join('');
                 document.querySelectorAll('.suggestion-item').forEach(item => item.addEventListener('click', () => {
                     const name = item.dataset.name;
-                    if (!reportStudentsList.includes(name)) { reportStudentsList.push(name); reportStudentsList.sort(); }
-                    rebuildSelector(); selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                    if (!reportStudentsList.includes(name)) { 
+                        reportStudentsList.push(name); 
+                        reportStudentsList.sort(); 
+                    }
+                    rebuildSelector();
+                    rebuildMergeList();
+                    selector.value = name; 
+                    newStudentInput.value = ''; 
+                    suggestionsDiv.innerHTML = '';
                     selector.dispatchEvent(new Event('change'));
                     showToast(`📋 Loaded: ${name}`, 'success');
                 }));
@@ -1397,21 +1474,41 @@
             const name = newStudentInput.value.trim();
             if (!name) return showToast('⚠️ Enter name.', 'warning');
             if (name.split(/\s+/).length < 2) return showToast('⚠️ First AND last name.', 'warning');
+            
+            // Check if student already exists
             const snap = await db.collection('reportCards').where('class','==',cls).get();
             let matchedName = null;
-            snap.forEach(d => { const existing = d.data().studentName; if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing; });
+            snap.forEach(d => { 
+                const existing = d.data().studentName; 
+                if (existing && existing.toLowerCase() === name.toLowerCase()) matchedName = existing; 
+            });
+            
             if (matchedName && matchedName !== name) {
-                if (!reportStudentsList.includes(matchedName)) { reportStudentsList.push(matchedName); reportStudentsList.sort(); }
-                rebuildSelector(); selector.value = matchedName; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                if (!reportStudentsList.includes(matchedName)) { 
+                    reportStudentsList.push(matchedName); 
+                    reportStudentsList.sort(); 
+                }
+                rebuildSelector();
+                rebuildMergeList();
+                selector.value = matchedName; 
+                newStudentInput.value = ''; 
+                suggestionsDiv.innerHTML = '';
                 selector.dispatchEvent(new Event('change'));
                 showToast(`📋 Using: "${matchedName}"`, 'warning');
             } else if (!reportStudentsList.includes(name)) {
-                reportStudentsList.push(name); reportStudentsList.sort();
-                rebuildSelector(); selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                reportStudentsList.push(name); 
+                reportStudentsList.sort();
+                rebuildSelector();
+                rebuildMergeList();
+                selector.value = name; 
+                newStudentInput.value = ''; 
+                suggestionsDiv.innerHTML = '';
                 selector.dispatchEvent(new Event('change'));
                 showToast(`✅ Added "${name}"!`, 'success');
             } else {
-                selector.value = name; newStudentInput.value = ''; suggestionsDiv.innerHTML = '';
+                selector.value = name; 
+                newStudentInput.value = ''; 
+                suggestionsDiv.innerHTML = '';
                 selector.dispatchEvent(new Event('change'));
             }
         });
@@ -1434,7 +1531,6 @@
             updatePhotoDisplay(photoUrl);
             updatePositionDisplay(student);
             
-            // Check push status
             const pushed = await checkPushStatus(student);
             updatePushStatusUI(student, pushed);
             
@@ -1545,6 +1641,8 @@
             reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
             reportStudentsList.sort();
             currentSelectedStudent = newName;
+            rebuildSelector();
+            rebuildMergeList();
             buildReportBuilderUI(currentUser.class);
             showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
         } catch (e) {
@@ -1609,6 +1707,8 @@
             if (!reportStudentsList.includes(toName)) reportStudentsList.push(toName);
             reportStudentsList.sort();
             currentSelectedStudent = toName;
+            rebuildSelector();
+            rebuildMergeList();
             buildReportBuilderUI(currentUser.class);
             showToast(`✅ Merged ${fromNames.length} student(s) into "${toName}"!`, 'success');
         } catch (e) {
@@ -1745,7 +1845,6 @@
             if (data.overallPosition) {
                 studentPositions[student] = { position: data.overallPosition, average: data.overallAverage || 0 };
             }
-            // Check push status
             if (data.pushedToAdmin) {
                 updatePushStatusUI(student, true);
             }
@@ -1892,7 +1991,6 @@
             const promotion = document.querySelector('.promotion-select')?.value || '';
 
             const currentVersion = docVersions.get(currentSelectedStudent) || 0;
-            const wasPushed = existingData.pushedToAdmin || false;
 
             await docRef.set({
                 class: cls,
@@ -1982,15 +2080,23 @@
     window.recoverFirstSecondFromThirdTerm = recoverFirstSecondFromThirdTerm;
     window.pushStudentToAdmin = pushStudentToAdmin;
     window.pushAllStudentsToAdmin = pushAllStudentsToAdmin;
+    window.deleteStudent = deleteStudent;
+    window.rebuildMergeList = rebuildMergeList;
 
     // INIT
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
     loadMasterClassList();
 
-    console.log('✅ Teacher Dashboard with Push to Admin is ready!');
-    console.log('📤 Use "Push to Admin" to send individual students, or "Push All" for bulk.');
-    console.log('💾 Data is protected with versioning and touch-tracking.');
+    console.log('✅ Teacher Dashboard with ALL fixes is ready!');
+    console.log('📌 Features:');
+    console.log('  ✏️ Edit student name (pencil icon)');
+    console.log('  ➕ Add student (input + Add button)');
+    console.log('  🗑️ Delete student (Delete Student button)');
+    console.log('  🔀 Merge students (select + merge)');
+    console.log('  📤 Push to Admin (individual & all)');
+    console.log('  🔄 Recover scores (button)');
+    console.log('  🏆 Calculate positions');
 </script>
 </body>
 </html>
