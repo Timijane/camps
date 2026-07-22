@@ -19,7 +19,6 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TOAST */
         .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
         .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
         .toast.hide { animation: slideOut 0.3s ease forwards; }
@@ -30,7 +29,6 @@
         @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
 
-        /* LOGIN */
         .login-box { max-width: 420px; margin: 20px auto; padding: 30px 0; }
         .login-box h2 { font-size: 28px; color: #1e1b4b; }
         .login-box p { color: #64748b; margin-bottom: 20px; }
@@ -40,7 +38,6 @@
         .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
         .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; }
 
-        /* DASHBOARD */
         .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 25px; }
         .admin-header h1 { font-size: 28px; color: #1e1b4b; }
         .admin-header h1 span { color: #4f46e5; }
@@ -49,18 +46,24 @@
         .admin-header .stats { display: flex; gap: 20px; font-size: 14px; font-weight: 600; color: #475569; }
         .admin-header .stats span { background: #f1f5f9; padding: 6px 16px; border-radius: 30px; }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-        @media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
-
         .card { background: #f8fafc; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; }
         .card h3 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
         .card .sub { color: #64748b; font-size: 14px; margin-bottom: 15px; }
 
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .class-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .class-card:hover { border-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .class-card .class-name { font-weight: 800; font-size: 18px; color: #1e1b4b; }
+        .class-card .class-count { font-size: 14px; color: #64748b; }
+        .class-card .class-status { font-size: 12px; font-weight: 600; margin-top: 6px; }
+        .class-card .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 12px; border-radius: 30px; }
+        .class-card .approved-badge { background: #d1fae5; color: #065f46; padding: 2px 12px; border-radius: 30px; }
+        .class-card .empty-badge { background: #fee2e2; color: #991b1b; padding: 2px 12px; border-radius: 30px; }
+        .class-card .total-badge { background: #e0e7ff; color: #3730a3; padding: 2px 12px; border-radius: 30px; }
+
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center; }
         th { background: white; font-weight: 700; }
-        tr.clickable { cursor: pointer; transition: 0.15s; }
-        tr.clickable:hover { background: #eef2ff; }
         .status-approved { color: #059669; font-weight: 700; }
         .status-pending { color: #d97706; font-weight: 700; }
 
@@ -75,40 +78,15 @@
         .btn-warning:hover { background: #d97706; }
         .btn-outline { background: white; border: 2px solid #e2e8f0; }
 
-        .flex-input { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; align-items: center; }
-        .flex-input input, .flex-input select { flex: 1; min-width: 120px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: white; }
-        .flex-input input:focus, .flex-input select:focus { border-color: #4f46e5; }
+        .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .class-header .back-btn { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .class-header .back-btn:hover { background: #e2e8f0; }
 
-        .pin-display-box { background: white; border-radius: 16px; padding: 15px; text-align: center; border: 2px dashed #4f46e5; margin-top: 12px; max-height: 150px; overflow-y: auto; }
-        .pin-display-box .pin-value { font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #1e1b4b; display: inline-block; background: #f1f5f9; padding: 4px 12px; border-radius: 30px; margin: 3px; }
-        .pin-display-box .pin-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+        .filters .search-box { padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; width: 100%; max-width: 300px; outline: none; font-family: 'Inter', sans-serif; }
+        .filters .search-box:focus { border-color: #4f46e5; }
+        .filters select { padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; background: white; }
 
-        .table-scroll { max-height: 250px; overflow-y: auto; margin-top: 10px; }
-        .table-scroll table { font-size: 12px; }
-        .table-scroll th { position: sticky; top: 0; background: #f1f5f9; z-index: 2; }
-
-        .class-droplet { display: inline-flex; align-items: center; gap: 8px; background: white; padding: 8px 16px; border-radius: 60px; border: 1px solid #e2e8f0; font-weight: 600; margin: 4px 8px 4px 0; }
-        .class-droplet .del-class { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-weight: 800; font-size: 16px; padding: 0 4px; }
-        .class-droplet .del-class:hover { color: #dc2626; }
-        .droplet-container { display: flex; flex-wrap: wrap; padding: 10px 0; }
-        .add-class-row { display: flex; gap: 10px; margin-top: 10px; }
-        .add-class-row input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: white; }
-        .add-class-row input:focus { border-color: #4f46e5; }
-        .add-class-row button { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .add-class-row button:hover { background: #059669; }
-
-        .tab-row { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
-        .tab-btn { padding: 8px 18px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid #e2e8f0; background: white; color: #64748b; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-        .tab-btn:hover { background: #f1f5f9; }
-        .tab-btn.active:hover { background: #4338ca; }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-
-        .pin-used { background: #d1fae5; color: #065f46; }
-        .pin-unused { background: #fef3c7; color: #92400e; }
-
-        /* ===== SIGNATURE SECTION ===== */
         .signature-section { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-top: 15px; }
         .signature-section .signature-title { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .signature-canvas { border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: crosshair; touch-action: none; width: 100%; max-width: 350px; height: 120px; display: block; }
@@ -121,62 +99,91 @@
         .signature-actions .btn-sm.upload { background: #f59e0b; color: #1e1b4b; }
         .signature-actions .btn-sm.upload:hover { background: #d97706; }
 
+        .tab-row { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 18px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid #e2e8f0; background: white; color: #64748b; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .tab-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active:hover { background: #4338ca; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .pin-display-box { background: white; border-radius: 16px; padding: 15px; text-align: center; border: 2px dashed #4f46e5; margin-top: 12px; max-height: 150px; overflow-y: auto; }
+        .pin-display-box .pin-value { font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #1e1b4b; display: inline-block; background: #f1f5f9; padding: 4px 12px; border-radius: 30px; margin: 3px; }
+        .pin-display-box .pin-label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+
+        .table-scroll { max-height: 250px; overflow-y: auto; margin-top: 10px; }
+        .table-scroll table { font-size: 12px; }
+        .table-scroll th { position: sticky; top: 0; background: #f1f5f9; z-index: 2; }
+
         /* ===== MODAL ===== */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
-        .modal-box { background: white; border-radius: 32px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 35px; box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
+        .modal-box { background: white; border-radius: 32px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 35px; box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
         .modal-box h2 { color: #1e1b4b; margin-bottom: 6px; }
         .modal-box .sub { color: #64748b; margin-bottom: 20px; }
         .modal-box .close-modal { float: right; background: transparent; border: none; font-size: 28px; cursor: pointer; color: #94a3b8; }
         .modal-box .close-modal:hover { color: #dc2626; }
+
         .modal-box .student-info { background: #f8fafc; padding: 15px; border-radius: 16px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 20px; }
         .modal-box .student-info strong { color: #1e1b4b; }
-        .modal-box .subject-summary { font-size: 13px; }
-        .modal-box .subject-summary table { width: 100%; }
+
+        .modal-box .full-report-section { margin: 15px 0; }
+        .modal-box .full-report-section h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        .modal-box .full-report-section .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .modal-box .full-report-section .item { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+        .modal-box .full-report-section .item .rating { background: #e0e7ff; padding: 0 10px; border-radius: 30px; color: #3730a3; font-weight: 700; }
+        .modal-box .full-report-section .extra-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .modal-box .full-report-section .extra-badges .badge { background: #dbeafe; color: #1e3a8a; padding: 2px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; }
+        .modal-box .full-report-section .extra-badges .badge.missing { background: #f1f5f9; color: #94a3b8; }
+        .modal-box .full-report-section .comment-box { background: #fafafa; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; font-style: italic; font-size: 14px; }
+
         .modal-box .remark-field { margin-top: 15px; }
         .modal-box .remark-field textarea { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 14px; resize: vertical; min-height: 80px; outline: none; }
         .modal-box .remark-field textarea:focus { border-color: #4f46e5; }
+
         .modal-box .consent-check { display: flex; align-items: center; gap: 12px; margin: 15px 0; font-weight: 600; }
         .modal-box .consent-check input { width: 20px; height: 20px; accent-color: #4f46e5; }
-        .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
-        .modal-box .signature-preview { max-width: 200px; max-height: 60px; border: 1px solid #e2e8f0; border-radius: 4px; }
-
-        /* ===== CLASS VIEW ===== */
-        .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-        .class-header .back-btn { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .class-header .back-btn:hover { background: #e2e8f0; }
-        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .class-card { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .class-card:hover { border-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .class-card .class-name { font-weight: 800; font-size: 18px; color: #1e1b4b; }
-        .class-card .class-count { font-size: 14px; color: #64748b; }
-        .class-card .class-status { font-size: 12px; font-weight: 600; margin-top: 6px; }
-        .class-card .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 12px; border-radius: 30px; }
-        .class-card .approved-badge { background: #d1fae5; color: #065f46; padding: 2px 12px; border-radius: 30px; }
-        .class-card .total-badge { background: #e0e7ff; color: #3730a3; padding: 2px 12px; border-radius: 30px; }
-        .class-card .empty-badge { background: #fee2e2; color: #991b1b; padding: 2px 12px; border-radius: 30px; }
-
-        /* ===== STUDENT LIST IN CLASS ===== */
-        .student-list-wrap { margin-top: 15px; }
-        .student-list-wrap .search-box { padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; width: 100%; max-width: 300px; outline: none; font-family: 'Inter', sans-serif; }
-        .student-list-wrap .search-box:focus { border-color: #4f46e5; }
-        .student-list-wrap .filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
-        .student-list-wrap .filters select { padding: 8px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; background: white; }
-
-        .student-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
-        .student-row:hover { background: #f8fafc; }
-        .student-row .name { font-weight: 700; color: #0f172a; }
-        .student-row .info { font-size: 13px; color: #64748b; }
+        .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
 
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         .empty-state .icon { font-size: 48px; }
         .empty-state .title { font-weight: 700; color: #64748b; font-size: 18px; margin-top: 8px; }
-        .empty-state .desc { font-size: 14px; margin-top: 4px; }
+
+        /* ===== PREVIEW MODAL ===== */
+        .preview-modal .modal-box { max-width: 1100px; background: #f1f5f9; padding: 20px; }
+        .preview-modal .preview-container { background: white; padding: 30px; border-radius: 16px; }
+        .preview-modal .report-card-preview { max-width: 210mm; margin: 0 auto; }
+        .preview-modal .report-card-preview table { font-size: 12px; }
+        .preview-modal .report-card-preview .position-summary { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 10px 0; padding: 12px; background: #fefce8; border-radius: 12px; border: 2px solid #f59e0b; }
+        .preview-modal .report-card-preview .position-summary .pos-item { text-align: center; padding: 0 20px; border-right: 1px solid #f59e0b; }
+        .preview-modal .report-card-preview .position-summary .pos-item:last-child { border-right: none; }
+        .preview-modal .report-card-preview .position-summary .pos-value { font-size: 28px; font-weight: 900; color: #1e1b4b; }
+        .preview-modal .report-card-preview .signature-section { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #cbd5e1; }
+        .preview-modal .report-card-preview .signature-box { flex: 1; min-width: 150px; }
+        .preview-modal .report-card-preview .signature-box .line { border-bottom: 2px solid #1e293b; width: 100%; margin-top: 25px; margin-bottom: 4px; }
+        .preview-modal .report-card-preview .signature-box .sub { font-size: 12px; color: #64748b; }
+        .preview-modal .report-card-preview .signature-box .sig-img { max-width: 150px; max-height: 50px; margin-top: 5px; }
+
+        .grade-distinction { color: #059669; font-weight: 800; }
+        .grade-excellent { color: #059669; font-weight: 800; }
+        .grade-verygood { color: #2563eb; font-weight: 800; }
+        .grade-good { color: #2563eb; font-weight: 700; }
+        .grade-aboveavg { color: #7c3aed; font-weight: 700; }
+        .grade-average { color: #d97706; font-weight: 700; }
+        .grade-belowavg { color: #ea580c; font-weight: 700; }
+        .grade-weak { color: #dc2626; font-weight: 700; }
+        .grade-fail { color: #dc2626; font-weight: 800; }
+
+        .promotion-badge { padding: 4px 14px; border-radius: 30px; font-weight: 800; font-size: 12px; display: inline-block; }
+        .promotion-badge.Promoted { background: #d1fae5; color: #065f46; }
+        .promotion-badge.Not\\ Promoted { background: #fee2e2; color: #991b1b; }
+        .promotion-badge.Probation { background: #fef3c7; color: #92400e; }
 
         @media (max-width: 700px) {
             #app { padding: 20px; border-radius: 16px; }
-            .grid-2 { grid-template-columns: 1fr; }
             .class-grid { grid-template-columns: 1fr 1fr; }
+            .modal-box .full-report-section .grid-2 { grid-template-columns: 1fr; }
+            .preview-modal .modal-box { padding: 10px; }
         }
     </style>
 </head>
@@ -211,11 +218,11 @@
             <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
         </div>
 
-        <!-- MAIN VIEW: Class Grid -->
+        <!-- MAIN VIEW -->
         <div id="mainView">
             <div class="card" style="margin-bottom:20px;">
-                <h3>📚 Select a Class</h3>
-                <div class="sub">Click on any class to view all report cards for that class.</div>
+                <h3>📚 Published Classes</h3>
+                <div class="sub">Classes where teachers have submitted report cards for review.</div>
                 <div id="classGridContainer" class="class-grid">
                     <span style="color:#94a3b8;">Loading classes...</span>
                 </div>
@@ -232,9 +239,9 @@
                 </div>
 
                 <div id="tabGenerate" class="tab-panel active">
-                    <div class="sub">Generate 10 to 60 unique PINs at once for parents to purchase.</div>
-                    <div class="flex-input">
-                        <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; text-align:center;" />
+                    <div class="sub">Generate 10 to 60 unique PINs at once.</div>
+                    <div class="flex-input" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                        <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; padding:12px 16px; border:2px solid #e2e8f0; border-radius:60px; text-align:center; font-size:14px; font-family:'Inter',sans-serif;" />
                         <button class="btn-sm btn-primary" id="genBulkPinBtn" style="padding:12px 20px; flex:1;">🔄 Generate</button>
                     </div>
                     <div class="pin-display-box" id="bulkPinResult">
@@ -247,17 +254,13 @@
                 <div id="tabHistory" class="tab-panel">
                     <div class="sub">Track who used which PIN and when.</div>
                     <button class="btn-sm btn-primary" id="refreshHistoryBtn" style="margin-bottom:10px;">🔄 Refresh</button>
-                    <div class="table-scroll" id="pinHistoryContainer">
-                        <p style="color:#94a3b8; font-size:14px;">Loading...</p>
-                    </div>
+                    <div class="table-scroll" id="pinHistoryContainer"><p style="color:#94a3b8; font-size:14px;">Loading...</p></div>
                 </div>
 
                 <div id="tabAllPins" class="tab-panel">
                     <div class="sub">View all generated PINs and their status.</div>
                     <button class="btn-sm btn-primary" id="refreshAllPinsBtn" style="margin-bottom:10px;">🔄 Refresh</button>
-                    <div class="table-scroll" id="allPinsContainer">
-                        <p style="color:#94a3b8; font-size:14px;">Loading...</p>
-                    </div>
+                    <div class="table-scroll" id="allPinsContainer"><p style="color:#94a3b8; font-size:14px;">Loading...</p></div>
                 </div>
 
                 <!-- ADMIN SIGNATURE TAB -->
@@ -278,16 +281,14 @@
             </div>
         </div>
 
-        <!-- CLASS VIEW: Students in a specific class -->
+        <!-- CLASS VIEW -->
         <div id="classView" style="display:none;">
             <div class="class-header">
                 <div>
                     <button class="back-btn" id="backToClassesBtn">⬅ Back to Classes</button>
                     <h2 style="display:inline-block; margin-left:15px; color:#1e1b4b;">📋 <span id="classViewTitle">Class Name</span></h2>
                 </div>
-                <div>
-                    <span class="btn-sm btn-outline" id="classViewStats">0 students</span>
-                </div>
+                <div><span class="btn-sm btn-outline" id="classViewStats">0 students</span></div>
             </div>
 
             <div class="card">
@@ -300,19 +301,17 @@
                     </select>
                     <button class="btn-sm btn-primary" id="refreshClassViewBtn">🔄 Refresh</button>
                 </div>
-                <div id="studentListContainer">
-                    <p style="color:#94a3b8;">Loading students...</p>
-                </div>
+                <div id="studentListContainer"><p style="color:#94a3b8;">Loading students...</p></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: Review & Approve Report Card -->
+    <!-- REVIEW MODAL - FULL REPORT CARD VIEW -->
     <div class="modal-overlay" id="reviewModal">
         <div class="modal-box">
             <button class="close-modal" id="closeModalBtn">✕</button>
-            <h2>📋 Review Report Card</h2>
-            <p class="sub">Review the student's performance, add your remarks, and give consent before publishing.</p>
+            <h2>📋 Full Report Card Review</h2>
+            <p class="sub">Review all sections of the report card before approving.</p>
 
             <div class="student-info" id="modalStudentInfo">
                 <div><strong>Student:</strong> <span id="modalStudentName">---</span></div>
@@ -322,7 +321,8 @@
                 <div><strong>Overall Avg:</strong> <span id="modalStudentAvg">---</span></div>
             </div>
 
-            <div class="subject-summary" id="modalSubjectSummary"></div>
+            <!-- FULL REPORT CARD SECTIONS -->
+            <div id="modalFullReport"></div>
 
             <div class="remark-field">
                 <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:4px;">📝 Admin / Principal Remarks</label>
@@ -335,8 +335,23 @@
             </div>
 
             <div class="actions">
+                <button class="btn-sm btn-primary" id="previewReportBtn">👁️ Preview Report Card</button>
                 <button class="btn-sm btn-outline" id="cancelReviewBtn">Cancel</button>
                 <button class="btn-sm btn-success" id="finalizeApprovalBtn">📤 Approve & Publish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div class="modal-overlay preview-modal" id="previewModal">
+        <div class="modal-box">
+            <button class="close-modal" id="closePreviewBtn">✕</button>
+            <h2>📄 Report Card Preview</h2>
+            <p class="sub">This is exactly how the student/parent will see the report card.</p>
+            <div class="preview-container" id="previewContainer"></div>
+            <div class="actions" style="margin-top:15px;">
+                <button class="btn-sm btn-outline" id="closePreviewBtn2">Close Preview</button>
+                <button class="btn-sm btn-primary" onclick="window.print()">🖨️ Print Preview</button>
             </div>
         </div>
     </div>
@@ -374,7 +389,7 @@
     }
 
     // =============================================================
-    // HELPERS & GLOBALS
+    // HELPERS
     // =============================================================
     const $ = (id) => document.getElementById(id);
     let masterClassList = [];
@@ -385,157 +400,27 @@
     let adminSignatureCtx = null;
 
     function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
-
-    // =============================================================
-    // ADMIN SIGNATURE FUNCTIONS
-    // =============================================================
-    function initAdminSignature() {
-        const canvas = document.getElementById('adminSignatureCanvas');
-        if (!canvas) return;
-        adminSignatureCanvas = canvas;
-        adminSignatureCtx = canvas.getContext('2d');
-
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-
-        function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width || 350;
-            canvas.height = rect.height || 120;
-            loadAdminSignature();
-        }
-
-        function startDrawing(e) {
-            e.preventDefault();
-            isDrawing = true;
-            const pos = getPos(e);
-            lastX = pos.x;
-            lastY = pos.y;
-        }
-
-        function draw(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            const pos = getPos(e);
-            adminSignatureCtx.beginPath();
-            adminSignatureCtx.moveTo(lastX, lastY);
-            adminSignatureCtx.lineTo(pos.x, pos.y);
-            adminSignatureCtx.strokeStyle = '#1e1b4b';
-            adminSignatureCtx.lineWidth = 3;
-            adminSignatureCtx.lineCap = 'round';
-            adminSignatureCtx.lineJoin = 'round';
-            adminSignatureCtx.stroke();
-            lastX = pos.x;
-            lastY = pos.y;
-        }
-
-        function stopDrawing(e) {
-            e.preventDefault();
-            if (isDrawing) {
-                isDrawing = false;
-                // Auto-save on stop
-                // Not auto-saving to Firestore, user must click Save
-            }
-        }
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
-
-        function loadAdminSignature() {
-            db.collection('settings').doc('adminConfig').get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (data.adminSignature) {
-                        const img = new Image();
-                        img.onload = function() {
-                            adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
-                            adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                            document.getElementById('adminSigStatus').innerHTML = '✅ Signature loaded from Firestore';
-                            document.getElementById('adminSigStatus').style.color = '#059669';
-                        };
-                        img.src = data.adminSignature;
-                    } else {
-                        document.getElementById('adminSigStatus').innerHTML = 'ℹ️ No signature saved yet. Draw and save one.';
-                        document.getElementById('adminSigStatus').style.color = '#64748b';
-                    }
-                }
-            }).catch(() => {});
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 300);
-
-        // Clear
-        document.getElementById('adminSigClear').addEventListener('click', function() {
-            if (confirm('Clear the signature?')) {
-                adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
-                document.getElementById('adminSigStatus').innerHTML = '🗑️ Signature cleared (local only)';
-                document.getElementById('adminSigStatus').style.color = '#dc2626';
-                showToast('🗑️ Signature cleared from canvas.', 'warning');
-            }
-        });
-
-        // Save to Firestore
-        document.getElementById('adminSigSave').addEventListener('click', function() {
-            const dataUrl = canvas.toDataURL('image/png');
-            if (dataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...') {
-                showToast('⚠️ Please draw or upload a signature first.', 'warning');
-                return;
-            }
-            db.collection('settings').doc('adminConfig').set({
-                adminSignature: dataUrl,
-                adminSignatureUpdated: new Date()
-            }, { merge: true }).then(() => {
-                document.getElementById('adminSigStatus').innerHTML = '✅ Signature saved to Firestore!';
-                document.getElementById('adminSigStatus').style.color = '#059669';
-                showToast('✅ Admin signature saved to Firestore!', 'success');
-            }).catch(e => {
-                showToast('❌ Error saving signature: ' + e.message, 'error');
-            });
-        });
-
-        // Upload image
-        document.getElementById('adminSigUpload').addEventListener('click', function() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
-                        adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        document.getElementById('adminSigStatus').innerHTML = '📤 Image loaded. Click "Save to Firestore" to store it.';
-                        document.getElementById('adminSigStatus').style.color = '#d97706';
-                        showToast('📤 Image loaded. Save to store permanently.', 'success');
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            };
-            input.click();
-        });
-
-        return { canvas, ctx: adminSignatureCtx };
+    function getRemarkText(avg) {
+        if (avg >= 75) return 'Distinction';
+        if (avg >= 70) return 'Excellent';
+        if (avg >= 65) return 'Very Good';
+        if (avg >= 60) return 'Good';
+        if (avg >= 55) return 'Above Avg';
+        if (avg >= 50) return 'Average';
+        if (avg >= 45) return 'Below Avg';
+        if (avg >= 40) return 'Weak Pass';
+        return 'Fail';
+    }
+    function getGradeClass(avg) {
+        if (avg >= 75) return 'grade-distinction';
+        if (avg >= 70) return 'grade-excellent';
+        if (avg >= 65) return 'grade-verygood';
+        if (avg >= 60) return 'grade-good';
+        if (avg >= 55) return 'grade-aboveavg';
+        if (avg >= 50) return 'grade-average';
+        if (avg >= 45) return 'grade-belowavg';
+        if (avg >= 40) return 'grade-weak';
+        return 'grade-fail';
     }
 
     // =============================================================
@@ -551,29 +436,7 @@
             $(btn.dataset.tab).classList.add('active');
             if (btn.dataset.tab === 'tabHistory') loadPinHistory();
             if (btn.dataset.tab === 'tabAllPins') loadAllPins();
-            if (btn.dataset.tab === 'tabAdminSignature') {
-                // Re-initialize canvas when tab is shown
-                setTimeout(() => {
-                    if (adminSignatureCanvas) {
-                        const rect = adminSignatureCanvas.getBoundingClientRect();
-                        adminSignatureCanvas.width = rect.width || 350;
-                        adminSignatureCanvas.height = rect.height || 120;
-                        // Reload signature
-                        db.collection('settings').doc('adminConfig').get().then(doc => {
-                            if (doc.exists && doc.data().adminSignature) {
-                                const img = new Image();
-                                img.onload = function() {
-                                    adminSignatureCtx.clearRect(0, 0, adminSignatureCanvas.width, adminSignatureCanvas.height);
-                                    adminSignatureCtx.drawImage(img, 0, 0, adminSignatureCanvas.width, adminSignatureCanvas.height);
-                                    document.getElementById('adminSigStatus').innerHTML = '✅ Signature loaded from Firestore';
-                                    document.getElementById('adminSigStatus').style.color = '#059669';
-                                };
-                                img.src = doc.data().adminSignature;
-                            }
-                        }).catch(() => {});
-                    }
-                }, 300);
-            }
+            if (btn.dataset.tab === 'tabAdminSignature') initAdminSignature();
         });
     });
 
@@ -628,6 +491,129 @@
     });
 
     // =============================================================
+    // ADMIN SIGNATURE
+    // =============================================================
+    function initAdminSignature() {
+        const canvas = document.getElementById('adminSignatureCanvas');
+        if (!canvas) return;
+        adminSignatureCanvas = canvas;
+        adminSignatureCtx = canvas.getContext('2d');
+
+        let isDrawing = false;
+        let lastX = 0, lastY = 0;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width || 350;
+            canvas.height = rect.height || 120;
+            loadAdminSignature();
+        }
+
+        function startDrawing(e) { e.preventDefault(); isDrawing = true; const pos = getPos(e); lastX = pos.x; lastY = pos.y; }
+        function draw(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            adminSignatureCtx.beginPath();
+            adminSignatureCtx.moveTo(lastX, lastY);
+            adminSignatureCtx.lineTo(pos.x, pos.y);
+            adminSignatureCtx.strokeStyle = '#1e1b4b';
+            adminSignatureCtx.lineWidth = 3;
+            adminSignatureCtx.lineCap = 'round';
+            adminSignatureCtx.lineJoin = 'round';
+            adminSignatureCtx.stroke();
+            lastX = pos.x; lastY = pos.y;
+        }
+        function stopDrawing(e) { e.preventDefault(); if (isDrawing) { isDrawing = false; } }
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+        function loadAdminSignature() {
+            db.collection('settings').doc('adminConfig').get().then(doc => {
+                if (doc.exists && doc.data().adminSignature) {
+                    const img = new Image();
+                    img.onload = function() {
+                        adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                        adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        document.getElementById('adminSigStatus').innerHTML = '✅ Signature loaded from Firestore';
+                        document.getElementById('adminSigStatus').style.color = '#059669';
+                    };
+                    img.src = doc.data().adminSignature;
+                } else {
+                    document.getElementById('adminSigStatus').innerHTML = 'ℹ️ No signature saved yet. Draw and save one.';
+                    document.getElementById('adminSigStatus').style.color = '#64748b';
+                }
+            }).catch(() => {});
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 300);
+
+        document.getElementById('adminSigClear').addEventListener('click', function() {
+            if (confirm('Clear the signature?')) {
+                adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('adminSigStatus').innerHTML = '🗑️ Signature cleared (local only)';
+                document.getElementById('adminSigStatus').style.color = '#dc2626';
+                showToast('🗑️ Signature cleared from canvas.', 'warning');
+            }
+        });
+
+        document.getElementById('adminSigSave').addEventListener('click', function() {
+            const dataUrl = canvas.toDataURL('image/png');
+            if (dataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...') {
+                showToast('⚠️ Please draw or upload a signature first.', 'warning');
+                return;
+            }
+            db.collection('settings').doc('adminConfig').set({
+                adminSignature: dataUrl,
+                adminSignatureUpdated: new Date()
+            }, { merge: true }).then(() => {
+                document.getElementById('adminSigStatus').innerHTML = '✅ Signature saved to Firestore!';
+                document.getElementById('adminSigStatus').style.color = '#059669';
+                showToast('✅ Admin signature saved to Firestore!', 'success');
+            }).catch(e => {
+                showToast('❌ Error saving signature: ' + e.message, 'error');
+            });
+        });
+
+        document.getElementById('adminSigUpload').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                        adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        document.getElementById('adminSigStatus').innerHTML = '📤 Image loaded. Click "Save to Firestore" to store it.';
+                        document.getElementById('adminSigStatus').style.color = '#d97706';
+                        showToast('📤 Image loaded. Save to store permanently.', 'success');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        });
+    }
+
+    // =============================================================
     // LOAD MASTER CLASS LIST
     // =============================================================
     async function loadMasterClassList() {
@@ -646,7 +632,7 @@
     }
 
     // =============================================================
-    // LOAD ALL REPORT CARDS (for stats and class views)
+    // LOAD ALL REPORT CARDS
     // =============================================================
     async function loadAllReportCards() {
         try {
@@ -662,7 +648,8 @@
                     class: data.class || 'Unknown',
                     overallPosition: data.overallPosition || null,
                     overallAverage: data.overallAverage || 0,
-                    subjects: data.subjects || {}
+                    subjects: data.subjects || {},
+                    pushedToAdmin: data.pushedToAdmin || false
                 });
             });
             updateStats();
@@ -677,63 +664,65 @@
     }
 
     // =============================================================
-    // UPDATE STATS BAR
+    // UPDATE STATS
     // =============================================================
     function updateStats() {
-        const total = allReportCards.length;
-        const pending = allReportCards.filter(r => !r.approved).length;
-        const approved = allReportCards.filter(r => r.approved).length;
-        $('totalStudents').innerText = total;
+        const pushed = allReportCards.filter(r => r.pushedToAdmin === true);
+        const pending = pushed.filter(r => !r.approved).length;
+        const approved = pushed.filter(r => r.approved).length;
+        $('totalStudents').innerText = pushed.length;
         $('pendingCount').innerText = pending;
         $('approvedCount').innerText = approved;
     }
 
     // =============================================================
-    // RENDER CLASS GRID (Main View)
+    // RENDER CLASS GRID - Only shows classes with pushed report cards
     // =============================================================
     function renderClassGrid() {
         const container = $('classGridContainer');
-        if (!masterClassList.length) {
-            container.innerHTML = '<p style="color:#94a3b8;">No classes configured. Please add classes in the PIN Management section.</p>';
+        
+        // Only show classes that have pushed report cards
+        const classMap = {};
+        allReportCards.forEach(r => {
+            if (r.pushedToAdmin === true) {
+                if (!classMap[r.class]) classMap[r.class] = [];
+                classMap[r.class].push(r);
+            }
+        });
+
+        const classNames = Object.keys(classMap).sort();
+
+        if (!classNames.length) {
+            container.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:30px; color:#94a3b8;">
+                    <div style="font-size:48px;">📭</div>
+                    <div style="font-weight:700; font-size:18px; margin-top:8px;">No Published Report Cards</div>
+                    <div style="font-size:14px;">Teachers haven't submitted any report cards yet.</div>
+                </div>
+            `;
             return;
         }
 
         let html = '';
-        masterClassList.forEach(cls => {
-            const students = allReportCards.filter(r => r.class === cls);
+        classNames.forEach(cls => {
+            const students = classMap[cls];
             const pending = students.filter(r => !r.approved).length;
             const approved = students.filter(r => r.approved).length;
             const total = students.length;
-
-            // Check if teacher has published any report cards for this class
-            // A report card is "published" if it has subjects with scores
-            const hasPublished = students.some(r => {
-                const subjects = r.subjects || {};
-                return Object.keys(subjects).length > 0;
-            });
-
-            // Build status badges
-            let statusHtml = '';
-            if (total === 0) {
-                statusHtml = `<span class="empty-badge">📭 No reports</span>`;
-            } else if (!hasPublished) {
-                statusHtml = `<span class="empty-badge">📭 No scores published</span>`;
-            } else {
-                if (pending > 0) statusHtml += `<span class="pending-badge">⏳ ${pending} pending</span> `;
-                if (approved > 0) statusHtml += `<span class="approved-badge">✅ ${approved} approved</span> `;
-            }
             
             html += `
                 <div class="class-card" data-class="${cls}">
                     <div class="class-name">📚 ${cls}</div>
                     <div class="class-count">${total} students</div>
-                    <div class="class-status">${statusHtml}</div>
+                    <div class="class-status">
+                        ${pending > 0 ? `<span class="pending-badge">⏳ ${pending} pending</span> ` : ''}
+                        ${approved > 0 ? `<span class="approved-badge">✅ ${approved} approved</span>` : ''}
+                    </div>
                 </div>
             `;
         });
         container.innerHTML = html;
 
-        // Click handler for class cards
         container.querySelectorAll('.class-card').forEach(card => {
             card.addEventListener('click', () => {
                 const cls = card.dataset.class;
@@ -742,84 +731,49 @@
                 $('mainView').style.display = 'none';
                 $('classView').style.display = 'block';
                 renderStudentList(cls);
-                const students = allReportCards.filter(r => r.class === cls);
+                const students = allReportCards.filter(r => r.class === cls && r.pushedToAdmin === true);
                 $('classViewStats').innerText = `${students.length} students`;
             });
         });
     }
 
     // =============================================================
-    // RENDER STUDENT LIST (Class View)
+    // RENDER STUDENT LIST
     // =============================================================
     function renderStudentList(cls, searchQuery = '', statusFilter = 'all') {
         const container = $('studentListContainer');
-        let students = allReportCards.filter(r => r.class === cls);
+        let students = allReportCards.filter(r => r.class === cls && r.pushedToAdmin === true);
 
-        // Apply search
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             students = students.filter(r => r.studentName.toLowerCase().includes(q));
         }
-
-        // Apply status filter
         if (statusFilter === 'pending') {
             students = students.filter(r => !r.approved);
         } else if (statusFilter === 'approved') {
             students = students.filter(r => r.approved);
         }
 
-        // Sort by name
         students.sort((a, b) => a.studentName.localeCompare(b.studentName));
-
-        // Check if there are any published report cards (with subjects)
-        const hasPublished = students.some(r => {
-            const subjects = r.subjects || {};
-            return Object.keys(subjects).length > 0;
-        });
 
         if (!students.length) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="icon">📭</div>
                     <div class="title">No Students Found</div>
-                    <div class="desc">No students in this class${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</div>
+                    <div class="desc">No submitted report cards in this class${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</div>
                 </div>
             `;
             return;
         }
 
-        // If no published report cards, show message
-        if (!hasPublished) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="icon">📋</div>
-                    <div class="title">No Report Cards Published</div>
-                    <div class="desc">The teacher for this class has not published any report cards yet.</div>
-                    <div style="margin-top:10px; font-size:13px; color:#94a3b8;">Please ask the teacher to publish report cards for this class.</div>
-                </div>
-            `;
-            return;
-        }
-
-        let html = `<div style="overflow-x:auto;">`;
-        html += `<table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th style="text-align:left;">Student Name</th>
-                    <th>Avg %</th>
-                    <th>Position</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>`;
+        let html = `<div style="overflow-x:auto;"><table>
+            <thead><tr><th>#</th><th style="text-align:left;">Student Name</th><th>Avg %</th><th>Position</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
 
         students.forEach((r, idx) => {
             const status = r.approved ? '✅ Approved' : '⏳ Pending';
             const statusClass = r.approved ? 'status-approved' : 'status-pending';
             const posText = r.overallPosition ? r.overallPosition + getOrdinalSuffix(r.overallPosition) : '--';
-            
             html += `
                 <tr>
                     <td>${idx + 1}</td>
@@ -839,7 +793,6 @@
         html += `</tbody></table></div>`;
         container.innerHTML = html;
 
-        // Event listeners
         container.querySelectorAll('.reviewBtn').forEach(btn => {
             btn.addEventListener('click', () => openReviewModal(btn.dataset.id));
         });
@@ -880,19 +833,15 @@
     });
 
     $('studentSearchBox').addEventListener('input', () => {
-        if (currentClassView) {
-            renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
-        }
+        if (currentClassView) renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
     });
 
     $('statusFilter').addEventListener('change', () => {
-        if (currentClassView) {
-            renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
-        }
+        if (currentClassView) renderStudentList(currentClassView, $('studentSearchBox').value, $('statusFilter').value);
     });
 
     // =============================================================
-    // REVIEW MODAL
+    // OPEN REVIEW MODAL - FULL REPORT CARD
     // =============================================================
     async function openReviewModal(docId, viewOnly = false) {
         currentPendingDocId = docId;
@@ -907,37 +856,142 @@
             $('modalStudentPosition').innerText = data.overallPosition ? data.overallPosition + getOrdinalSuffix(data.overallPosition) : 'N/A';
             $('modalStudentAvg').innerText = data.overallAverage ? data.overallAverage.toFixed(1) + '%' : 'N/A';
 
-            // Subject table - ONLY show subjects that have at least ONE score > 0
+            // ===== FULL REPORT CARD SECTIONS =====
             const subjects = data.subjects || {};
-            let tableHtml = `<table><tr><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr>`;
+            const affective = data.affectiveDomain || {};
+            const psychomotor = data.psychomotorDomain || {};
+            const extracurriculars = data.extracurriculars || [];
+            const commentary = data.classTeacherCommentary || 'No comments provided.';
+            const principalRemarks = data.principalRemarks || '';
+            const promotionStatus = data.promotionStatus || '';
+            const teacherSig = data.teacherSignature || null;
+            const adminSig = data.adminSignature || null;
+
+            // Build subject table
+            let subjectRows = '';
             let hasAnyScore = false;
-            Object.keys(subjects).forEach(sub => {
+            Object.keys(subjects).forEach((sub, idx) => {
                 const s = subjects[sub] || {};
                 const hasScore = (s.firstTerm > 0) || (s.secondTerm > 0) || (s.thirdTerm > 0);
                 if (hasScore) {
                     hasAnyScore = true;
-                    tableHtml += `<tr><td><strong>${sub}</strong></td><td>${s.firstTerm||0}</td><td>${s.secondTerm||0}</td><td>${s.thirdTerm||0}</td><td>${s.average||0}%</td><td>${s.remark||'--'}</td></tr>`;
+                    const avg = s.average || 0;
+                    const remark = s.remark || getRemarkText(avg);
+                    const gradeClass = getGradeClass(avg);
+                    subjectRows += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td style="text-align:left; font-weight:600;">${sub}</td>
+                            <td>${s.firstTerm || 0}</td>
+                            <td>${s.secondTerm || 0}</td>
+                            <td>${s.thirdTerm || 0}</td>
+                            <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
+                            <td class="${gradeClass}">${remark || '--'}</td>
+                        </tr>
+                    `;
                 }
             });
-            tableHtml += '</table>';
 
-            if (!hasAnyScore) {
-                tableHtml = `<div style="text-align:center; padding:20px; color:#94a3b8;">
-                    <p style="font-size:24px;">📭</p>
-                    <p>No subject scores found for this student.</p>
-                </div>`;
+            let tableHtml = '';
+            if (hasAnyScore) {
+                tableHtml = `
+                    <h4 style="font-weight:700; color:#1e1b4b; margin-top:10px; margin-bottom:6px; font-size:14px;">📖 Subject Scores</h4>
+                    <div style="overflow-x:auto;">
+                        <table style="font-size:12px;">
+                            <thead><tr><th>S/N</th><th style="text-align:left;">Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr></thead>
+                            <tbody>${subjectRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                tableHtml = `<p style="color:#94a3b8;">No subject scores recorded.</p>`;
             }
-            $('modalSubjectSummary').innerHTML = tableHtml;
 
-            // If view-only, disable inputs and change button text
+            // Affective
+            let affectiveHtml = '';
+            Object.keys(affective).forEach(key => {
+                const val = affective[key] || 3;
+                const stars = '⭐'.repeat(Math.min(val, 5)) + '☆'.repeat(Math.max(0, 5 - val));
+                affectiveHtml += `<div class="item"><span>${key}</span><span class="rating">${stars}</span></div>`;
+            });
+
+            // Psychomotor
+            let psychomotorHtml = '';
+            Object.keys(psychomotor).forEach(key => {
+                const val = psychomotor[key] || 3;
+                const stars = '⭐'.repeat(Math.min(val, 5)) + '☆'.repeat(Math.max(0, 5 - val));
+                psychomotorHtml += `<div class="item"><span>${key}</span><span class="rating">${stars}</span></div>`;
+            });
+
+            // Clubs
+            const allClubs = ['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'];
+            let clubsHtml = allClubs.map(c => {
+                const done = extracurriculars.includes(c);
+                return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${c}</span>`;
+            }).join(' ');
+
+            // Signatures
+            let teacherSigHtml = teacherSig ? `<img src="${teacherSig}" style="max-width:150px; max-height:40px; margin-top:4px;" />` : '<span style="color:#94a3b8;">No signature</span>';
+            let adminSigHtml = adminSig ? `<img src="${adminSig}" style="max-width:150px; max-height:40px; margin-top:4px;" />` : '<span style="color:#94a3b8;">No signature</span>';
+
+            // Build full report HTML
+            const fullReportHtml = `
+                <div class="full-report-section">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                        <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+                            <h4>⭐ Affective Domain</h4>
+                            ${affectiveHtml || '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'}
+                        </div>
+                        <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0;">
+                            <h4>🤸 Psychomotor Domain</h4>
+                            ${psychomotorHtml || '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'}
+                        </div>
+                    </div>
+                    <div style="background:#f8fafc; padding:12px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px;">
+                        <h4>⚽ Clubs & Societies</h4>
+                        <div class="extra-badges">${clubsHtml}</div>
+                    </div>
+                    ${tableHtml}
+                    <div style="background:#fafafa; padding:12px; border-radius:12px; border:1px solid #e2e8f0; margin-top:15px;">
+                        <h4>📝 Teacher's Comment</h4>
+                        <div class="comment-box">${commentary}</div>
+                    </div>
+                    ${principalRemarks ? `
+                    <div style="background:#fefce8; padding:12px; border-radius:12px; border:1px solid #f59e0b; margin-top:10px;">
+                        <h4>👨‍💼 Principal's Remarks (Existing)</h4>
+                        <div class="comment-box">${principalRemarks}</div>
+                    </div>` : ''}
+                    ${promotionStatus ? `
+                    <div style="margin-top:10px;">
+                        <h4 style="font-weight:700; color:#1e1b4b; font-size:14px;">📈 Promotion Status</h4>
+                        <span class="promotion-badge ${promotionStatus.replace(/\s+/g, '\\ ')}">${promotionStatus}</span>
+                    </div>` : ''}
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:15px; padding-top:15px; border-top:2px dashed #cbd5e1;">
+                        <div>
+                            <h4 style="font-weight:700; color:#1e1b4b; font-size:13px;">✍️ Teacher Signature</h4>
+                            ${teacherSigHtml}
+                        </div>
+                        <div>
+                            <h4 style="font-weight:700; color:#1e1b4b; font-size:13px;">✍️ Admin Signature</h4>
+                            ${adminSigHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('modalFullReport').innerHTML = fullReportHtml;
+
+            // Set remarks and consent
             if (viewOnly || data.approved) {
                 $('adminRemarksInput').value = data.principalRemarks || '';
                 $('adminRemarksInput').disabled = true;
                 $('adminConsentCheck').disabled = true;
-                $('finalizeApprovalBtn').innerText = '👁️ View Only (Approved)';
+                $('adminConsentCheck').checked = true;
+                $('finalizeApprovalBtn').innerText = '✅ Already Approved';
                 $('finalizeApprovalBtn').disabled = true;
                 $('finalizeApprovalBtn').style.opacity = '0.6';
                 $('adminRemarksInput').style.background = '#f1f5f9';
+                $('previewReportBtn').style.display = 'inline-block';
             } else {
                 $('adminRemarksInput').value = '';
                 $('adminRemarksInput').disabled = false;
@@ -947,7 +1001,12 @@
                 $('finalizeApprovalBtn').disabled = false;
                 $('finalizeApprovalBtn').style.opacity = '1';
                 $('adminRemarksInput').style.background = 'white';
+                $('previewReportBtn').style.display = 'inline-block';
             }
+
+            // Store data for preview
+            window._previewData = data;
+            window._previewViewOnly = viewOnly;
 
             $('reviewModal').classList.add('active');
 
@@ -968,6 +1027,204 @@
     });
 
     // =============================================================
+    // PREVIEW REPORT CARD
+    // =============================================================
+    $('previewReportBtn').addEventListener('click', async () => {
+        const data = window._previewData;
+        if (!data) return showToast('⚠️ No data to preview.', 'warning');
+
+        const container = $('previewContainer');
+        
+        // Get admin signature for preview
+        let adminSig = null;
+        try {
+            const settingsDoc = await db.collection('settings').doc('adminConfig').get();
+            if (settingsDoc.exists) adminSig = settingsDoc.data().adminSignature || null;
+        } catch (e) {}
+
+        // Build preview report card
+        const subjects = data.subjects || {};
+        const affective = data.affectiveDomain || {};
+        const psychomotor = data.psychomotorDomain || {};
+        const extracurriculars = data.extracurriculars || [];
+        const commentary = data.classTeacherCommentary || 'No comments provided.';
+        const promotionStatus = data.promotionStatus || '';
+        const overallPosition = data.overallPosition || null;
+        const overallAverage = data.overallAverage || 0;
+        const totalStudents = data.totalStudents || 0;
+
+        let subjectRows = '';
+        let hasAnyScore = false;
+        Object.keys(subjects).forEach((sub, idx) => {
+            const s = subjects[sub] || {};
+            const hasScore = (s.firstTerm > 0) || (s.secondTerm > 0) || (s.thirdTerm > 0);
+            if (hasScore) {
+                hasAnyScore = true;
+                const avg = s.average || 0;
+                const remark = s.remark || getRemarkText(avg);
+                const gradeClass = getGradeClass(avg);
+                subjectRows += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td style="text-align:left; font-weight:600;">${sub}</td>
+                        <td>${s.firstTerm || 0}</td>
+                        <td>${s.secondTerm || 0}</td>
+                        <td>${s.thirdTerm || 0}</td>
+                        <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
+                        <td class="${gradeClass}">${remark || '--'}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        let positionHtml = '';
+        if (overallPosition !== null && overallPosition > 0) {
+            const suffix = getOrdinalSuffix(overallPosition);
+            let posEmoji = overallPosition === 1 ? '🥇' : overallPosition === 2 ? '🥈' : overallPosition === 3 ? '🥉' : '';
+            let percentDisplay = 100;
+            if (totalStudents > 1) {
+                percentDisplay = Math.round(((totalStudents - overallPosition) / (totalStudents - 1)) * 100);
+            }
+            positionHtml = `
+                <div class="position-summary">
+                    <div class="pos-item"><div class="pos-value">${posEmoji} ${overallPosition}<small>${suffix}</small></div><div class="pos-label">Position</div></div>
+                    <div class="pos-item"><div class="pos-value">${overallAverage.toFixed(1)}%</div><div class="pos-label">Average</div></div>
+                    ${totalStudents > 0 ? `<div class="pos-item"><div class="pos-value">${totalStudents}</div><div class="pos-label">Total Students</div></div>
+                    <div class="pos-item"><div class="pos-value" style="font-size:24px;">${percentDisplay}%</div><div class="pos-label">Top ${percentDisplay}%</div></div>` : ''}
+                    ${promotionStatus ? `<div class="pos-item"><div class="pos-value" style="font-size:16px;"><span class="promotion-badge ${promotionStatus.replace(/\s+/g, '\\ ')}">${promotionStatus}</span></div><div class="pos-label">Promotion</div></div>` : ''}
+                </div>
+            `;
+        }
+
+        let affectiveHtml = '';
+        Object.keys(affective).forEach(key => {
+            const val = affective[key] || 3;
+            const stars = '⭐'.repeat(Math.min(val, 5)) + '☆'.repeat(Math.max(0, 5 - val));
+            affectiveHtml += `<div class="item"><span>${key}</span><span class="rating-stars">${stars}</span></div>`;
+        });
+
+        let psychomotorHtml = '';
+        Object.keys(psychomotor).forEach(key => {
+            const val = psychomotor[key] || 3;
+            const stars = '⭐'.repeat(Math.min(val, 5)) + '☆'.repeat(Math.max(0, 5 - val));
+            psychomotorHtml += `<div class="item"><span>${key}</span><span class="rating-stars">${stars}</span></div>`;
+        });
+
+        const allClubs = ['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'];
+        let clubsHtml = allClubs.map(c => {
+            const done = extracurriculars.includes(c);
+            return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${c}</span>`;
+        }).join(' ');
+
+        const schoolLogo = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
+
+        container.innerHTML = `
+            <div class="report-card-preview">
+                <div style="text-align:center; border-bottom:3px double #1e1b4b; padding-bottom:15px; margin-bottom:15px;">
+                    <div style="display:flex; align-items:center; justify-content:center; gap:15px;">
+                        <img src="${schoolLogo}" style="width:60px; height:60px; border-radius:50%; border:3px solid #1e1b4b;" />
+                        <div>
+                            <div style="font-size:28px; font-weight:900; color:#1e1b4b; letter-spacing:2px;">${data.schoolName || 'COVENANT ARROWS\' MODEL'}</div>
+                            <div style="font-weight:600; color:#4f46e5; font-size:13px;">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
+                            <div style="font-size:12px; color:#475569;">Abiola Way, Abeokuta, Ogun State.</div>
+                        </div>
+                    </div>
+                    <div style="font-size:16px; font-weight:800; color:#0f172a; margin-top:6px; background:#f1f5f9; display:inline-block; padding:2px 30px; border-radius:30px;">${data.term || 'THIRD TERM'} REPORT — ${data.session || data.year || new Date().getFullYear()}</div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; padding:10px 15px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px;">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <div style="width:70px; height:90px; border-radius:8px; overflow:hidden; border:2px solid #e2e8f0; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:36px; color:#94a3b8;">👤</div>
+                        <div>
+                            <div style="font-size:18px; font-weight:800; color:#0f172a;">${data.studentName}</div>
+                            <div style="font-weight:700; color:#1e293b; font-size:14px;">📚 ${data.class} | Day</div>
+                            <div style="font-weight:600; color:#475569; font-size:13px;">👨‍🏫 Teacher: ${data.teacherName || 'N/A'}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:13px; font-weight:600; color:#475569; background:white; padding:4px 12px; border-radius:30px; border:1px solid #e2e8f0;">
+                        📅 ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}
+                    </div>
+                </div>
+
+                ${positionHtml}
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+                        <h4 style="font-weight:700; color:#1e1b4b; font-size:13px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px;">⭐ Affective Domain</h4>
+                        ${affectiveHtml || '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'}
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+                        <h4 style="font-weight:700; color:#1e1b4b; font-size:13px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px;">🤸 Psychomotor Domain</h4>
+                        ${psychomotorHtml || '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'}
+                    </div>
+                </div>
+
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; margin-bottom:15px;">
+                    <h4 style="font-weight:700; color:#1e1b4b; font-size:13px; border-bottom:1px solid #e2e8f0; padding-bottom:4px; margin-bottom:6px;">⚽ Clubs & Societies</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px;">${clubsHtml}</div>
+                </div>
+
+                ${hasAnyScore ? `
+                <div style="overflow-x:auto; margin-bottom:15px;">
+                    <table style="font-size:11px;">
+                        <thead><tr style="background:#1e1b4b; color:white;"><th>S/N</th><th style="text-align:left;">Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr></thead>
+                        <tbody>${subjectRows}
+                            <tr style="background:#f1f5f9; font-weight:800; border-top:3px solid #1e1b4b;">
+                                <td colspan="5" style="text-align:right;">📊 OVERALL AVERAGE</td>
+                                <td>${overallAverage.toFixed(1)}%</td>
+                                <td>${getRemarkText(overallAverage)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>` : '<p style="color:#94a3b8;">No subject scores recorded.</p>'}
+
+                <div style="background:#fafafa; padding:12px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px;">
+                    <h4 style="font-weight:700; color:#1e1b4b; font-size:13px;">📝 Teacher's Comment</h4>
+                    <p style="font-style:italic; font-size:14px; color:#1e293b; line-height:1.6;">${commentary}</p>
+                </div>
+
+                ${data.principalRemarks ? `
+                <div style="background:#fefce8; padding:12px; border-radius:12px; border:1px solid #f59e0b; margin-bottom:15px;">
+                    <h4 style="font-weight:700; color:#1e1b4b; font-size:13px;">👨‍💼 Principal's Remarks</h4>
+                    <p style="font-style:italic; font-size:14px; color:#1e293b; line-height:1.6;">${data.principalRemarks}</p>
+                </div>` : ''}
+
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px; margin-top:15px; padding-top:15px; border-top:2px dashed #cbd5e1;">
+                    <div style="flex:1; min-width:120px;">
+                        <div style="font-weight:700; color:#475569; font-size:13px;">Class Teacher</div>
+                        ${data.teacherSignature ? `<img src="${data.teacherSignature}" style="max-width:120px; max-height:40px; margin-top:4px;" />` : ''}
+                        <div style="border-bottom:2px solid #1e293b; width:100%; margin-top:15px;"></div>
+                        <div style="font-size:11px; color:#64748b;">${data.teacherName || 'Name & Signature'}</div>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <div style="font-weight:700; color:#475569; font-size:13px;">Principal</div>
+                        ${adminSig ? `<img src="${adminSig}" style="max-width:120px; max-height:40px; margin-top:4px;" />` : ''}
+                        <div style="border-bottom:2px solid #1e293b; width:100%; margin-top:15px;"></div>
+                        <div style="font-size:11px; color:#64748b;">Name & Signature</div>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <div style="font-weight:700; color:#475569; font-size:13px;">Parent/Guardian</div>
+                        <div style="border-bottom:2px solid #1e293b; width:100%; margin-top:15px;"></div>
+                        <div style="font-size:11px; color:#64748b;">Name & Signature</div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; font-size:10px; color:#94a3b8; margin-top:15px; border-top:1px solid #e2e8f0; padding-top:10px;">
+                    🔐 Verified & Approved | Generated by Covenant Arrows' Model School System
+                </div>
+            </div>
+        `;
+
+        $('previewModal').classList.add('active');
+    });
+
+    $('closePreviewBtn').addEventListener('click', () => { $('previewModal').classList.remove('active'); });
+    $('closePreviewBtn2').addEventListener('click', () => { $('previewModal').classList.remove('active'); });
+    $('previewModal').addEventListener('click', (e) => {
+        if (e.target === $('previewModal')) $('previewModal').classList.remove('active');
+    });
+
+    // =============================================================
     // FINALIZE APPROVAL
     // =============================================================
     $('finalizeApprovalBtn').addEventListener('click', async () => {
@@ -982,11 +1239,19 @@
         }
 
         try {
+            // Get admin signature
+            let adminSig = null;
+            try {
+                const settingsDoc = await db.collection('settings').doc('adminConfig').get();
+                if (settingsDoc.exists) adminSig = settingsDoc.data().adminSignature || null;
+            } catch (e) {}
+
             await db.collection('reportCards').doc(currentPendingDocId).update({
                 approved: true,
                 principalRemarks: remarks || 'No remarks provided.',
                 adminConsent: true,
-                approvedAt: new Date()
+                approvedAt: new Date(),
+                adminSignature: adminSig
             });
 
             showToast('✅ Report card approved and published!', 'success');
@@ -1001,13 +1266,11 @@
     });
 
     // =============================================================
-    // BULK PIN GENERATION
+    // PIN FUNCTIONS
     // =============================================================
     $('genBulkPinBtn').addEventListener('click', async () => {
         const count = parseInt($('pinCount').value) || 20;
-        if (count < 1 || count > 60) {
-            return showToast('⚠️ Please enter a number between 1 and 60.', 'warning');
-        }
+        if (count < 1 || count > 60) return showToast('⚠️ Enter a number between 1 and 60.', 'warning');
 
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
         const generatedPins = [];
@@ -1019,24 +1282,15 @@
             attempts++;
             let pin = '';
             for (let i = 0; i < 8; i++) pin += chars[Math.floor(Math.random() * chars.length)];
-
             const check = await db.collection('pins').doc(pin).get();
             if (!check.exists && !generatedPins.includes(pin)) {
                 generatedPins.push(pin);
                 const ref = db.collection('pins').doc(pin);
-                batch.set(ref, { 
-                    used: false, 
-                    usedBy: null, 
-                    usedAt: null, 
-                    class: null, 
-                    createdAt: new Date() 
-                });
+                batch.set(ref, { used: false, usedBy: null, usedAt: null, class: null, createdAt: new Date() });
             }
         }
 
-        if (generatedPins.length < count) {
-            showToast(`⚠️ Only generated ${generatedPins.length} unique PINs.`, 'warning');
-        }
+        if (generatedPins.length < count) showToast(`⚠️ Only generated ${generatedPins.length} unique PINs.`, 'warning');
 
         try {
             await batch.commit();
@@ -1064,39 +1318,22 @@
         });
     });
 
-    // =============================================================
-    // PIN USAGE HISTORY
-    // =============================================================
     async function loadPinHistory() {
         const container = $('pinHistoryContainer');
         try {
-            const snap = await db.collection('pins')
-                .where('used', '==', true)
-                .orderBy('usedAt', 'desc')
-                .get();
-
-            if (snap.empty) {
-                container.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No PINs have been used yet.</p>';
-                return;
-            }
-
-            let html = `<table><tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>`;
+            const snap = await db.collection('pins').where('used', '==', true).orderBy('usedAt', 'desc').get();
+            if (snap.empty) { container.innerHTML = '<p style="color:#94a3b8;">No PINs used yet.</p>'; return; }
+            let html = '<table><tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>';
             snap.forEach(doc => {
                 const data = doc.data();
                 const date = data.usedAt?.toDate?.()?.toLocaleString() || 'N/A';
                 html += `<tr><td><strong>${doc.id}</strong></td><td>${data.usedBy || 'N/A'}</td><td>${data.class || 'N/A'}</td><td>${date}</td></tr>`;
             });
             container.innerHTML = html + '</table>';
-        } catch (e) {
-            container.innerHTML = '<p style="color:#dc2626;">❌ Error loading history.</p>';
-        }
+        } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error loading history.</p>'; }
     }
-
     $('refreshHistoryBtn').addEventListener('click', () => { loadPinHistory(); showToast('🔄 Refreshed.', 'success'); });
 
-    // =============================================================
-    // ALL PINS LIST
-    // =============================================================
     async function loadAllPins() {
         const container = $('allPinsContainer');
         try {
@@ -1112,7 +1349,6 @@
             container.innerHTML = html + '</table>';
         } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error.</p>'; }
     }
-
     $('refreshAllPinsBtn').addEventListener('click', () => { loadAllPins(); showToast('🔄 Refreshed.', 'success'); });
 
     // =============================================================
@@ -1120,7 +1356,7 @@
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Admin Console with Signature + Fixed Subjects is ready!');
+    console.log('✅ Admin Console with Full Report Card Preview is ready!');
 </script>
 </body>
 </html>
