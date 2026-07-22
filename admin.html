@@ -108,6 +108,19 @@
         .pin-used { background: #d1fae5; color: #065f46; }
         .pin-unused { background: #fef3c7; color: #92400e; }
 
+        /* ===== SIGNATURE SECTION ===== */
+        .signature-section { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-top: 15px; }
+        .signature-section .signature-title { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .signature-canvas { border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: crosshair; touch-action: none; width: 100%; max-width: 350px; height: 120px; display: block; }
+        .signature-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .signature-actions .btn-sm { padding: 6px 14px; border: none; border-radius: 30px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
+        .signature-actions .btn-sm.clear { background: #fee2e2; color: #dc2626; }
+        .signature-actions .btn-sm.clear:hover { background: #fecaca; }
+        .signature-actions .btn-sm.save { background: #4f46e5; color: white; }
+        .signature-actions .btn-sm.save:hover { background: #4338ca; }
+        .signature-actions .btn-sm.upload { background: #f59e0b; color: #1e1b4b; }
+        .signature-actions .btn-sm.upload:hover { background: #d97706; }
+
         /* ===== MODAL ===== */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
@@ -126,6 +139,7 @@
         .modal-box .consent-check { display: flex; align-items: center; gap: 12px; margin: 15px 0; font-weight: 600; }
         .modal-box .consent-check input { width: 20px; height: 20px; accent-color: #4f46e5; }
         .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .modal-box .signature-preview { max-width: 200px; max-height: 60px; border: 1px solid #e2e8f0; border-radius: 4px; }
 
         /* ===== CLASS VIEW ===== */
         .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
@@ -140,6 +154,7 @@
         .class-card .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 12px; border-radius: 30px; }
         .class-card .approved-badge { background: #d1fae5; color: #065f46; padding: 2px 12px; border-radius: 30px; }
         .class-card .total-badge { background: #e0e7ff; color: #3730a3; padding: 2px 12px; border-radius: 30px; }
+        .class-card .empty-badge { background: #fee2e2; color: #991b1b; padding: 2px 12px; border-radius: 30px; }
 
         /* ===== STUDENT LIST IN CLASS ===== */
         .student-list-wrap { margin-top: 15px; }
@@ -152,6 +167,11 @@
         .student-row:hover { background: #f8fafc; }
         .student-row .name { font-weight: 700; color: #0f172a; }
         .student-row .info { font-size: 13px; color: #64748b; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .empty-state .icon { font-size: 48px; }
+        .empty-state .title { font-weight: 700; color: #64748b; font-size: 18px; margin-top: 8px; }
+        .empty-state .desc { font-size: 14px; margin-top: 4px; }
 
         @media (max-width: 700px) {
             #app { padding: 20px; border-radius: 16px; }
@@ -208,6 +228,7 @@
                     <button class="tab-btn active" data-tab="tabGenerate">🔄 Generate PINs</button>
                     <button class="tab-btn" data-tab="tabHistory">📜 Usage History</button>
                     <button class="tab-btn" data-tab="tabAllPins">📋 All PINs</button>
+                    <button class="tab-btn" data-tab="tabAdminSignature">✍️ Admin Signature</button>
                 </div>
 
                 <div id="tabGenerate" class="tab-panel active">
@@ -236,6 +257,22 @@
                     <button class="btn-sm btn-primary" id="refreshAllPinsBtn" style="margin-bottom:10px;">🔄 Refresh</button>
                     <div class="table-scroll" id="allPinsContainer">
                         <p style="color:#94a3b8; font-size:14px;">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- ADMIN SIGNATURE TAB -->
+                <div id="tabAdminSignature" class="tab-panel">
+                    <div class="sub">✍️ Add your official admin signature. This will appear on approved report cards.</div>
+                    <div class="signature-section">
+                        <div class="signature-title">✍️ Admin Signature</div>
+                        <canvas id="adminSignatureCanvas" class="signature-canvas"></canvas>
+                        <div class="signature-actions">
+                            <button class="btn-sm clear" id="adminSigClear">🗑️ Clear</button>
+                            <button class="btn-sm save" id="adminSigSave">💾 Save to Firestore</button>
+                            <button class="btn-sm upload" id="adminSigUpload">📤 Upload Image</button>
+                        </div>
+                        <small style="color:#94a3b8; font-size:11px;">Draw your signature or upload an image. Click "Save to Firestore" to store it permanently.</small>
+                        <div id="adminSigStatus" style="margin-top:8px; font-weight:600; font-size:13px;"></div>
                     </div>
                 </div>
             </div>
@@ -344,8 +381,162 @@
     let currentPendingDocId = null;
     let currentClassView = null;
     let allReportCards = [];
+    let adminSignatureCanvas = null;
+    let adminSignatureCtx = null;
 
     function getOrdinalSuffix(n) { const s = ['th','st','nd','rd']; const v = n % 100; return s[(v-20)%10] || s[v] || s[0]; }
+
+    // =============================================================
+    // ADMIN SIGNATURE FUNCTIONS
+    // =============================================================
+    function initAdminSignature() {
+        const canvas = document.getElementById('adminSignatureCanvas');
+        if (!canvas) return;
+        adminSignatureCanvas = canvas;
+        adminSignatureCtx = canvas.getContext('2d');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width || 350;
+            canvas.height = rect.height || 120;
+            loadAdminSignature();
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const pos = getPos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function draw(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            adminSignatureCtx.beginPath();
+            adminSignatureCtx.moveTo(lastX, lastY);
+            adminSignatureCtx.lineTo(pos.x, pos.y);
+            adminSignatureCtx.strokeStyle = '#1e1b4b';
+            adminSignatureCtx.lineWidth = 3;
+            adminSignatureCtx.lineCap = 'round';
+            adminSignatureCtx.lineJoin = 'round';
+            adminSignatureCtx.stroke();
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDrawing(e) {
+            e.preventDefault();
+            if (isDrawing) {
+                isDrawing = false;
+                // Auto-save on stop
+                // Not auto-saving to Firestore, user must click Save
+            }
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+        function loadAdminSignature() {
+            db.collection('settings').doc('adminConfig').get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.adminSignature) {
+                        const img = new Image();
+                        img.onload = function() {
+                            adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                            adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            document.getElementById('adminSigStatus').innerHTML = '✅ Signature loaded from Firestore';
+                            document.getElementById('adminSigStatus').style.color = '#059669';
+                        };
+                        img.src = data.adminSignature;
+                    } else {
+                        document.getElementById('adminSigStatus').innerHTML = 'ℹ️ No signature saved yet. Draw and save one.';
+                        document.getElementById('adminSigStatus').style.color = '#64748b';
+                    }
+                }
+            }).catch(() => {});
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 300);
+
+        // Clear
+        document.getElementById('adminSigClear').addEventListener('click', function() {
+            if (confirm('Clear the signature?')) {
+                adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('adminSigStatus').innerHTML = '🗑️ Signature cleared (local only)';
+                document.getElementById('adminSigStatus').style.color = '#dc2626';
+                showToast('🗑️ Signature cleared from canvas.', 'warning');
+            }
+        });
+
+        // Save to Firestore
+        document.getElementById('adminSigSave').addEventListener('click', function() {
+            const dataUrl = canvas.toDataURL('image/png');
+            if (dataUrl === 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...') {
+                showToast('⚠️ Please draw or upload a signature first.', 'warning');
+                return;
+            }
+            db.collection('settings').doc('adminConfig').set({
+                adminSignature: dataUrl,
+                adminSignatureUpdated: new Date()
+            }, { merge: true }).then(() => {
+                document.getElementById('adminSigStatus').innerHTML = '✅ Signature saved to Firestore!';
+                document.getElementById('adminSigStatus').style.color = '#059669';
+                showToast('✅ Admin signature saved to Firestore!', 'success');
+            }).catch(e => {
+                showToast('❌ Error saving signature: ' + e.message, 'error');
+            });
+        });
+
+        // Upload image
+        document.getElementById('adminSigUpload').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        adminSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+                        adminSignatureCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        document.getElementById('adminSigStatus').innerHTML = '📤 Image loaded. Click "Save to Firestore" to store it.';
+                        document.getElementById('adminSigStatus').style.color = '#d97706';
+                        showToast('📤 Image loaded. Save to store permanently.', 'success');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        });
+
+        return { canvas, ctx: adminSignatureCtx };
+    }
 
     // =============================================================
     // TAB SWITCHING
@@ -360,6 +551,29 @@
             $(btn.dataset.tab).classList.add('active');
             if (btn.dataset.tab === 'tabHistory') loadPinHistory();
             if (btn.dataset.tab === 'tabAllPins') loadAllPins();
+            if (btn.dataset.tab === 'tabAdminSignature') {
+                // Re-initialize canvas when tab is shown
+                setTimeout(() => {
+                    if (adminSignatureCanvas) {
+                        const rect = adminSignatureCanvas.getBoundingClientRect();
+                        adminSignatureCanvas.width = rect.width || 350;
+                        adminSignatureCanvas.height = rect.height || 120;
+                        // Reload signature
+                        db.collection('settings').doc('adminConfig').get().then(doc => {
+                            if (doc.exists && doc.data().adminSignature) {
+                                const img = new Image();
+                                img.onload = function() {
+                                    adminSignatureCtx.clearRect(0, 0, adminSignatureCanvas.width, adminSignatureCanvas.height);
+                                    adminSignatureCtx.drawImage(img, 0, 0, adminSignatureCanvas.width, adminSignatureCanvas.height);
+                                    document.getElementById('adminSigStatus').innerHTML = '✅ Signature loaded from Firestore';
+                                    document.getElementById('adminSigStatus').style.color = '#059669';
+                                };
+                                img.src = doc.data().adminSignature;
+                            }
+                        }).catch(() => {});
+                    }
+                }, 300);
+            }
         });
     });
 
@@ -386,6 +600,7 @@
                 loadAllReportCards();
                 loadPinHistory();
                 loadAllPins();
+                initAdminSignature();
             } else {
                 err.innerText = '❌ Invalid Admin PIN.';
             }
@@ -399,6 +614,7 @@
                 loadAllReportCards();
                 loadPinHistory();
                 loadAllPins();
+                initAdminSignature();
             } else {
                 err.innerText = '❌ Invalid Admin PIN. (Fallback: admin123)';
             }
@@ -445,7 +661,8 @@
                     studentName: data.studentName || 'Unknown',
                     class: data.class || 'Unknown',
                     overallPosition: data.overallPosition || null,
-                    overallAverage: data.overallAverage || 0
+                    overallAverage: data.overallAverage || 0,
+                    subjects: data.subjects || {}
                 });
             });
             updateStats();
@@ -487,16 +704,30 @@
             const pending = students.filter(r => !r.approved).length;
             const approved = students.filter(r => r.approved).length;
             const total = students.length;
+
+            // Check if teacher has published any report cards for this class
+            // A report card is "published" if it has subjects with scores
+            const hasPublished = students.some(r => {
+                const subjects = r.subjects || {};
+                return Object.keys(subjects).length > 0;
+            });
+
+            // Build status badges
+            let statusHtml = '';
+            if (total === 0) {
+                statusHtml = `<span class="empty-badge">📭 No reports</span>`;
+            } else if (!hasPublished) {
+                statusHtml = `<span class="empty-badge">📭 No scores published</span>`;
+            } else {
+                if (pending > 0) statusHtml += `<span class="pending-badge">⏳ ${pending} pending</span> `;
+                if (approved > 0) statusHtml += `<span class="approved-badge">✅ ${approved} approved</span> `;
+            }
             
             html += `
                 <div class="class-card" data-class="${cls}">
                     <div class="class-name">📚 ${cls}</div>
                     <div class="class-count">${total} students</div>
-                    <div class="class-status">
-                        ${pending > 0 ? `<span class="pending-badge">⏳ ${pending} pending</span>` : ''}
-                        ${approved > 0 ? `<span class="approved-badge">✅ ${approved} approved</span>` : ''}
-                        ${total === 0 ? `<span class="total-badge">📭 No reports</span>` : ''}
-                    </div>
+                    <div class="class-status">${statusHtml}</div>
                 </div>
             `;
         });
@@ -511,7 +742,6 @@
                 $('mainView').style.display = 'none';
                 $('classView').style.display = 'block';
                 renderStudentList(cls);
-                // Update stats
                 const students = allReportCards.filter(r => r.class === cls);
                 $('classViewStats').innerText = `${students.length} students`;
             });
@@ -541,11 +771,31 @@
         // Sort by name
         students.sort((a, b) => a.studentName.localeCompare(b.studentName));
 
+        // Check if there are any published report cards (with subjects)
+        const hasPublished = students.some(r => {
+            const subjects = r.subjects || {};
+            return Object.keys(subjects).length > 0;
+        });
+
         if (!students.length) {
             container.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#94a3b8;">
-                    <p style="font-size:48px;">📭</p>
-                    <p>No students found${searchQuery ? ' matching "' + searchQuery + '"' : ''} in this class.</p>
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div class="title">No Students Found</div>
+                    <div class="desc">No students in this class${searchQuery ? ' matching "' + searchQuery + '"' : ''}.</div>
+                </div>
+            `;
+            return;
+        }
+
+        // If no published report cards, show message
+        if (!hasPublished) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📋</div>
+                    <div class="title">No Report Cards Published</div>
+                    <div class="desc">The teacher for this class has not published any report cards yet.</div>
+                    <div style="margin-top:10px; font-size:13px; color:#94a3b8;">Please ask the teacher to publish report cards for this class.</div>
                 </div>
             `;
             return;
@@ -657,14 +907,26 @@
             $('modalStudentPosition').innerText = data.overallPosition ? data.overallPosition + getOrdinalSuffix(data.overallPosition) : 'N/A';
             $('modalStudentAvg').innerText = data.overallAverage ? data.overallAverage.toFixed(1) + '%' : 'N/A';
 
-            // Subject table
-            const subjects = Object.keys(data.subjects || {});
+            // Subject table - ONLY show subjects that have at least ONE score > 0
+            const subjects = data.subjects || {};
             let tableHtml = `<table><tr><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr>`;
-            subjects.forEach(sub => {
-                const s = data.subjects[sub] || {};
-                tableHtml += `<tr><td><strong>${sub}</strong></td><td>${s.firstTerm||0}</td><td>${s.secondTerm||0}</td><td>${s.thirdTerm||0}</td><td>${s.average||0}%</td><td>${s.remark||'--'}</td></tr>`;
+            let hasAnyScore = false;
+            Object.keys(subjects).forEach(sub => {
+                const s = subjects[sub] || {};
+                const hasScore = (s.firstTerm > 0) || (s.secondTerm > 0) || (s.thirdTerm > 0);
+                if (hasScore) {
+                    hasAnyScore = true;
+                    tableHtml += `<tr><td><strong>${sub}</strong></td><td>${s.firstTerm||0}</td><td>${s.secondTerm||0}</td><td>${s.thirdTerm||0}</td><td>${s.average||0}%</td><td>${s.remark||'--'}</td></tr>`;
+                }
             });
             tableHtml += '</table>';
+
+            if (!hasAnyScore) {
+                tableHtml = `<div style="text-align:center; padding:20px; color:#94a3b8;">
+                    <p style="font-size:24px;">📭</p>
+                    <p>No subject scores found for this student.</p>
+                </div>`;
+            }
             $('modalSubjectSummary').innerHTML = tableHtml;
 
             // If view-only, disable inputs and change button text
@@ -858,7 +1120,7 @@
     // =============================================================
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     $('loginPage').classList.add('active');
-    console.log('✅ Admin Console with Class-Based View is ready!');
+    console.log('✅ Admin Console with Signature + Fixed Subjects is ready!');
 </script>
 </body>
 </html>
