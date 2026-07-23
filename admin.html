@@ -146,8 +146,8 @@
             gap: 12px;
         }
         .report-card-item .card-header .student-info .photo-thumb {
-            width: 44px;
-            height: 44px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             overflow: hidden;
             border: 2px solid #e2e8f0;
@@ -165,7 +165,7 @@
             justify-content: center;
             width: 100%;
             height: 100%;
-            font-size: 20px;
+            font-size: 24px;
             color: #94a3b8;
         }
         .report-card-item .card-header .student-name { font-weight: 700; color: #1e1b4b; }
@@ -183,6 +183,41 @@
         .report-card-item .card-body { padding: 16px 20px; max-height: 500px; overflow-y: auto; }
         .report-card-item .card-body::-webkit-scrollbar { width: 4px; }
         .report-card-item .card-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Comment input inside card */
+        .admin-comment-area {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .admin-comment-area textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            min-height: 40px;
+        }
+        .admin-comment-area .comment-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .admin-comment-area .comment-actions .btn-sm {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-sm-save { background: #4f46e5; color: white; }
+        .btn-sm-save:hover { background: #4338ca; }
+        .btn-sm-clear { background: #fee2e2; color: #dc2626; }
+        .btn-sm-clear:hover { background: #fecaca; }
 
         .report-card-item .card-actions {
             padding: 12px 20px;
@@ -210,8 +245,10 @@
         .btn-edit-photo:hover { background: #4338ca; }
         .btn-preview { background: #8b5cf6; color: white; }
         .btn-preview:hover { background: #7c3aed; }
+        .btn-comment { background: #f59e0b; color: #1e1b4b; }
+        .btn-comment:hover { background: #d97706; }
 
-        /* Preview inside card - condensed */
+        /* Preview condensed */
         .preview-condensed {
             font-size: 12px;
         }
@@ -241,9 +278,7 @@
         .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
         .empty-state h3 { font-size: 20px; color: #64748b; margin-bottom: 6px; }
 
-        /* ========================================================== */
-        /* MODAL - Full Report Card Preview (Student View) */
-        /* ========================================================== */
+        /* Modal - Full Report Card Preview */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -489,12 +524,31 @@
             position: relative;
             z-index: 1;
         }
-        .signature-box { flex: 1; min-width: 140px; }
+        .signature-box { flex: 1; min-width: 140px; text-align: center; }
         .signature-box .label { font-weight: 700; color: #475569; font-size: 13px; margin-bottom: 4px; }
-        .signature-box .line { border-bottom: 2px solid #1e293b; width: 100%; margin-top: 25px; margin-bottom: 4px; }
-        .signature-box .sub { font-size: 11px; color: #64748b; margin-top: 4px; }
-        .signature-box.text-right { text-align: right; }
-        .signature-box.text-right .line { margin-left: auto; }
+        .signature-box .sig-image-container {
+            margin: 8px auto;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signature-box .sig-image-container img {
+            max-height: 60px;
+            max-width: 160px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            background: white;
+            object-fit: contain;
+        }
+        .signature-box .sig-image-container .no-sig {
+            color: #94a3b8;
+            font-size: 11px;
+            font-style: italic;
+        }
+        .signature-box .line { border-bottom: 2px solid #1e293b; width: 100%; margin-top: 4px; margin-bottom: 4px; }
+        .signature-box .sub { font-size: 11px; color: #64748b; margin-top: 2px; }
 
         .report-footer {
             text-align: center;
@@ -507,7 +561,6 @@
             z-index: 1;
         }
 
-        /* Modal Actions */
         .modal-actions {
             display: flex;
             flex-wrap: wrap;
@@ -698,6 +751,7 @@
     let allReportCards = [];
     let filteredReportCards = [];
     let adminSigData = null;
+    let openCommentId = null;
 
     // =============================================================
     // TOAST
@@ -756,25 +810,60 @@
     }
 
     // =============================================================
-    // LOAD REPORT CARDS
+    // GET STUDENT PHOTO - FIXED to fetch from studentPhotos collection
+    // =============================================================
+    async function getStudentPhoto(studentName, className) {
+        try {
+            const doc = await db.collection('studentPhotos').doc(`${className}_${studentName}`).get();
+            if (doc.exists && doc.data().photoUrl) {
+                return doc.data().photoUrl;
+            }
+            return null;
+        } catch (e) {
+            console.warn('Photo fetch error:', e);
+            return null;
+        }
+    }
+
+    // =============================================================
+    // LOAD REPORT CARDS - FIXED to fetch photos
     // =============================================================
     async function loadReportCards() {
         try {
+            // First get all report cards
             const snap = await db.collection('reportCards')
                 .where('pushedToAdmin', '==', true)
                 .orderBy('pushedAt', 'desc')
                 .get();
 
             allReportCards = [];
+            const photoPromises = [];
+
             snap.forEach(doc => {
                 const data = doc.data();
-                allReportCards.push({
+                const cardData = {
                     id: doc.id,
                     ...data,
                     _docId: doc.id,
-                    _ref: doc.ref
-                });
+                    _ref: doc.ref,
+                    _photoUrl: null // Will be filled
+                };
+                allReportCards.push(cardData);
+                
+                // Queue photo fetch
+                if (data.studentName && data.class) {
+                    photoPromises.push(
+                        getStudentPhoto(data.studentName, data.class)
+                            .then(url => {
+                                cardData._photoUrl = url;
+                            })
+                            .catch(() => {})
+                    );
+                }
             });
+
+            // Wait for all photos to load
+            await Promise.allSettled(photoPromises);
 
             // Load class list
             const classSnap = await db.collection('classList').doc('allClasses').get();
@@ -835,7 +924,27 @@
     }
 
     // =============================================================
-    // RENDER REPORT CARDS
+    // GET ACTIVE SUBJECTS - FILTER OUT ZERO SCORES
+    // =============================================================
+    function getActiveSubjects(subjects) {
+        if (!subjects) return {};
+        const active = {};
+        Object.keys(subjects).forEach(sub => {
+            const data = subjects[sub];
+            // Check if any term has a score > 0
+            const hasScore = (data.firstTerm && data.firstTerm > 0) || 
+                            (data.secondTerm && data.secondTerm > 0) || 
+                            (data.thirdTerm && data.thirdTerm > 0) ||
+                            (data.average && data.average > 0);
+            if (hasScore) {
+                active[sub] = data;
+            }
+        });
+        return active;
+    }
+
+    // =============================================================
+    // RENDER REPORT CARDS - FIXED with photos and comments
     // =============================================================
     function renderReportCards() {
         const grid = $('reportGrid');
@@ -856,25 +965,34 @@
             const statusLabel = rc.approved ? '✅ Approved' : (rc.rejected ? '❌ Rejected' : '⏳ Pending');
             const statusClass = rc.approved ? 'approved' : (rc.rejected ? 'rejected' : 'pending');
 
-            // Build condensed preview
+            // Get active subjects only (filter out zeros)
+            const activeSubjects = getActiveSubjects(rc.subjects);
+            const subjectCount = Object.keys(activeSubjects).length;
+
+            // Build condensed preview from active subjects only
             let subjectsPreview = '';
-            if (rc.subjects) {
-                const entries = Object.entries(rc.subjects).slice(0, 4);
+            if (activeSubjects) {
+                const entries = Object.entries(activeSubjects).slice(0, 4);
                 subjectsPreview = entries.map(([sub, data]) => 
                     `<div class="scores-mini"><span class="subj">${sub}:</span> <span class="sc">${data.thirdTerm || data.average || 0}</span></div>`
                 ).join('');
-                if (Object.keys(rc.subjects).length > 4) {
-                    subjectsPreview += `<div style="color:#94a3b8; font-size:10px;">+${Object.keys(rc.subjects).length - 4} more</div>`;
+                if (Object.keys(activeSubjects).length > 4) {
+                    subjectsPreview += `<div style="color:#94a3b8; font-size:10px;">+${Object.keys(activeSubjects).length - 4} more</div>`;
                 }
             }
 
-            // Photo
-            let photoHtml = rc.photoUrl ? 
-                `<img src="${rc.photoUrl}" alt="${rc.studentName}" />` : 
+            // Photo - use the fetched photo URL
+            const photoUrl = rc._photoUrl;
+            let photoHtml = photoUrl ? 
+                `<img src="${photoUrl}" alt="${rc.studentName}" />` : 
                 `<div class="no-photo">👤</div>`;
 
             const teacherName = rc.teacherName || 'Unknown Teacher';
             const pushedAt = rc.pushedAt?.toDate ? rc.pushedAt.toDate().toLocaleString() : 'N/A';
+
+            // Admin comment
+            const adminComment = rc.adminComment || '';
+            const isCommentOpen = openCommentId === rc.id;
 
             return `
             <div class="report-card-item" data-id="${rc.id}">
@@ -900,9 +1018,32 @@
                         ${rc.promotionStatus ? `<div class="preview-row"><span class="label">📈 Promotion</span><span class="value">${rc.promotionStatus}</span></div>` : ''}
                         ${rc.overallAverage ? `<div class="preview-row"><span class="label">📊 Overall Avg</span><span class="value" style="color:#4f46e5;">${rc.overallAverage.toFixed(1)}%</span></div>` : ''}
                         <div style="margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
-                            <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">📚 Subjects</div>
+                            <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">📚 Subjects (${subjectCount})</div>
                             ${subjectsPreview || '<span style="color:#94a3b8; font-size:11px;">No subjects</span>'}
                         </div>
+                        ${rc.teacherSignature ? `
+                        <div style="margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
+                            <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">✍️ Teacher Signature</div>
+                            <img src="${rc.teacherSignature}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" />
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Admin Comment Area -->
+                    <div class="admin-comment-area">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-size:11px; font-weight:600; color:#64748b;">💬 Admin Comment</span>
+                            <button class="btn btn-sm btn-outline" onclick="toggleComment('${rc.id}')" style="padding:2px 10px; font-size:10px;">
+                                ${isCommentOpen ? '− Hide' : '+ Add'}
+                            </button>
+                        </div>
+                        ${isCommentOpen ? `
+                        <textarea id="comment_${rc.id}" placeholder="Add your admin comment here..." style="width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:'Inter',sans-serif; resize:vertical; min-height:50px;">${adminComment}</textarea>
+                        <div class="comment-actions">
+                            <button class="btn-sm btn-sm-save" onclick="saveAdminComment('${rc.id}')">💾 Save Comment</button>
+                            ${adminComment ? `<button class="btn-sm btn-sm-clear" onclick="clearAdminComment('${rc.id}')">🗑️ Clear</button>` : ''}
+                        </div>
+                        ` : ''}
+                        ${adminComment && !isCommentOpen ? `<div style="font-size:11px; color:#475569; font-style:italic; margin-top:4px; padding:6px 10px; background:#f8fafc; border-radius:6px; border-left:3px solid #4f46e5;">"${adminComment}"</div>` : ''}
                     </div>
                 </div>
 
@@ -921,12 +1062,67 @@
     }
 
     // =============================================================
+    // TOGGLE COMMENT
+    // =============================================================
+    function toggleComment(id) {
+        if (openCommentId === id) {
+            openCommentId = null;
+        } else {
+            openCommentId = id;
+        }
+        renderReportCards();
+    }
+
+    // =============================================================
+    // SAVE ADMIN COMMENT
+    // =============================================================
+    async function saveAdminComment(id) {
+        const textarea = document.getElementById(`comment_${id}`);
+        if (!textarea) return;
+        const comment = textarea.value.trim();
+        
+        try {
+            await db.collection('reportCards').doc(id).update({
+                adminComment: comment,
+                adminCommentAt: new Date(),
+                adminCommentBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('💬 Comment saved!', 'success');
+            openCommentId = null;
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to save comment: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // CLEAR ADMIN COMMENT
+    // =============================================================
+    async function clearAdminComment(id) {
+        if (!confirm('Clear this admin comment?')) return;
+        
+        try {
+            await db.collection('reportCards').doc(id).update({
+                adminComment: '',
+                adminCommentAt: null,
+                adminCommentBy: null,
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('🗑️ Comment cleared.', 'warning');
+            openCommentId = null;
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to clear comment: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
     // APPROVE / REJECT
     // =============================================================
     async function approveReportCard(id) {
         if (!confirm('✅ Approve this report card? It will become visible to students.')) return;
 
-        // Check admin signature
         if (!adminSigData) {
             showToast('⚠️ Please add your admin signature first.', 'warning');
             openAdminSignatureModal();
@@ -1080,12 +1276,25 @@
             }
             if (result && result.event === "success") {
                 try {
+                    // Update both reportCard and studentPhotos
                     await db.collection('reportCards').doc(id).update({
                         photoUrl: result.info.secure_url,
                         photoPublicId: result.info.public_id,
                         photoUpdatedAt: new Date(),
                         _version: firebase.firestore.FieldValue.increment(1)
                     });
+                    
+                    // Also update studentPhotos collection
+                    if (rc.studentName && rc.class) {
+                        await db.collection('studentPhotos').doc(`${rc.class}_${rc.studentName}`).set({
+                            className: rc.class,
+                            studentName: rc.studentName,
+                            photoUrl: result.info.secure_url,
+                            publicId: result.info.public_id,
+                            updatedAt: new Date()
+                        }, { merge: true });
+                    }
+                    
                     showToast('📸 Photo updated successfully!', 'success');
                     await loadReportCards();
                 } catch (e) {
@@ -1097,7 +1306,7 @@
     }
 
     // =============================================================
-    // VIEW FULL REPORT - STUDENT VIEW PREVIEW
+    // VIEW FULL REPORT - FIXED to filter zero subjects
     // =============================================================
     function viewFullReport(id) {
         const rc = allReportCards.find(r => r.id === id);
@@ -1109,8 +1318,14 @@
 
         title.textContent = `📋 ${rc.studentName || 'Student'} - Report Card Preview (Student View)`;
 
-        // Generate the full report card HTML (same as student view)
-        const reportHtml = generateFullReportCard(rc);
+        // Get active subjects only
+        const activeSubjects = getActiveSubjects(rc.subjects);
+        const rcWithActive = {
+            ...rc,
+            subjects: activeSubjects
+        };
+
+        const reportHtml = generateFullReportCard(rcWithActive);
 
         content.innerHTML = `
             <div style="background:#f8fafc; border-radius:12px; padding:12px 16px; margin-bottom:16px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -1119,8 +1334,10 @@
                     <span style="font-size:12px; color:#64748b; margin-left:10px;">This is exactly how students will see their report card</span>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn btn-success" onclick="approveFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#10b981; color:white;">✅ Approve & Publish</button>
-                    <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#dc2626; color:white;">❌ Reject</button>
+                    ${!rc.approved && !rc.rejected ? `
+                        <button class="btn btn-success" onclick="approveFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#10b981; color:white;">✅ Approve & Publish</button>
+                        <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#dc2626; color:white;">❌ Reject</button>
+                    ` : ''}
                     <button class="btn btn-outline" onclick="window.print()" style="padding:8px 20px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">🖨️ Print</button>
                     <button class="btn btn-outline" onclick="hideModal()" style="padding:8px 20px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">Close</button>
                 </div>
@@ -1129,8 +1346,10 @@
                 ${reportHtml}
             </div>
             <div class="modal-actions no-print">
-                <button class="btn btn-success" onclick="approveFromModal('${rc.id}')">✅ Approve & Publish</button>
-                <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')">❌ Reject</button>
+                ${!rc.approved && !rc.rejected ? `
+                    <button class="btn btn-success" onclick="approveFromModal('${rc.id}')">✅ Approve & Publish</button>
+                    <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')">❌ Reject</button>
+                ` : ''}
                 <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
                 <button class="btn btn-outline" onclick="hideModal()">Close</button>
             </div>
@@ -1140,7 +1359,7 @@
     }
 
     // =============================================================
-    // GENERATE FULL REPORT CARD (Student View)
+    // GENERATE FULL REPORT CARD - FIXED with photos and signatures
     // =============================================================
     function generateFullReportCard(data) {
         const subjects = Object.keys(data.subjects || {});
@@ -1154,6 +1373,9 @@
         const overallPosition = data.overallPosition || null;
         const overallAverage = data.overallAverage || 0;
         const totalStudents = data.totalStudents || 0;
+
+        // Get photo from the data or fetch
+        const photoUrl = data._photoUrl || data.photoUrl || null;
 
         const formatDate = (str) => {
             if (!str) return 'Not set';
@@ -1262,12 +1484,55 @@
             `;
         }
 
-        let photoHtml = data.photoUrl ? 
-            `<img src="${data.photoUrl}" alt="${data.studentName}" />` : 
+        let photoHtml = photoUrl ? 
+            `<img src="${photoUrl}" alt="${data.studentName}" />` : 
             `<span class="student-photo-placeholder">👤</span>`;
 
-        // Admin signature from data or use the stored admin signature
-        const adminSig = data.adminSignature || adminSigData || '';
+        // Signatures
+        const teacherSig = data.teacherSignature || null;
+        const adminSig = data.adminSignature || adminSigData || null;
+
+        // Teacher Signature HTML
+        let teacherSigHtml = '';
+        if (teacherSig) {
+            teacherSigHtml = `
+                <div class="sig-image-container">
+                    <img src="${teacherSig}" alt="Teacher Signature" />
+                </div>
+                <div class="sub">${data.teacherName || 'Teacher'}</div>
+            `;
+        } else {
+            teacherSigHtml = `
+                <div class="sig-image-container">
+                    <span class="no-sig">No signature</span>
+                </div>
+                <div class="sub">${data.teacherName || 'Teacher'}</div>
+            `;
+        }
+
+        let adminSigHtml = '';
+        if (adminSig) {
+            adminSigHtml = `
+                <div class="sig-image-container">
+                    <img src="${adminSig}" alt="Admin Signature" />
+                </div>
+                <div class="sub">${data.approvedBy || 'Admin'}</div>
+            `;
+        } else {
+            adminSigHtml = `
+                <div class="sig-image-container">
+                    <span class="no-sig">Not signed</span>
+                </div>
+                <div class="sub">Admin</div>
+            `;
+        }
+
+        const parentSigHtml = `
+            <div class="sig-image-container">
+                <span class="no-sig">______</span>
+            </div>
+            <div class="sub">Parent/Guardian</div>
+        `;
 
         return `
             <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
@@ -1365,23 +1630,25 @@
                 <p>${principalRemarks}</p>
             </div>` : ''}
 
+            ${data.adminComment ? `
+            <div class="commentary-box" style="background:#e0f2fe; border-color:#38bdf8;">
+                <h4>💬 Admin's Comment</h4>
+                <p style="font-style:italic; color:#0369a1;">${data.adminComment}</p>
+                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">— ${data.adminCommentBy || 'Admin'} on ${formatDate(data.adminCommentAt)}</div>
+            </div>` : ''}
+
             <div class="signature-section">
                 <div class="signature-box">
                     <div class="label">Class Teacher</div>
-                    <div class="line"></div>
-                    <div class="sub">${data.teacherName || 'Name & Signature'}</div>
-                    ${data.teacherSignature ? `<div style="margin-top:4px;"><img src="${data.teacherSignature}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" /></div>` : ''}
+                    ${teacherSigHtml}
                 </div>
                 <div class="signature-box">
                     <div class="label">Principal / Admin</div>
-                    <div class="line"></div>
-                    <div class="sub">${currentUserData?.fullName || currentUserData?.name || 'Admin'}</div>
-                    ${adminSig ? `<div style="margin-top:4px;"><img src="${adminSig}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" /></div>` : ''}
+                    ${adminSigHtml}
                 </div>
                 <div class="signature-box">
                     <div class="label">Parent/Guardian</div>
-                    <div class="line"></div>
-                    <div class="sub">Name & Signature</div>
+                    ${parentSigHtml}
                 </div>
             </div>
 
@@ -1627,7 +1894,6 @@
 
         currentUser = user;
 
-        // Get user data
         try {
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
@@ -1647,13 +1913,11 @@
             $('adminName').textContent = 'Admin';
         }
 
-        // Load saved admin signature
         const savedSig = localStorage.getItem('adminSignature_' + (user.uid || 'admin'));
         if (savedSig) {
             adminSigData = savedSig;
         }
 
-        // Load report cards
         await loadReportCards();
 
         if (allReportCards.length === 0) {
@@ -1685,16 +1949,18 @@
     window.clearAdminSignature = clearAdminSignature;
     window.uploadAdminSignature = uploadAdminSignature;
     window.closeAdminSignatureModal = closeAdminSignatureModal;
+    window.toggleComment = toggleComment;
+    window.saveAdminComment = saveAdminComment;
+    window.clearAdminComment = clearAdminComment;
+    window.loadReportCards = loadReportCards;
 
     console.log('✅ Admin Report Card Dashboard loaded!');
     console.log('📌 Features:');
-    console.log('  - View all submitted report cards');
-    console.log('  - Full student view preview (exactly as students see it)');
-    console.log('  - Admin signature (draw or upload)');
-    console.log('  - Approve/Reject individual or bulk');
-    console.log('  - Edit student photos');
-    console.log('  - Print report cards');
-    console.log('  - Filter by class, status, search');
+    console.log('  - Student photos now showing (fetched from studentPhotos collection)');
+    console.log('  - Admin comments per student');
+    console.log('  - Deleted subjects filtered out (scores ≤ 0 removed)');
+    console.log('  - Teacher signature displayed');
+    console.log('  - Full student view preview');
 </script>
 
 </body>
