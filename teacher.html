@@ -236,6 +236,19 @@
         .signature-actions .btn-sm.upload { background: #f59e0b; color: #1e1b4b; }
         .signature-actions .btn-sm.upload:hover { background: #d97706; }
 
+        /* attendance and term settings */
+        .attendance-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 12px; background: #f8fafc; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .attendance-section label { font-weight: 600; color: #1e293b; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+        .attendance-section input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; }
+        .attendance-section input:focus { border-color: #4f46e5; outline: none; }
+
+        .term-settings { background: #f1f5f9; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .term-settings h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 10px; font-size: 14px; }
+        .term-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; }
+        .term-grid label { font-weight: 600; color: #1e293b; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+        .term-grid input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; }
+        .term-grid input:focus { border-color: #4f46e5; outline: none; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -288,6 +301,18 @@
             </div>
             <div class="user-info"><span class="name" id="sidebarName">Teacher</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
             <div class="class-switcher"><select id="classSelect"><option value="">-- Select Class --</option></select><button id="switchClassBtn">Switch</button></div>
+            
+            <!-- Term Settings (Class-wide) -->
+            <div class="term-settings" id="termSettings">
+                <h4>📅 Term Settings</h4>
+                <div class="term-grid">
+                    <label>Resumption Date <input type="date" id="resumptionDate" /></label>
+                    <label>Closing Date <input type="date" id="closingDate" /></label>
+                    <label>Total Days Opened <input type="number" id="totalDaysOpened" min="1" max="120" value="90" /></label>
+                    <button class="btn-action btn-primary" id="saveTermSettingsBtn" style="padding:8px 16px; font-size:13px; align-self:end;">💾 Save Term</button>
+                </div>
+            </div>
+
             <div class="sidebar-title"><span>📚 Subjects</span><span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span></div>
             <div class="add-subject-row"><input id="newSubjectInput" placeholder="New Subject..." /><button id="addSubjectBtn">➕</button></div>
             <div class="subject-list" id="subjectListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div></div>
@@ -364,7 +389,10 @@
                         <span class="student-count-badge" id="studentCountBadge">0 Students</span>
                         <span style="margin-left:12px;">📚 <span id="subjectCountDisplay">0</span> Subjects</span>
                     </p>
-                    <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
+                        <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
+                        <button class="btn-action btn-warning" id="cleanOrphanSubjectsBtn" style="font-size:13px; padding:10px 20px;">🧹 Remove Orphan Subjects</button>
+                    </div>
                     <div id="reportBuilderArea"></div>
                 </div>
             </div>
@@ -404,6 +432,7 @@
     let studentPositions = {};
     let isSaving = false;
     let saveTimeout = null;
+    let classTermSettings = { resumptionDate: '', closingDate: '', totalDaysOpened: 90 };
 
     // =============================================================
     // TOAST
@@ -429,41 +458,28 @@
         
         try {
             const snap = await db.collection('results').where('class', '==', cls).get();
-            
             if (snap.empty) {
                 container.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:20px;">No results found.</p>';
                 return;
             }
-
-            // Group results by subject
             const subjectGroups = {};
             snap.forEach(doc => {
                 const data = doc.data();
                 const subject = data.subject || 'Unknown';
                 const studentName = data.studentName || 'Unknown';
                 const score = data.score || 0;
-                
-                if (!subjectGroups[subject]) {
-                    subjectGroups[subject] = [];
-                }
-                // Store as object with student and score
+                if (!subjectGroups[subject]) subjectGroups[subject] = [];
                 subjectGroups[subject].push({ student: studentName, score: score });
             });
-
-            // Sort each subject's students alphabetically
             Object.keys(subjectGroups).forEach(subject => {
                 subjectGroups[subject].sort((a, b) => a.student.localeCompare(b.student));
             });
-
-            // Build the accordion HTML
             let html = '<div class="results-accordion">';
             const sortedSubjects = Object.keys(subjectGroups).sort();
-            
             sortedSubjects.forEach((subject, index) => {
                 const students = subjectGroups[subject];
                 const totalStudents = students.length;
                 const isOpen = index === 0 ? 'open' : '';
-                
                 html += `
                 <div class="subject-accordion">
                     <div class="subject-accordion-header" data-subject="${subject}">
@@ -480,57 +496,37 @@
                     </div>
                     <div class="subject-accordion-body ${isOpen}" data-subject="${subject}">
                         <table>
-                            <thead>
-                                <tr><th>Student</th><th style="text-align:right;">Score</th></tr>
-                            </thead>
+                            <thead><tr><th>Student</th><th style="text-align:right;">Score</th></tr></thead>
                             <tbody>
-                                ${students.map(s => `
-                                    <tr>
-                                        <td class="student-name">${s.student}</td>
-                                        <td class="score-cell">${s.score}</td>
-                                    </tr>
-                                `).join('')}
+                                ${students.map(s => `<tr><td class="student-name">${s.student}</td><td class="score-cell">${s.score}</td></tr>`).join('')}
                             </tbody>
                         </table>
                     </div>
-                </div>
-                `;
+                </div>`;
             });
-            
             html += '</div>';
             container.innerHTML = html;
 
-            // --- Attach Accordion Click Events ---
             document.querySelectorAll('.subject-accordion-header').forEach(header => {
                 header.addEventListener('click', function(e) {
-                    // Don't toggle if clicking a button
                     if (e.target.closest('.btn-sm')) return;
-                    
                     const subject = this.dataset.subject;
                     const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
                     const arrow = this.querySelector('.arrow');
-                    
-                    if (body) {
-                        body.classList.toggle('open');
-                        if (arrow) arrow.classList.toggle('open');
-                    }
+                    if (body) { body.classList.toggle('open'); if (arrow) arrow.classList.toggle('open'); }
                 });
             });
 
-            // --- Attach Multiply Events ---
             document.querySelectorAll('.btn-sm.multiply').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const subject = this.dataset.subject;
                     const multiplier = parseInt(this.dataset.multiplier);
-                    
                     if (!confirm(`Multiply ALL "${subject}" scores by ${multiplier}?`)) return;
-                    
                     multiplySubjectScores(subject, multiplier, cls);
                 });
             });
 
-            // --- Attach Copy Events ---
             document.querySelectorAll('.btn-sm.copy').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -551,34 +547,19 @@
     async function multiplySubjectScores(subject, multiplier, cls) {
         try {
             showToast(`⏳ Multiplying ${subject} scores by ${multiplier}...`, 'warning');
-            
-            const snap = await db.collection('results')
-                .where('class', '==', cls)
-                .where('subject', '==', subject)
-                .get();
-            
-            if (snap.empty) {
-                showToast('No scores found for this subject.', 'warning');
-                return;
-            }
-
+            const snap = await db.collection('results').where('class', '==', cls).where('subject', '==', subject).get();
+            if (snap.empty) { showToast('No scores found.', 'warning'); return; }
             const batch = db.batch();
             let count = 0;
-            
             snap.forEach(doc => {
                 const data = doc.data();
                 const newScore = Math.min(Math.round((data.score || 0) * multiplier), 100);
                 batch.update(doc.ref, { score: newScore });
                 count++;
             });
-            
             await batch.commit();
-            
             showToast(`✅ ${count} scores multiplied by ${multiplier}`, 'success');
-            
-            // Reload results
             await loadResultsWithAccordion(cls);
-            
         } catch (e) {
             console.error('Multiply error:', e);
             showToast('❌ Failed to multiply: ' + e.message, 'error');
@@ -591,11 +572,9 @@
     function copySubjectScores(subject) {
         const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
         if (!body) return;
-        
         const rows = body.querySelectorAll('tr');
         let text = `📊 ${subject} Scores\n`;
         text += '─'.repeat(40) + '\n';
-        
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length === 2) {
@@ -604,11 +583,9 @@
                 text += `${student}: ${score}\n`;
             }
         });
-        
         navigator.clipboard.writeText(text).then(() => {
             showToast(`📋 Copied ${subject} scores to clipboard!`, 'success');
         }).catch(() => {
-            // Fallback
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
@@ -648,10 +625,7 @@
             singleUploadAutoClose: true,
             publicId: `${currentUser.class || 'general'}_${studentName.replace(/\s+/g, '_')}_${Date.now()}`
         }, (error, result) => {
-            if (error) {
-                showToast('❌ Upload failed.', 'error');
-                return;
-            }
+            if (error) { showToast('❌ Upload failed.', 'error'); return; }
             if (result && result.event === "success") {
                 const photoData = {
                     url: result.info.secure_url,
@@ -691,11 +665,9 @@
     function initSignatureCanvas(canvasId, signatureType, saveCallback) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return null;
-
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let lastX = 0, lastY = 0;
 
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
@@ -708,8 +680,7 @@
             e.preventDefault();
             isDrawing = true;
             const pos = getPos(e);
-            lastX = pos.x;
-            lastY = pos.y;
+            lastX = pos.x; lastY = pos.y;
         }
 
         function draw(e) {
@@ -724,8 +695,7 @@
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             ctx.stroke();
-            lastX = pos.x;
-            lastY = pos.y;
+            lastX = pos.x; lastY = pos.y;
         }
 
         function stopDrawing(e) {
@@ -740,10 +710,7 @@
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -812,8 +779,7 @@
         setTimeout(resizeCanvas, 100);
 
         return {
-            canvas: canvas,
-            ctx: ctx,
+            canvas, ctx,
             clear: clearSignature,
             upload: uploadSignature,
             save: function() {
@@ -828,7 +794,6 @@
     // =============================================================
     // CORE FUNCTIONS
     // =============================================================
-
     function getRemarkText(avg) {
         if (avg >= 75) return 'Distinction';
         if (avg >= 70) return 'Excellent';
@@ -856,7 +821,52 @@
     }
 
     // =============================================================
-    // SAVE CURRENT STUDENT - FIXED VERSION
+    // TERM SETTINGS
+    // =============================================================
+    async function loadTermSettings(cls) {
+        try {
+            const doc = await db.collection('classSettings').doc(cls).get();
+            if (doc.exists) {
+                const data = doc.data();
+                classTermSettings = {
+                    resumptionDate: data.resumptionDate || '',
+                    closingDate: data.closingDate || '',
+                    totalDaysOpened: data.totalDaysOpened || 90
+                };
+            } else {
+                classTermSettings = { resumptionDate: '', closingDate: '', totalDaysOpened: 90 };
+            }
+            const rd = document.getElementById('resumptionDate');
+            const cd = document.getElementById('closingDate');
+            const td = document.getElementById('totalDaysOpened');
+            if (rd) rd.value = classTermSettings.resumptionDate;
+            if (cd) cd.value = classTermSettings.closingDate;
+            if (td) td.value = classTermSettings.totalDaysOpened;
+        } catch (e) {
+            console.error('Load term settings error:', e);
+        }
+    }
+
+    async function saveTermSettings(cls) {
+        const rd = document.getElementById('resumptionDate')?.value || '';
+        const cd = document.getElementById('closingDate')?.value || '';
+        const td = parseInt(document.getElementById('totalDaysOpened')?.value) || 90;
+        try {
+            await db.collection('classSettings').doc(cls).set({
+                resumptionDate: rd,
+                closingDate: cd,
+                totalDaysOpened: td,
+                updatedAt: new Date()
+            }, { merge: true });
+            classTermSettings = { resumptionDate: rd, closingDate: cd, totalDaysOpened: td };
+            showToast('✅ Term settings saved!', 'success');
+        } catch (e) {
+            showToast('❌ Failed to save term settings: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // SAVE CURRENT STUDENT - FIXED
     // =============================================================
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
@@ -867,7 +877,6 @@
             const docRef = db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`);
             const docSnap = await docRef.get();
             const existingData = docSnap.exists ? docSnap.data() : {};
-            const existingSubjects = existingData.subjects || {};
             const currentVersion = existingData._version || 0;
 
             const subjectsData = {};
@@ -876,7 +885,7 @@
                 const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
                 const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
 
-                // ✅ FIXED: Always read the value from the input, ignore 'touched'
+                // FIX: Always read value from input, no 'touched' check
                 const firstVal = fi ? parseFloat(fi.value) || 0 : 0;
                 const secondVal = si ? parseFloat(si.value) || 0 : 0;
                 const thirdVal = ti ? parseFloat(ti.value) || 0 : 0;
@@ -905,6 +914,11 @@
             const principal = document.querySelector('.principal-input')?.value || '';
             const promotion = document.querySelector('.promotion-select')?.value || '';
 
+            const totalDays = classTermSettings.totalDaysOpened || 90;
+            const daysPresentInput = document.querySelector('.attendance-days-present');
+            const daysPresent = daysPresentInput ? parseInt(daysPresentInput.value) || 0 : 0;
+            const daysAbsent = Math.max(totalDays - daysPresent, 0);
+
             const teacherSig = localStorage.getItem(`signature_${currentUser.class}_teacher`);
             const adminSig = localStorage.getItem(`signature_${currentUser.class}_admin`);
 
@@ -917,7 +931,13 @@
                 teacherName: currentUser.name,
                 dateOfIssue: new Date().toISOString().slice(0, 10),
                 category: 'Day',
-                attendance: { daysOpened: 90, daysPresent: 85, daysAbsent: 5 },
+                attendance: {
+                    daysOpened: totalDays,
+                    daysPresent: daysPresent,
+                    daysAbsent: daysAbsent
+                },
+                resumptionDate: classTermSettings.resumptionDate || '',
+                closingDate: classTermSettings.closingDate || '',
                 subjects: subjectsData,
                 affectiveDomain: affective,
                 psychomotorDomain: psychomotor,
@@ -977,6 +997,9 @@
         const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
         const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
 
+        const daysPresentInput = document.querySelector('.attendance-days-present');
+        if (daysPresentInput) daysPresentInput.value = 0;
+
         if (doc.exists) {
             const data = doc.data();
             if (data.subjects) {
@@ -993,6 +1016,10 @@
                         ti.style.fontWeight = '700';
                     }
                 });
+            }
+            if (data.attendance && data.attendance.daysPresent !== undefined) {
+                const dp = document.querySelector('.attendance-days-present');
+                if (dp) dp.value = data.attendance.daysPresent || 0;
             }
             if (data.affectiveDomain) {
                 Object.keys(data.affectiveDomain).forEach(t => {
@@ -1038,7 +1065,7 @@
     }
 
     // =============================================================
-    // CALCULATE POSITIONS - FIXED VERSION
+    // CALCULATE POSITIONS
     // =============================================================
     async function calculateAllPositions(cls) {
         studentPositions = {};
@@ -1094,9 +1121,6 @@
         showToast(`✅ Positions calculated for ${totalStudents} students`, 'success');
     }
 
-    // =============================================================
-    // UPDATE POSITION DISPLAY
-    // =============================================================
     function updatePositionDisplay(student) {
         const posDisplay = document.getElementById('positionDisplay');
         const posNumber = document.getElementById('positionNumber');
@@ -1178,21 +1202,18 @@
     }
 
     // =============================================================
-    // DELETE STUDENT
+    // DELETE, RENAME, MERGE
     // =============================================================
     async function deleteStudent(studentName) {
         if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
         if (!confirm(`⚠️ Delete "${studentName}"? This CANNOT be undone!`)) return;
-
         try {
             await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).delete();
-
             reportStudentsList = reportStudentsList.filter(s => s !== studentName);
             if (currentSelectedStudent === studentName) {
                 currentSelectedStudent = null;
                 document.getElementById('studentWorkArea').style.display = 'none';
             }
-
             rebuildSelector();
             rebuildMergeList();
             updateStudentCount();
@@ -1202,23 +1223,15 @@
         }
     }
 
-    // =============================================================
-    // RENAME STUDENT
-    // =============================================================
     async function renameStudent(oldName, newName) {
         if (!newName || newName.trim().length < 2) {
             showToast('⚠️ Please enter a valid name.', 'error');
             return;
         }
-
         try {
             const cls = currentUser.class;
             const oldDoc = await db.collection('reportCards').doc(`${cls}_${oldName}`).get();
-            if (!oldDoc.exists) {
-                showToast('❌ Student not found.', 'error');
-                return;
-            }
-
+            if (!oldDoc.exists) { showToast('❌ Student not found.', 'error'); return; }
             const data = oldDoc.data();
 
             const newDoc = await db.collection('reportCards').doc(`${cls}_${newName}`).get();
@@ -1245,39 +1258,27 @@
                 .where('class', '==', cls)
                 .where('studentName', '==', oldName)
                 .get();
-
             const batch = db.batch();
             resultsSnap.forEach(doc => {
-                batch.update(doc.ref, {
-                    studentName: newName,
-                    previousName: oldName,
-                    renamedAt: new Date()
-                });
+                batch.update(doc.ref, { studentName: newName, previousName: oldName, renamedAt: new Date() });
             });
             await batch.commit();
 
             reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
             reportStudentsList.sort();
             currentSelectedStudent = newName;
-
             rebuildSelector();
             rebuildMergeList();
             updateStudentCount();
-
             await loadStudentData(newName, cls);
             document.getElementById('selectedStudentName').innerText = newName;
-
             showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
-
         } catch (e) {
             console.error('Rename error:', e);
             showToast('❌ Rename failed: ' + e.message, 'error');
         }
     }
 
-    // =============================================================
-    // MERGE STUDENTS
-    // =============================================================
     async function mergeStudents(fromNames, toName) {
         try {
             const cls = currentUser.class;
@@ -1329,14 +1330,9 @@
                     .where('class', '==', cls)
                     .where('studentName', '==', fromName)
                     .get();
-
                 const batch = db.batch();
                 resultsSnap.forEach(doc => {
-                    batch.update(doc.ref, {
-                        studentName: toName,
-                        mergedFrom: fromName,
-                        mergedAt: new Date()
-                    });
+                    batch.update(doc.ref, { studentName: toName, mergedFrom: fromName, mergedAt: new Date() });
                 });
                 await batch.commit();
 
@@ -1354,15 +1350,12 @@
             if (!reportStudentsList.includes(toName)) reportStudentsList.push(toName);
             reportStudentsList.sort();
             currentSelectedStudent = toName;
-
             rebuildSelector();
             rebuildMergeList();
             updateStudentCount();
             await loadStudentData(toName, cls);
             document.getElementById('selectedStudentName').innerText = toName;
-
             showToast(`✅ Merged ${fromNames.length} student(s) into "${toName}"!`, 'success');
-
         } catch (e) {
             console.error('Merge error:', e);
             showToast('❌ Merge failed: ' + e.message, 'error');
@@ -1375,17 +1368,13 @@
     async function recoverFirstSecondFromThirdTerm() {
         const cls = currentUser.class;
         if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
-
         showToast('🔄 Recovering first/second term from third term...', 'warning');
-
         try {
             const snap = await db.collection('reportCards').where('class', '==', cls).get();
             let count = 0;
-
             for (let doc of snap.docs) {
                 const data = doc.data();
                 let changed = false;
-
                 if (data.subjects) {
                     Object.keys(data.subjects).forEach(sub => {
                         const subData = data.subjects[sub];
@@ -1406,7 +1395,6 @@
                         }
                     });
                 }
-
                 if (changed) {
                     await doc.ref.update({
                         subjects: data.subjects,
@@ -1416,15 +1404,9 @@
                     count++;
                 }
             }
-
             await calculateAllPositions(cls);
-
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, cls);
-            }
-
+            if (currentSelectedStudent) { await loadStudentData(currentSelectedStudent, cls); }
             showToast(`✅ Recovered ${count} student records.`, 'success');
-
         } catch (e) {
             showToast('❌ Recovery failed: ' + e.message, 'error');
         }
@@ -1436,13 +1418,11 @@
     async function pushStudentToAdmin(studentName) {
         if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
         if (!confirm(`📤 Push "${studentName}" to Admin?`)) return;
-
         try {
             await saveCurrentStudent(currentUser.class);
             const docRef = db.collection('reportCards').doc(`${currentUser.class}_${studentName}`);
             const doc = await docRef.get();
             const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
-
             await docRef.update({
                 pushedToAdmin: true,
                 pushedAt: new Date(),
@@ -1459,30 +1439,22 @@
     async function pushAllStudentsToAdmin() {
         if (reportStudentsList.length === 0) { showToast('⚠️ No students to push.', 'error'); return; }
         if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?`)) return;
-
         const progressEl = document.getElementById('pushProgress');
         const progressFill = document.getElementById('pushProgressFill');
         const progressStatus = document.getElementById('pushStatus');
-
         if (progressEl) progressEl.style.display = 'block';
         if (progressFill) progressFill.style.width = '0%';
         if (progressStatus) progressStatus.innerText = '⏳ Starting...';
-
         let pushed = 0;
         const total = reportStudentsList.length;
-
         try {
-            if (currentSelectedStudent) {
-                await saveCurrentStudent(currentUser.class);
-            }
-
+            if (currentSelectedStudent) { await saveCurrentStudent(currentUser.class); }
             for (let i = 0; i < total; i++) {
                 const student = reportStudentsList[i];
                 try {
                     const docRef = db.collection('reportCards').doc(`${currentUser.class}_${student}`);
                     const doc = await docRef.get();
                     const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
-
                     await docRef.update({
                         pushedToAdmin: true,
                         pushedAt: new Date(),
@@ -1494,22 +1466,15 @@
                     const progress = Math.round(((i + 1) / total) * 100);
                     if (progressFill) progressFill.style.width = progress + '%';
                     if (progressStatus) progressStatus.innerText = `📤 ${pushed}/${total} pushed`;
-                } catch (e) {
-                    console.error(`Failed to push ${student}:`, e);
-                }
+                } catch (e) { console.error(`Failed to push ${student}:`, e); }
             }
-
             if (pushed === total) {
                 showToast(`✅ All ${pushed} students pushed to Admin!`, 'push');
                 if (progressStatus) progressStatus.innerText = `✅ All ${pushed} students pushed successfully!`;
             } else {
                 showToast(`⚠️ ${pushed}/${total} pushed. Some failed.`, 'warning');
             }
-
-            setTimeout(() => {
-                if (progressEl) progressEl.style.display = 'none';
-            }, 3000);
-
+            setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; }, 3000);
         } catch (e) {
             showToast('❌ Push all failed: ' + e.message, 'error');
         }
@@ -1527,13 +1492,10 @@
             const existingStudents = [];
             reportSnap.forEach(doc => {
                 const data = doc.data();
-                if (data.studentName) {
-                    existingStudents.push(data.studentName);
-                }
+                if (data.studentName) { existingStudents.push(data.studentName); }
             });
 
             const resultsSnap = await db.collection('results').where('class', '==', cls).get();
-            
             if (resultsSnap.empty && existingStudents.length === 0) {
                 area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
                 return;
@@ -1666,7 +1628,64 @@
     }
 
     // =============================================================
-    // BUILD REPORT BUILDER UI
+    // ORPHAN SUBJECT CLEANUP
+    // =============================================================
+    async function removeOrphanSubjects() {
+        const cls = currentUser.class;
+        if (!cls) { showToast('⚠️ Please login first.', 'error'); return; }
+        if (!confirm(`Remove all subjects from students that are not in the class subject list? This will affect all students in ${cls}.`)) return;
+
+        try {
+            const studentsSnap = await db.collection('reportCards').where('class', '==', cls).get();
+            if (studentsSnap.empty) { showToast('ℹ️ No students found.', 'warning'); return; }
+
+            const allowedSubjects = new Set(currentSubjects.map(s => s.trim()));
+            let totalStudents = 0;
+            let totalRemoved = 0;
+            const batch = db.batch();
+
+            studentsSnap.forEach(doc => {
+                const data = doc.data();
+                const subjects = data.subjects || {};
+                let changed = false;
+                const newSubjects = {};
+                for (const [key, value] of Object.entries(subjects)) {
+                    if (allowedSubjects.has(key)) {
+                        newSubjects[key] = value;
+                    } else {
+                        changed = true;
+                        totalRemoved++;
+                        console.log(`🗑️ Removing orphan subject "${key}" from ${data.studentName}`);
+                    }
+                }
+                if (changed) {
+                    batch.update(doc.ref, {
+                        subjects: newSubjects,
+                        _version: firebase.firestore.FieldValue.increment(1),
+                        updatedAt: new Date()
+                    });
+                    totalStudents++;
+                }
+            });
+
+            if (totalStudents === 0) {
+                showToast('✅ No orphan subjects found.', 'success');
+                return;
+            }
+
+            await batch.commit();
+            showToast(`✅ Removed orphan subjects from ${totalStudents} student(s) (${totalRemoved} subjects removed).`, 'success');
+            if (currentSelectedStudent) {
+                await loadStudentData(currentSelectedStudent, cls);
+            }
+        } catch (e) {
+            console.error('Cleanup error:', e);
+            showToast('❌ Failed to clean up: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // BUILD REPORT BUILDER UI (including attendance)
     // =============================================================
     function buildReportBuilderUI(cls) {
         const area = document.getElementById('reportBuilderArea');
@@ -1693,6 +1712,7 @@
                 <button class="btn-action btn-warning" id="recoverBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
             </div>
 
+            <!-- Signatures -->
             <div class="signature-section">
                 <div class="signature-title">✍️ Teacher Signature (${currentUser.name})</div>
                 <canvas id="teacherSignatureCanvas" class="signature-canvas"></canvas>
@@ -1715,6 +1735,7 @@
                 <small style="color:#94a3b8; font-size:11px;">Draw or upload admin signature. Auto-saves when you stop.</small>
             </div>
 
+            <!-- Merge -->
             <div class="merge-section" id="mergeSection">
                 <div class="merge-title">🔀 Merge Duplicate Students</div>
                 <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge.</p>
@@ -1732,6 +1753,7 @@
                 <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
             </div>
 
+            <!-- Student Selector -->
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                 <label class="section-label">👤 Select Student:</label>
                 <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
@@ -1745,6 +1767,7 @@
                 <div id="nameSuggestions" style="margin-top:8px;"></div>
             </div>
 
+            <!-- Student Work Area -->
             <div id="studentWorkArea" style="display:none;">
                 <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
                     <div class="photo-container-small" style="width:90px; height:90px; position:relative;">
@@ -1768,6 +1791,7 @@
                     <div class="pos-percentage" id="positionPercentage"></div>
                 </div>
 
+                <!-- Subjects -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">📖 Subject Scores</div>
                     <div style="overflow-x:auto;">
@@ -1789,6 +1813,23 @@
                     </div>
                 </div>
 
+                <!-- Attendance -->
+                <div class="attendance-section">
+                    <label>📅 Total Days Opened <span style="font-weight:400; color:#64748b;">(from Term Settings)</span>
+                        <input type="number" value="${classTermSettings.totalDaysOpened}" disabled style="background:#e2e8f0;" />
+                    </label>
+                    <label>✅ Days Present
+                        <input type="number" class="attendance-days-present" min="0" max="${classTermSettings.totalDaysOpened}" value="0" />
+                    </label>
+                    <label>❌ Days Absent
+                        <input type="number" id="attendance-days-absent" value="0" disabled style="background:#e2e8f0;" />
+                    </label>
+                    <div style="grid-column:1/-1; font-size:12px; color:#64748b;">
+                        Resumption: ${classTermSettings.resumptionDate || 'Not set'} | Closing: ${classTermSettings.closingDate || 'Not set'}
+                    </div>
+                </div>
+
+                <!-- Affective -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">⭐ Affective Domain</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
@@ -1803,6 +1844,7 @@
                     </div>
                 </div>
 
+                <!-- Psychomotor -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">🤸 Psychomotor Domain</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
@@ -1817,6 +1859,7 @@
                     </div>
                 </div>
 
+                <!-- Clubs -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">⚽ Clubs</div>
                     <div style="display:flex; flex-wrap:wrap; gap:5px;">
@@ -1828,6 +1871,7 @@
                     </div>
                 </div>
 
+                <!-- Comments -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">📝 Teacher's Comment</div>
                     <textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
@@ -2001,23 +2045,13 @@
         document.getElementById('addStudentBtn')?.addEventListener('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
             const name = newStudentInput?.value.trim();
-            if (!name) {
-                showToast('⚠️ Please enter a name.', 'warning');
-                return;
-            }
-            if (name.split(/\s+/).length < 2) {
-                showToast('⚠️ Please enter first AND last name.', 'warning');
-                return;
-            }
-
+            if (!name) { showToast('⚠️ Please enter a name.', 'warning'); return; }
+            if (name.split(/\s+/).length < 2) { showToast('⚠️ Please enter first AND last name.', 'warning'); return; }
             try {
                 const cls = currentUser.class;
-                
                 const docRef = db.collection('reportCards').doc(`${cls}_${name}`);
                 const doc = await docRef.get();
-                
                 if (doc.exists) {
                     showToast(`⚠️ "${name}" already exists.`, 'warning');
                     if (!reportStudentsList.includes(name)) {
@@ -2033,7 +2067,6 @@
                     suggestionsDiv.innerHTML = '';
                     return;
                 }
-
                 await docRef.set({
                     class: cls,
                     studentName: name,
@@ -2045,23 +2078,18 @@
                     createdAt: new Date(),
                     _version: 1
                 });
-
                 if (!reportStudentsList.includes(name)) {
                     reportStudentsList.push(name);
                     reportStudentsList.sort();
                 }
-
                 rebuildSelector();
                 rebuildMergeList();
                 updateStudentCount();
                 selector.value = name;
                 newStudentInput.value = '';
                 suggestionsDiv.innerHTML = '';
-                
                 selector.dispatchEvent(new Event('change'));
-                
                 showToast(`✅ Added "${name}" successfully!`, 'success');
-                
             } catch (e) {
                 console.error('Add student error:', e);
                 showToast('❌ Failed to add student: ' + e.message, 'error');
@@ -2134,13 +2162,25 @@
             });
         });
 
-        document.querySelectorAll('.club-check, .commentary-input, .principal-input, .promotion-select').forEach(el => {
+        document.querySelectorAll('.club-check, .commentary-input, .principal-input, .promotion-select, .attendance-days-present').forEach(el => {
             el.addEventListener('input', () => {
                 updateSaveStatus('saving', 'Saving...');
                 triggerAutoSave(cls);
             });
             el.addEventListener('blur', () => { saveCurrentStudent(cls); });
         });
+
+        // Update days absent automatically
+        const daysPresentInput = document.querySelector('.attendance-days-present');
+        const daysAbsentInput = document.getElementById('attendance-days-absent');
+        if (daysPresentInput && daysAbsentInput) {
+            daysPresentInput.addEventListener('input', () => {
+                const total = classTermSettings.totalDaysOpened || 90;
+                const present = parseInt(daysPresentInput.value) || 0;
+                const absent = Math.max(total - present, 0);
+                daysAbsentInput.value = absent;
+            });
+        }
 
         rebuildMergeList();
         updateStudentCount();
@@ -2280,7 +2320,7 @@
     });
 
     // =============================================================
-    // QUESTIONS (abbreviated)
+    // QUESTIONS
     // =============================================================
     async function selectSubject(subject) {
         selectedSubject = subject;
@@ -2344,7 +2384,7 @@
     });
 
     // =============================================================
-    // EXAM PUBLISHING (abbreviated)
+    // EXAM PUBLISHING
     // =============================================================
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
@@ -2378,7 +2418,28 @@
     });
 
     // =============================================================
-    // TAB SWITCHING - LOAD RESULTS WITH ACCORDION
+    // ORPHAN CLEANUP BUTTON
+    // =============================================================
+    document.getElementById('cleanOrphanSubjectsBtn')?.addEventListener('click', async () => {
+        await removeOrphanSubjects();
+    });
+
+    // =============================================================
+    // TERM SETTINGS SAVE BUTTON
+    // =============================================================
+    document.getElementById('saveTermSettingsBtn')?.addEventListener('click', async () => {
+        if (!currentUser.class) { showToast('⚠️ Please select a class.', 'error'); return; }
+        await saveTermSettings(currentUser.class);
+        if (document.getElementById('reportBuilderArea').innerHTML !== '') {
+            await loadTermSettings(currentUser.class);
+            if (currentSelectedStudent) {
+                await loadStudentData(currentSelectedStudent, currentUser.class);
+            }
+        }
+    });
+
+    // =============================================================
+    // TAB SWITCHING
     // =============================================================
     document.querySelectorAll('.main-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -2386,15 +2447,11 @@
             tab.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(tab.dataset.tab).classList.add('active');
-            
             if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
             if (tab.dataset.tab === 'tabResults') {
                 if (currentUser.class) {
                     loadResultsWithAccordion(currentUser.class);
                 }
-            }
-            if (tab.dataset.tab === 'tabReports') {
-                // Load reports if needed
             }
         });
     });
@@ -2425,22 +2482,18 @@
         const newClass = $('classSelect').value;
         if (!newClass) return showToast('⚠️ Select class.', 'error');
         if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
-
         if (currentSelectedStudent) await saveCurrentStudent(currentUser.class);
-
         currentUser.class = newClass;
         currentSelectedStudent = null;
         reportStudentsList = [];
-
         await loadSubjects(newClass);
         await loadSchedule(newClass);
         await loadResultsWithAccordion(newClass);
-
+        await loadTermSettings(newClass);
         const area = document.getElementById('reportBuilderArea');
         area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Click "Load Students" to see results.</div>`;
         document.getElementById('studentCountBadge').innerText = '0 Students';
         document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-
         showToast(`🔄 Switched to ${newClass}`, 'success');
     });
 
@@ -2451,24 +2504,19 @@
         const name = $('loginName').value.trim();
         const cls = $('loginClassSelect').value;
         const err = $('loginErr');
-
         if (!name) return err.innerText = '⚠️ Please enter your name.';
         if (!cls) return err.innerText = '⚠️ Please select a class.';
-
         currentUser = { name, class: cls };
         err.innerText = '';
-
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         $('dashboardPage').classList.add('active');
         $('sidebarName').innerText = name + ' 👨‍🏫';
         $('classSelect').value = cls;
-
         showToast(`👋 Welcome, ${name}!`, 'success');
-
         await loadSubjects(cls);
         await loadSchedule(cls);
         await loadResultsWithAccordion(cls);
-
+        await loadTermSettings(cls);
         const resultsSnap = await db.collection('results').where('class', '==', cls).get();
         if (!resultsSnap.empty) {
             await loadStudentsFromResults(cls);
@@ -2482,13 +2530,12 @@
     $('loginPage').classList.add('active');
     loadMasterClassList();
 
-    console.log('✅ Teacher Dashboard - COMPLETE WITH ACCORDION RESULTS');
+    console.log('✅ Teacher Dashboard - COMPLETE WITH FIXES & TERM SETTINGS & ORPHAN CLEANUP');
     console.log('📌 Features: Subject accordion, ×2, ×3, Copy, Add/Edit/Delete/Merge/Push');
-    console.log('📊 Results are organized by subject with alphabetical student order');
-    console.log('🔢 ×2 and ×3 buttons multiply ALL scores for a subject');
-    console.log('📋 Copy button copies student: score to clipboard');
-    console.log('✅ ALL data is preserved - nothing is lost!');
-    console.log('🔧 FIXED: Save now reads values directly from input fields, ignoring "touched" flag.');
+    console.log('🧹 "Remove Orphan Subjects" button in Reports tab deletes subjects not in sidebar');
+    console.log('📅 Term Settings: resumption, closing dates, total days opened');
+    console.log('📊 Attendance: days present input, auto-calculates days absent');
+    console.log('✅ SAVE FIX: reads input values directly, no data loss!');
 </script>
 </body>
 </html>
