@@ -205,7 +205,7 @@
             font-family: 'Inter', sans-serif;
             color: #0f172a;
             position: relative;
-            overflow: visible;
+            overflow: hidden;
         }
 
         /* ===== WATERMARK ===== */
@@ -240,6 +240,33 @@
         .header-text {
             text-align: center;
         }
+        .header-text .school-name {
+            font-size: 28px;
+            font-weight: 900;
+            color: #1e1b4b;
+            letter-spacing: 1px;
+        }
+        .header-text .motto {
+            font-weight: 600;
+            color: #4f46e5;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        .header-text .location {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+        }
+        .term-info {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 6px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 2px 30px;
+            border-radius: 30px;
+        }
 
         /* ===== Student Photo ===== */
         .student-photo-container {
@@ -262,6 +289,21 @@
         .student-photo-placeholder {
             font-size: 48px;
             color: #94a3b8;
+        }
+
+        /* ===== Student Meta ===== */
+        .student-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
         }
         .student-details {
             flex: 1;
@@ -286,25 +328,51 @@
             font-size: 13px;
         }
 
-        /* ===== Promotion Badge ===== */
-        .promotion-badge {
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-weight: 800;
+        /* ===== Attendance ===== */
+        .attendance-grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            padding: 8px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            font-weight: 600;
             font-size: 13px;
-            white-space: nowrap;
+            color: #334155;
         }
-        .promotion-badge.Promoted {
-            background: #d1fae5;
-            color: #065f46;
+        .attendance-grid span {
+            background: white;
+            padding: 4px 14px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
         }
-        .promotion-badge.Not\\ Promoted {
-            background: #fee2e2;
-            color: #991b1b;
+
+        /* ===== Dates Row ===== */
+        .dates-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            position: relative;
+            z-index: 1;
         }
-        .promotion-badge.Probation {
-            background: #fef3c7;
-            color: #92400e;
+        .dates-row span {
+            background: white;
+            padding: 2px 12px;
+            border-radius: 30px;
+        }
+        .dates-row strong {
+            color: #1e1b4b;
         }
 
         /* ===== Position Summary ===== */
@@ -330,12 +398,12 @@
             border-right: none;
         }
         .position-summary .pos-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 900;
             color: #1e1b4b;
         }
         .position-summary .pos-value small {
-            font-size: 18px;
+            font-size: 16px;
         }
         .position-summary .pos-label {
             font-size: 11px;
@@ -343,9 +411,26 @@
             text-transform: uppercase;
         }
 
-        .rating-stars {
-            color: #f59e0b;
-            letter-spacing: 2px;
+        /* ===== Promotion Badge ===== */
+        .promotion-badge {
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 13px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .promotion-badge.promoted {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .promotion-badge.not-promoted {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .promotion-badge.probation {
+            background: #fef3c7;
+            color: #92400e;
         }
 
         /* ===== Grade Colors ===== */
@@ -359,497 +444,260 @@
         .grade-weak { color: #dc2626; font-weight: 700; }
         .grade-fail { color: #dc2626; font-weight: 800; }
 
-        /* ----- School Header ----- */
-        .report-header {
-            text-align: center;
-            border-bottom: 3px double #1e1b4b;
-            padding-bottom: 18px;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .report-header .school-name {
-            font-size: 32px;
-            font-weight: 900;
-            color: #1e1b4b;
+        /* ===== Rating Stars ===== */
+        .rating-stars {
+            color: #f59e0b;
             letter-spacing: 2px;
         }
 
-        .report-header .motto {
-            font-weight: 600;
-            color: #4f46e5;
-            font-size: 15px;
-            letter-spacing: 1px;
-        }
-
-        .report-header .location {
-            font-size: 13px;
-            color: #475569;
-            font-weight: 500;
-        }
-
-        .report-header .term-info {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f172a;
-            margin-top: 6px;
-            background: #f1f5f9;
-            display: inline-block;
-            padding: 2px 30px;
-            border-radius: 30px;
-        }
-
-        /* ----- Student Info & Attendance ----- */
-        .student-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            position: relative;
-            z-index: 1;
-        }
-
-        .student-meta .name {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-
-        .student-meta .name span {
-            color: #4f46e5;
-        }
-
-        .student-meta .class {
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .student-meta .teacher {
-            font-weight: 600;
-            color: #475569;
-            font-size: 14px;
-        }
-
-        .attendance-grid {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            font-weight: 600;
-            font-size: 14px;
-            color: #334155;
-        }
-
-        .attendance-grid span {
-            background: white;
-            padding: 4px 14px;
-            border-radius: 40px;
-            border: 1px solid #e2e8f0;
-        }
-
-        /* ----- School Dates Row ----- */
-        .dates-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-between;
-            background: #f8fafc;
-            padding: 8px 16px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
-            font-size: 13px;
-            font-weight: 600;
-            color: #475569;
-            position: relative;
-            z-index: 1;
-        }
-
-        .dates-row span {
-            background: white;
-            padding: 2px 12px;
-            border-radius: 30px;
-        }
-
-        .dates-row strong {
-            color: #1e1b4b;
-        }
-
-        /* ----- Qualities & Extracurriculars Grid ----- */
+        /* ===== Qualities & Extracurriculars Grid ===== */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 16px;
+            margin-bottom: 16px;
             position: relative;
             z-index: 1;
         }
-
         .info-grid .box {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px 16px;
         }
-
         .info-grid .box h4 {
             font-weight: 700;
             color: #1e1b4b;
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 6px;
+            font-size: 13px;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 4px;
         }
-
         .info-grid .box .item {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
-            font-size: 13px;
+            padding: 2px 0;
+            font-size: 12px;
             font-weight: 500;
-        }
-
-        .info-grid .box .item .rating {
-            background: #e0e7ff;
-            padding: 0 10px;
-            border-radius: 30px;
-            color: #3730a3;
-            font-weight: 700;
         }
 
         .extra-badges {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 4px;
             margin-top: 4px;
         }
-
         .extra-badges .badge {
             background: #dbeafe;
             color: #1e3a8a;
-            padding: 2px 12px;
+            padding: 2px 10px;
             border-radius: 30px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
         }
-
         .extra-badges .badge.missing {
             background: #f1f5f9;
             color: #94a3b8;
         }
 
-        /* ----- Main Subject Table (Full Grid) ----- */
+        /* ===== Main Subject Table ===== */
         .table-wrap {
             overflow-x: auto;
-            margin: 15px 0 10px 0;
+            margin: 12px 0;
             position: relative;
             z-index: 1;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
         }
-
         table th {
             background: #1e1b4b;
             color: white;
             font-weight: 700;
-            padding: 10px 6px;
+            padding: 8px 4px;
             border: 1px solid #1e1b4b;
         }
-
         table td {
-            padding: 8px 4px;
+            padding: 6px 4px;
             border: 1px solid #cbd5e1;
             vertical-align: middle;
         }
-
         table tr:nth-child(even) {
             background: #fafafa;
         }
-
-        table tr:hover {
-            background: #f1f5f9;
-        }
-
-        /* Subject column left-aligned */
         table td:first-child,
         table th:first-child {
             font-weight: 700;
         }
-
         table td:nth-child(2) {
             text-align: left;
             font-weight: 600;
-            padding-left: 12px;
+            padding-left: 8px;
         }
-
         .sub-header th {
             background: #334155;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 6px 2px;
+            padding: 4px 2px;
         }
-
         .grand-total-row td {
             background: #f1f5f9;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             border-top: 3px solid #1e1b4b;
             color: #0f172a;
         }
 
-        /* ----- Teacher's Commentary ----- */
+        /* ===== Commentary ===== */
         .commentary-box {
-            margin: 15px 0 20px 0;
-            padding: 15px;
+            margin: 12px 0;
+            padding: 12px 16px;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             background: #fafafa;
             position: relative;
             z-index: 1;
         }
-
         .commentary-box h4 {
             font-weight: 700;
             color: #1e1b4b;
-            margin-bottom: 6px;
-            font-size: 14px;
+            margin-bottom: 4px;
+            font-size: 13px;
         }
-
         .commentary-box p {
             font-style: italic;
             color: #1e293b;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
         }
 
-        /* ----- Bottom Signatures - WITH ACTUAL SIGNATURE IMAGES ----- */
+        /* ========================================================== */
+        /* ===== SIGNATURES - UPDATED WITH IMAGE SUPPORT ===== */
+        /* ========================================================== */
         .signature-section {
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 20px;
-            margin-top: 25px;
-            padding-top: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 2px dashed #cbd5e1;
             position: relative;
             z-index: 1;
         }
-
         .signature-box {
             flex: 1;
-            min-width: 150px;
+            min-width: 140px;
             text-align: center;
         }
-
         .signature-box .label {
             font-weight: 700;
             color: #475569;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 4px;
         }
-
-        .signature-box .sig-img {
-            max-width: 150px;
-            max-height: 50px;
-            margin: 4px auto;
-            display: block;
+        /* Signature image container */
+        .signature-box .sig-image-container {
+            margin: 8px auto;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signature-box .sig-image-container img {
+            max-height: 60px;
+            max-width: 160px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            background: white;
             object-fit: contain;
         }
-
-        .signature-box .sig-placeholder {
-            font-size: 11px;
+        .signature-box .sig-image-container .no-sig {
             color: #94a3b8;
-            margin: 4px 0;
+            font-size: 11px;
+            font-style: italic;
         }
-
         .signature-box .line {
             border-bottom: 2px solid #1e293b;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 4px;
             margin-bottom: 4px;
         }
-
         .signature-box .sub {
             font-size: 11px;
             color: #64748b;
-            margin-top: 4px;
+            margin-top: 2px;
+        }
+        .signature-box.text-right {
+            text-align: right;
+        }
+        .signature-box.text-right .line {
+            margin-left: auto;
         }
 
-        /* ----- Footer ----- */
+        /* ===== Footer ===== */
         .report-footer {
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             color: #94a3b8;
-            margin-top: 30px;
+            margin-top: 20px;
             border-top: 1px solid #e2e8f0;
-            padding-top: 15px;
+            padding-top: 12px;
             position: relative;
             z-index: 1;
         }
 
         /* ========================================================== */
-        /* ===== PRINT STYLES - SINGLE PAGE ===== */
+        /* ===== PRINT STYLES ===== */
         /* ========================================================== */
         @media print {
-            /* Page setup - single page */
-            @page {
-                size: A4 portrait;
-                margin: 10mm 12mm 10mm 12mm;
-                padding: 0;
-            }
-
-            body { 
-                background: white; 
-                padding: 0; 
-                margin: 0; 
-                min-height: 100vh;
-            }
-
-            #app { 
-                max-width: 100%; 
-                padding: 0; 
-                margin: 0;
-                width: 100%;
-            }
-
-            .no-print { 
-                display: none !important; 
-            }
-
-            .report-wrapper { 
-                box-shadow: none; 
-                border: none; 
-                border-radius: 0; 
-                padding: 0; 
-                margin: 0; 
-                background: white;
-            }
-
-            .report-card { 
-                max-width: 100%; 
-                padding: 0; 
-                overflow: visible;
-                width: 100%;
-            }
-
-            /* Force everything on one page */
-            .report-card {
-                page-break-after: avoid;
-                page-break-inside: avoid;
-            }
-
+            body { background: white; padding: 0; margin: 0; }
+            #app { max-width: 100%; padding: 0; }
+            .no-print { display: none !important; }
+            .report-wrapper { box-shadow: none; border: none; border-radius: 0; padding: 10px 15px; margin: 0; }
+            .report-card { max-width: 100%; padding: 0; overflow: visible; }
+            
             .watermark-img { 
-                opacity: 0.06 !important; 
+                opacity: 0.05 !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-
-            .report-header, .student-meta, .dates-row, .info-grid, .table-wrap, 
-            .commentary-box, .signature-section, .report-footer, .position-summary { 
-                position: relative; 
-                z-index: 1; 
-            }
-
+            
             table th { 
                 background: #1e1b4b !important; 
                 color: white !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-
+            
             .grand-total-row td { 
-                background: #f1f5f9 !important; 
+                background: #1e1b4b !important; 
+                color: white !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-
+            
             .student-meta, .dates-row, .info-grid .box, .commentary-box, .position-summary { 
                 background: #f8fafc !important; 
                 -webkit-print-color-adjust: exact; 
                 print-color-adjust: exact; 
             }
-
-            .report-header .term-info { 
-                background: #f1f5f9 !important; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
-
-            .extra-badges .badge { 
-                background: #dbeafe !important; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
-
-            .school-logo { 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
-
-            .student-photo-container img { 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
-
-            .position-summary .pos-item { 
-                border-right-color: #f59e0b !important; 
-            }
-
-            .sig-img {
+            
+            .signature-box .sig-image-container img {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                max-height: 40px !important;
             }
-
-            /* Prevent page break inside table */
-            table { 
-                page-break-inside: avoid; 
-            }
-
-            .signature-section { 
-                page-break-inside: avoid; 
-            }
-
-            /* Compact everything to fit one page */
-            .report-header .school-name { font-size: 24px; }
-            .report-header .term-info { font-size: 14px; padding: 2px 20px; }
-            .student-meta { padding: 8px 12px; margin-bottom: 8px; }
-            .student-details .name { font-size: 15px; }
-            .position-summary { padding: 8px; margin: 6px 0; }
-            .position-summary .pos-value { font-size: 24px; }
-            .info-grid { gap: 12px; margin-bottom: 10px; }
-            .info-grid .box { padding: 10px; }
-            .info-grid .box .item { font-size: 12px; padding: 2px 0; }
-            .table-wrap { margin: 8px 0; }
-            table { font-size: 11px; }
-            table th { padding: 6px 4px; }
-            table td { padding: 5px 3px; }
-            .commentary-box { padding: 10px; margin: 8px 0 12px 0; }
-            .commentary-box p { font-size: 12px; }
-            .signature-section { margin-top: 12px; padding-top: 12px; gap: 10px; }
-            .signature-box .label { font-size: 12px; }
-            .signature-box .line { margin-top: 10px; }
-            .report-footer { margin-top: 12px; padding-top: 8px; font-size: 9px; }
-            .dates-row { font-size: 11px; padding: 4px 12px; margin-bottom: 8px; }
-            .attendance-grid { font-size: 12px; gap: 8px; }
-            .attendance-grid span { padding: 2px 10px; }
-            .school-logo { width: 50px; height: 50px; }
-            .header-logo-row { gap: 12px; margin-bottom: 6px; }
-            .student-photo-container { width: 60px; height: 80px; }
-            .extra-badges .badge { font-size: 10px; padding: 1px 8px; }
+            
+            table { page-break-inside: avoid; }
+            .signature-section { page-break-inside: avoid; }
+            .school-logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .student-photo-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .position-summary .pos-item { border-right-color: #f59e0b !important; }
         }
 
         /* ========================================================== */
@@ -859,11 +707,9 @@
             display: none;
             animation: fadeUp 0.4s ease;
         }
-
         .page.active {
             display: block;
         }
-
         @keyframes fadeUp {
             0% {
                 opacity: 0;
@@ -895,7 +741,6 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .btn-print:hover {
             background: #1e293b;
             transform: scale(1.02);
@@ -913,10 +758,24 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         .btn-back:hover {
             border-color: #4f46e5;
             background: #f8fafc;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .report-wrapper { padding: 16px; }
+            .login-card { padding: 24px 20px; }
+            .header-text .school-name { font-size: 20px; }
+            .student-meta { flex-direction: column; align-items: center; text-align: center; }
+            .student-details { text-align: center; }
+            .info-grid { grid-template-columns: 1fr; }
+            .position-summary .pos-item { padding: 0 10px; }
+            .position-summary .pos-value { font-size: 20px; }
+            .signature-section { flex-direction: column; align-items: center; }
+            .signature-box { width: 100%; }
         }
     </style>
 </head>
@@ -953,7 +812,7 @@
             <div class="report-wrapper">
                 <!-- Print & Back Buttons (hidden when printing) -->
                 <div class="flex-center no-print" style="margin-bottom:20px;">
-                    <button class="btn-print" onclick="window.print()">🖨️ Print / Download PDF</button>
+                    <button class="btn-print" onclick="window.print()">🖨️ Print Preview / Download PDF</button>
                     <button class="btn-back" id="backBtn">⬅ Back to Search</button>
                 </div>
 
@@ -1052,7 +911,7 @@
         }
 
         // =============================================================
-        // 2. LOAD MASTER CLASS LIST
+        // 2. LOAD MASTER CLASS LIST & POPULATE DROPDOWN
         // =============================================================
         async function loadMasterClassList() {
             try {
@@ -1060,12 +919,16 @@
                 if (doc.exists) {
                     masterClassList = doc.data().classes || [];
                 } else {
-                    masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+                    masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
+                        'Basic 6'
+                    ];
                 }
                 populateClassDropdown();
             } catch (e) {
                 console.error("Error loading master class list:", e);
-                masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
+                masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
+                    'Basic 6'
+                ];
                 populateClassDropdown();
             }
         }
@@ -1082,7 +945,7 @@
         // =============================================================
         // Helper functions
         // =============================================================
-        function getRemarkText(avg) {
+        function getRemark(avg) {
             if (avg >= 75) return 'Distinction';
             if (avg >= 70) return 'Excellent';
             if (avg >= 65) return 'Very Good';
@@ -1112,6 +975,14 @@
             return s[(v-20)%10] || s[v] || s[0]; 
         }
 
+        function formatDate(d) {
+            if (!d) return 'Not set';
+            if (d.toDate) d = d.toDate();
+            if (typeof d === 'string') d = new Date(d);
+            if (isNaN(d.getTime())) return 'Invalid date';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
         // =============================================================
         // 3. CHECK REPORT LOGIC
         // =============================================================
@@ -1121,9 +992,18 @@
             const pin = $('studentPin').value.trim();
             const err = $('reportErr');
 
-            if (!name) { err.innerText = '⚠️ Please enter the student\'s name.'; return; }
-            if (!cls) { err.innerText = '⚠️ Please select the student\'s class.'; return; }
-            if (!pin) { err.innerText = '⚠️ Please enter the PIN.'; return; }
+            if (!name) {
+                err.innerText = '⚠️ Please enter the student\'s name.';
+                return;
+            }
+            if (!cls) {
+                err.innerText = '⚠️ Please select the student\'s class.';
+                return;
+            }
+            if (!pin) {
+                err.innerText = '⚠️ Please enter the PIN.';
+                return;
+            }
 
             err.innerText = '';
             $('checkReportBtn').innerText = '⏳ Searching...';
@@ -1198,26 +1078,8 @@
                     }
                 } catch (e) { /* ignore */ }
 
-                // Get admin signature from settings
-                let adminSig = null;
-                try {
-                    const settingsDoc = await db.collection('settings').doc('adminConfig').get();
-                    if (settingsDoc.exists) {
-                        adminSig = settingsDoc.data().adminSignature || null;
-                    }
-                } catch (e) {}
-
-                // Get teacher signature from report card data
-                const teacherSig = data.teacherSignature || null;
-                // Admin signature might be in the report card or in settings
-                const adminSigFromReport = data.adminSignature || adminSig;
-
                 const photoUrl = await getStudentPhoto(name, cls);
-                renderReportCard(data, { 
-                    name: schoolName, 
-                    motto: schoolMotto, 
-                    location: schoolLocation 
-                }, photoUrl, teacherSig, adminSigFromReport);
+                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation }, photoUrl);
 
                 showPage('report');
                 err.innerText = '';
@@ -1233,9 +1095,9 @@
         });
 
         // =============================================================
-        // RENDER REPORT CARD - WITH ACTUAL SIGNATURES
+        // RENDER REPORT CARD - WITH SIGNATURE IMAGES
         // =============================================================
-        function renderReportCard(data, school, studentPhotoUrl, teacherSig, adminSig) {
+        function renderReportCard(data, school, studentPhotoUrl) {
             const container = $('reportContainer');
             const subjects = Object.keys(data.subjects || {});
             const att = data.attendance || {};
@@ -1245,9 +1107,14 @@
             const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
             const principalRemarks = data.principalRemarks || '';
             const promotionStatus = data.promotionStatus || '';
+            
             const overallPosition = data.overallPosition || null;
             const overallAverage = data.overallAverage || 0;
             const totalStudents = data.totalStudents || 0;
+
+            // ===== SIGNATURE DATA =====
+            const teacherSig = data.teacherSignature || null;
+            const adminSig = data.adminSignature || null;
 
             const formatDate = (str) => {
                 if (!str) return 'Not set';
@@ -1263,7 +1130,7 @@
                 const second = s.secondTerm || 0;
                 const third = s.thirdTerm || 0;
                 const avg = s.average || ((first + second + third) / 3);
-                const remark = s.remark || getRemarkText(avg);
+                const remark = s.remark || getRemark(avg);
                 const gradeClass = getGradeClass(avg);
 
                 subjectRows += `
@@ -1303,7 +1170,6 @@
                 return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${e}</span>`;
             }).join(' ');
 
-            // ===== POSITION HTML =====
             let positionHtml = '';
             if (overallPosition !== null && overallPosition > 0) {
                 const suffix = getOrdinalSuffix(overallPosition);
@@ -1334,13 +1200,13 @@
                             <div class="pos-label">Total Students</div>
                         </div>
                         <div class="pos-item">
-                            <div class="pos-value" style="font-size:24px;">${percentDisplay}%</div>
+                            <div class="pos-value" style="font-size:20px;">${percentDisplay}%</div>
                             <div class="pos-label">Top ${percentDisplay}%</div>
                         </div>` : ''}
                         ${promotionStatus ? `
                         <div class="pos-item">
                             <div class="pos-value" style="font-size:16px;">
-                                <span class="promotion-badge ${promotionStatus.replace(/\s+/g, '\\ ')}">${promotionStatus}</span>
+                                <span class="promotion-badge ${promotionStatus.toLowerCase().replace(/\s+/g, '-')}">${promotionStatus}</span>
                             </div>
                             <div class="pos-label">Promotion Status</div>
                         </div>` : ''}
@@ -1364,20 +1230,50 @@
                 photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
             }
 
-            // ===== SIGNATURES WITH ACTUAL IMAGES =====
+            // ===== SIGNATURE HTML WITH IMAGE SUPPORT =====
+            // Teacher Signature
             let teacherSigHtml = '';
             if (teacherSig) {
-                teacherSigHtml = `<img class="sig-img" src="${teacherSig}" alt="Teacher Signature" />`;
+                teacherSigHtml = `
+                    <div class="sig-image-container">
+                        <img src="${teacherSig}" alt="Teacher Signature" />
+                    </div>
+                    <div class="sub">${data.teacherName || 'Teacher'}</div>
+                `;
             } else {
-                teacherSigHtml = `<div class="sig-placeholder">No signature uploaded</div>`;
+                teacherSigHtml = `
+                    <div class="sig-image-container">
+                        <span class="no-sig">No signature</span>
+                    </div>
+                    <div class="sub">${data.teacherName || 'Teacher'}</div>
+                `;
             }
 
+            // Admin Signature
             let adminSigHtml = '';
             if (adminSig) {
-                adminSigHtml = `<img class="sig-img" src="${adminSig}" alt="Admin Signature" />`;
+                adminSigHtml = `
+                    <div class="sig-image-container">
+                        <img src="${adminSig}" alt="Admin Signature" />
+                    </div>
+                    <div class="sub">${data.approvedBy || 'Admin'}</div>
+                `;
             } else {
-                adminSigHtml = `<div class="sig-placeholder">No signature uploaded</div>`;
+                adminSigHtml = `
+                    <div class="sig-image-container">
+                        <span class="no-sig">Not signed</span>
+                    </div>
+                    <div class="sub">Admin</div>
+                `;
             }
+
+            // Parent/Guardian - always empty line
+            const parentSigHtml = `
+                <div class="sig-image-container">
+                    <span class="no-sig">______</span>
+                </div>
+                <div class="sub">Parent/Guardian</div>
+            `;
 
             const html = `
                 <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
@@ -1404,7 +1300,7 @@
                     </div>
                 </div>
 
-                <div class="attendance-grid" style="margin-bottom:8px; padding:8px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                <div class="attendance-grid">
                     <span>📅 Days Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
                     <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
                     <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
@@ -1458,7 +1354,7 @@
                             <tr class="grand-total-row">
                                 <td colspan="5"><strong>📊 OVERALL AVERAGE</strong></td>
                                 <td><strong>${overallAverage.toFixed(1)}%</strong></td>
-                                <td><strong>${getRemarkText(overallAverage)}</strong></td>
+                                <td><strong>${getRemark(overallAverage)}</strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -1475,24 +1371,19 @@
                     <p>${principalRemarks}</p>
                 </div>` : ''}
 
-                <!-- ===== SIGNATURE SECTION WITH ACTUAL IMAGES ===== -->
+                <!-- ===== SIGNATURES WITH IMAGES ===== -->
                 <div class="signature-section">
                     <div class="signature-box">
                         <div class="label">Class Teacher</div>
                         ${teacherSigHtml}
-                        <div class="line"></div>
-                        <div class="sub">${data.teacherName || 'Name & Signature'}</div>
                     </div>
                     <div class="signature-box">
-                        <div class="label">Principal</div>
+                        <div class="label">Principal / Admin</div>
                         ${adminSigHtml}
-                        <div class="line"></div>
-                        <div class="sub">Name & Signature</div>
                     </div>
                     <div class="signature-box">
                         <div class="label">Parent/Guardian</div>
-                        <div class="line"></div>
-                        <div class="sub">Name & Signature</div>
+                        ${parentSigHtml}
                     </div>
                 </div>
 
@@ -1521,7 +1412,7 @@
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer with Signatures & Single Page Print is ready!');
+        console.log('✅ Report Card Viewer with Signature Images is ready!');
     </script>
 </body>
 </html>
