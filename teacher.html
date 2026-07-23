@@ -856,7 +856,7 @@
     }
 
     // =============================================================
-    // SAVE CURRENT STUDENT
+    // SAVE CURRENT STUDENT - FIXED VERSION
     // =============================================================
     async function saveCurrentStudent(cls) {
         if (!currentSelectedStudent) return;
@@ -876,18 +876,10 @@
                 const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
                 const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
 
-                const existingSub = existingSubjects[sub] || {};
-                const oldFirst = existingSub.firstTerm || 0;
-                const oldSecond = existingSub.secondTerm || 0;
-                const oldThird = existingSub.thirdTerm || 0;
-
-                const newFirst = fi ? parseFloat(fi.value) : 0;
-                const newSecond = si ? parseFloat(si.value) : 0;
-                const newThird = ti ? parseFloat(ti.value) : 0;
-
-                const firstVal = (fi && fi.dataset.touched === 'true') ? newFirst : oldFirst;
-                const secondVal = (si && si.dataset.touched === 'true') ? newSecond : oldSecond;
-                const thirdVal = (ti && ti.dataset.touched === 'true') ? newThird : oldThird;
+                // ✅ FIXED: Always read the value from the input, ignore 'touched'
+                const firstVal = fi ? parseFloat(fi.value) || 0 : 0;
+                const secondVal = si ? parseFloat(si.value) || 0 : 0;
+                const thirdVal = ti ? parseFloat(ti.value) || 0 : 0;
 
                 const scores = [firstVal, secondVal, thirdVal].filter(v => v > 0);
                 const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
@@ -2496,6 +2488,7 @@
     console.log('🔢 ×2 and ×3 buttons multiply ALL scores for a subject');
     console.log('📋 Copy button copies student: score to clipboard');
     console.log('✅ ALL data is preserved - nothing is lost!');
+    console.log('🔧 FIXED: Save now reads values directly from input fields, ignoring "touched" flag.');
 </script>
 </body>
 </html>
