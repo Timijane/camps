@@ -3,188 +3,459 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Admin Dashboard · Covenant Arrows</title>
+    <title>Admin · Report Card Review</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        #app { width: 100%; max-width: 1400px; height: 90vh; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; min-height: 100vh; }
+        
+        .app-container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        .admin-header {
+            background: white;
+            border-radius: 24px;
+            padding: 20px 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .admin-header .brand { font-weight: 900; font-size: 24px; color: #1e1b4b; }
+        .admin-header .brand span { color: #4f46e5; }
+        .admin-header .user-info { font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 12px; }
+        .admin-header .user-info .role-badge { 
+            background: #4f46e5; color: white; padding: 4px 14px; border-radius: 60px; font-size: 12px; 
+        }
+        .admin-header .logout-btn {
+            background: #fee2e2; color: #dc2626; border: none;
+            padding: 10px 24px; border-radius: 60px; font-weight: 700;
+            cursor: pointer; font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .admin-header .logout-btn:hover { background: #fecaca; }
 
-        .page { display: none; height: 100%; width: 100%; animation: fadeIn 0.3s ease; }
-        .page.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .stat-card .stat-number { font-size: 32px; font-weight: 900; color: #1e1b4b; }
+        .stat-card .stat-label { font-size: 13px; color: #64748b; font-weight: 600; }
+        .stat-card.pending .stat-number { color: #f59e0b; }
+        .stat-card.approved .stat-number { color: #10b981; }
+        .stat-card.rejected .stat-number { color: #dc2626; }
+        .stat-card.total .stat-number { color: #4f46e5; }
 
-        /* ===== LOGIN ===== */
-        #loginPage { align-items: center; justify-content: center; background: linear-gradient(135deg, #e0f2fe, #ede9fe); }
-        .login-box { background: white; padding: 50px 40px; border-radius: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); }
-        .login-box h2 { font-size: 28px; color: #1e1b4b; margin-bottom: 6px; }
-        .login-box p { color: #64748b; margin-bottom: 25px; }
-        .login-box input { width: 100%; padding: 16px 20px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .login-box input:focus { border-color: #4f46e5; background: white; }
-        .login-box button { width: 100%; padding: 16px; background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; border: none; border-radius: 60px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
-        .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
+        /* Filter Bar */
+        .filter-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            outline: none;
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-bar select:focus, .filter-bar input:focus { border-color: #4f46e5; }
+        .filter-bar .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
+        .btn-outline:hover { background: #f8fafc; }
+        .btn-warning { background: #f59e0b; color: #1e1b4b; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-purple { background: #8b5cf6; color: white; }
+        .btn-purple:hover { background: #7c3aed; }
 
-        /* ===== TOAST ===== */
-        .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
-        .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
-        .toast.hide { animation: slideOut 0.3s ease forwards; }
-        .toast .icon { font-size: 22px; }
-        .toast.success { border-color: #10b981; }
-        .toast.error { border-color: #dc2626; }
-        .toast.warning { border-color: #f59e0b; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
+        /* Report Grid */
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+            gap: 20px;
+        }
 
-        /* ===== DASHBOARD ===== */
-        #dashboardPage { flex-direction: row; background: #f8fafc; }
-        .sidebar { width: 280px; min-width: 240px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
-        .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
-        .sidebar .brand span { color: #7c3aed; }
-        .sidebar .user-info { font-size: 14px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .sidebar .user-info .name { font-weight: 700; color: #0f172a; }
-        .sidebar .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .sidebar .logout-btn:hover { background: #fecaca; }
-
-        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .class-list { flex: 1; overflow-y: auto; margin-top: 5px; }
-        .class-item { padding: 12px 16px; border-radius: 12px; margin-bottom: 4px; cursor: pointer; transition: 0.15s; font-weight: 600; color: #334155; display: flex; justify-content: space-between; align-items: center; border: 2px solid transparent; background: #f8fafc; }
-        .class-item:hover { background: #eef2ff; border-color: #c7d2fe; }
-        .class-item.active { background: #7c3aed; color: white; border-color: #7c3aed; }
-        .class-item .badge-count { background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 30px; font-size: 11px; }
-        .class-item.active .badge-count { background: rgba(255,255,255,0.3); }
-
-        .sidebar-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: #1e293b; }
-
-        /* ===== MAIN PANEL ===== */
-        .main-panel { flex: 1; padding: 25px 30px; overflow-y: auto; height: 100%; background: #f8fafc; display: flex; flex-direction: column; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-        .panel-header h2 { font-size: 24px; color: #0f172a; font-weight: 800; }
-        .panel-header h2 span { color: #7c3aed; }
-
-        .stats-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
-        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px 25px; flex: 1; min-width: 120px; text-align: center; }
-        .stat-card .number { font-size: 28px; font-weight: 900; color: #1e1b4b; }
-        .stat-card .label { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
-
-        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: white; padding: 15px; border-radius: 16px; border: 1px solid #e2e8f0; }
-        .filter-bar select, .filter-bar input { padding: 10px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .filter-bar select:focus, .filter-bar input:focus { border-color: #7c3aed; background: white; }
-        .filter-bar button { padding: 10px 24px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #7c3aed; color: white; }
-        .filter-bar button:hover { background: #6d28d9; }
-
-        /* ===== STUDENT LIST ===== */
-        .student-list-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; flex: 1; }
-        .student-list-header { display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 120px; gap: 10px; padding: 12px 16px; background: #f1f5f9; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
-        .student-list-item { display: grid; grid-template-columns: 30px 1fr 1fr 1fr 1fr 120px; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; align-items: center; cursor: pointer; transition: 0.15s; font-size: 14px; }
-        .student-list-item:hover { background: #f8fafc; }
-        .student-list-item .status-badge { padding: 3px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
-        .status-badge.submitted { background: #fef3c7; color: #92400e; }
+        /* Report Card Item */
+        .report-card-item {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: 0.2s;
+        }
+        .report-card-item:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+        .report-card-item .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #f8fafc;
+        }
+        .report-card-item .card-header .student-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .report-card-item .card-header .student-info .photo-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            background: #f1f5f9;
+            flex-shrink: 0;
+        }
+        .report-card-item .card-header .student-info .photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .report-card-item .card-header .student-info .photo-thumb .no-photo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-size: 20px;
+            color: #94a3b8;
+        }
+        .report-card-item .card-header .student-name { font-weight: 700; color: #1e1b4b; }
+        .report-card-item .card-header .student-class { font-size: 13px; color: #64748b; }
+        .report-card-item .card-header .status-badge {
+            padding: 4px 14px;
+            border-radius: 60px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .status-badge.pending { background: #fef3c7; color: #92400e; }
         .status-badge.approved { background: #d1fae5; color: #065f46; }
-        .status-badge.published { background: #dbeafe; color: #1e3a8a; }
         .status-badge.rejected { background: #fee2e2; color: #991b1b; }
 
-        /* ===== REPORT CARD VIEWER (Modal/Overlay) ===== */
-        .report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; overflow-y: auto; padding: 30px; }
-        .report-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
-        .report-modal { background: white; border-radius: 24px; max-width: 1100px; width: 100%; padding: 30px; position: relative; margin: 20px auto; }
-        .report-modal .close-btn { position: sticky; top: 0; float: right; background: #fee2e2; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; font-weight: 700; color: #dc2626; z-index: 10; }
-        .report-modal .close-btn:hover { background: #fecaca; }
+        .report-card-item .card-body { padding: 16px 20px; max-height: 500px; overflow-y: auto; }
+        .report-card-item .card-body::-webkit-scrollbar { width: 4px; }
+        .report-card-item .card-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        .report-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
-        .report-actions button { padding: 10px 24px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .report-actions .btn-approve { background: #10b981; color: white; }
-        .report-actions .btn-approve:hover { background: #059669; }
-        .report-actions .btn-reject { background: #dc2626; color: white; }
-        .report-actions .btn-reject:hover { background: #b91c1c; }
-        .report-actions .btn-publish { background: #7c3aed; color: white; }
-        .report-actions .btn-publish:hover { background: #6d28d9; }
-        .report-actions .btn-preview { background: #f59e0b; color: #1e1b4b; }
-        .report-actions .btn-preview:hover { background: #d97706; }
-        .report-actions .btn-print { background: #0f172a; color: white; }
-        .report-actions .btn-print:hover { background: #1e293b; }
+        .report-card-item .card-actions {
+            padding: 12px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #f8fafc;
+        }
+        .report-card-item .card-actions .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .btn-approve { background: #10b981; color: white; }
+        .btn-approve:hover { background: #059669; }
+        .btn-reject { background: #dc2626; color: white; }
+        .btn-reject:hover { background: #b91c1c; }
+        .btn-edit-photo { background: #4f46e5; color: white; }
+        .btn-edit-photo:hover { background: #4338ca; }
+        .btn-preview { background: #8b5cf6; color: white; }
+        .btn-preview:hover { background: #7c3aed; }
 
-        .report-actions .btn-sm { padding: 6px 16px; font-size: 12px; }
+        /* Preview inside card - condensed */
+        .preview-condensed {
+            font-size: 12px;
+        }
+        .preview-condensed .preview-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dashed #f1f5f9;
+            font-size: 12px;
+        }
+        .preview-condensed .preview-row .label { color: #64748b; }
+        .preview-condensed .preview-row .value { font-weight: 600; color: #1e1b4b; }
+        .preview-condensed .scores-mini {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .preview-condensed .scores-mini .subj { font-weight: 600; }
+        .preview-condensed .scores-mini .sc { font-weight: 700; color: #4f46e5; }
 
-        /* ===== REPORT CARD STYLING (same as student view) ===== */
-        .report-card { max-width: 210mm; margin: 0 auto; background: white; padding: 8px 0; font-family: 'Inter', sans-serif; color: #0f172a; position: relative; overflow: hidden; }
-        .watermark-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-25deg); width: 500px; height: auto; opacity: 0.08; pointer-events: none; z-index: 0; }
-        .header-logo-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; }
-        .school-logo { width: 80px; height: 80px; object-fit: contain; border-radius: 50%; border: 3px solid #1e1b4b; background: white; }
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+            grid-column: 1 / -1;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state h3 { font-size: 20px; color: #64748b; margin-bottom: 6px; }
+
+        /* ========================================================== */
+        /* MODAL - Full Report Card Preview (Student View) */
+        /* ========================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 28px;
+            padding: 28px;
+            max-width: 1100px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .modal-header h3 { font-size: 22px; font-weight: 800; color: #1e1b4b; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: 0.2s;
+        }
+        .modal-close:hover { color: #dc2626; transform: rotate(90deg); }
+
+        /* ===== REPORT CARD PREVIEW (Student View) ===== */
+        .report-card-preview {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 8px 0;
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+            position: relative;
+            overflow: hidden;
+        }
+        .watermark-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            width: 500px;
+            height: auto;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .school-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 3px solid #1e1b4b;
+            background: white;
+        }
         .header-text { text-align: center; }
-        .report-header .school-name { font-size: 32px; font-weight: 900; color: #1e1b4b; letter-spacing: 2px; }
-        .report-header .motto { font-weight: 600; color: #7c3aed; font-size: 15px; letter-spacing: 1px; }
-        .report-header .location { font-size: 13px; color: #475569; font-weight: 500; }
-        .report-header .term-info { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 6px; background: #f1f5f9; display: inline-block; padding: 2px 30px; border-radius: 30px; }
+        .header-text .school-name { font-size: 28px; font-weight: 900; color: #1e1b4b; letter-spacing: 1px; }
+        .header-text .motto { font-weight: 600; color: #4f46e5; font-size: 14px; letter-spacing: 1px; }
+        .header-text .location { font-size: 13px; color: #475569; font-weight: 500; }
+        .term-info {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 6px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 2px 30px;
+            border-radius: 30px;
+        }
 
-        .student-photo-container { width: 90px; height: 110px; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; background: #f1f5f9; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .student-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+        .student-photo-container {
+            width: 90px;
+            height: 110px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            background: #f1f5f9;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .student-photo-container img { width: 100%; height: 100%; object-fit: cover; }
         .student-photo-placeholder { font-size: 48px; color: #94a3b8; }
         .student-details { flex: 1; min-width: 200px; }
         .student-details .name { font-size: 18px; font-weight: 800; color: #0f172a; }
-        .student-details .name span { color: #7c3aed; }
+        .student-details .name span { color: #4f46e5; }
         .student-details .class { font-weight: 700; color: #1e293b; font-size: 14px; }
         .student-details .teacher { font-weight: 600; color: #475569; font-size: 13px; }
 
-        .student-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; padding: 12px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; position: relative; z-index: 1; }
-        .attendance-grid { display: flex; gap: 15px; flex-wrap: wrap; font-weight: 600; font-size: 14px; color: #334155; padding: 8px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
-        .attendance-grid span { background: white; padding: 4px 14px; border-radius: 40px; border: 1px solid #e2e8f0; }
-        .dates-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; background: #f8fafc; padding: 8px 16px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 600; color: #475569; position: relative; z-index: 1; }
-        .dates-row span { background: white; padding: 2px 12px; border-radius: 30px; }
-        .dates-row strong { color: #1e1b4b; }
-
-        .position-summary { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 10px 0; padding: 12px; background: #fefce8; border-radius: 12px; border: 2px solid #f59e0b; position: relative; z-index: 1; }
-        .position-summary .pos-item { text-align: center; padding: 0 20px; border-right: 1px solid #f59e0b; }
+        .position-summary {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+            padding: 12px;
+            background: #fefce8;
+            border-radius: 12px;
+            border: 2px solid #f59e0b;
+            position: relative;
+            z-index: 1;
+        }
+        .position-summary .pos-item {
+            text-align: center;
+            padding: 0 20px;
+            border-right: 1px solid #f59e0b;
+        }
         .position-summary .pos-item:last-child { border-right: none; }
-        .position-summary .pos-value { font-size: 32px; font-weight: 900; color: #1e1b4b; }
-        .position-summary .pos-value small { font-size: 18px; }
+        .position-summary .pos-value { font-size: 28px; font-weight: 900; color: #1e1b4b; }
+        .position-summary .pos-value small { font-size: 16px; }
         .position-summary .pos-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
-        .promotion-badge { padding: 6px 16px; border-radius: 30px; font-weight: 800; font-size: 13px; white-space: nowrap; }
+        .promotion-badge {
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 13px;
+            white-space: nowrap;
+            display: inline-block;
+        }
         .promotion-badge.promoted { background: #d1fae5; color: #065f46; }
         .promotion-badge.not-promoted { background: #fee2e2; color: #991b1b; }
         .promotion-badge.probation { background: #fef3c7; color: #92400e; }
 
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; position: relative; z-index: 1; }
-        .info-grid .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; }
-        .info-grid .box h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-        .info-grid .box .item { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; font-weight: 500; }
-        .info-grid .box .item .rating { background: #e0e7ff; padding: 0 10px; border-radius: 30px; color: #3730a3; font-weight: 700; }
-        .extra-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-        .extra-badges .badge { background: #dbeafe; color: #1e3a8a; padding: 2px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .info-grid .box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+        .info-grid .box h4 {
+            font-weight: 700;
+            color: #1e1b4b;
+            margin-bottom: 6px;
+            font-size: 13px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+        }
+        .info-grid .box .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .rating-stars { color: #f59e0b; letter-spacing: 1px; }
+        .extra-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .extra-badges .badge {
+            background: #dbeafe;
+            color: #1e3a8a;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 600;
+        }
         .extra-badges .badge.missing { background: #f1f5f9; color: #94a3b8; }
 
-        .table-wrap { overflow-x: auto; margin: 15px 0 10px 0; position: relative; z-index: 1; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
-        table th { background: #1e1b4b; color: white; font-weight: 700; padding: 10px 6px; border: 1px solid #1e1b4b; }
-        table td { padding: 8px 4px; border: 1px solid #cbd5e1; vertical-align: middle; }
+        .table-wrap { overflow-x: auto; margin: 12px 0; position: relative; z-index: 1; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; }
+        table th { background: #1e1b4b; color: white; font-weight: 700; padding: 8px 4px; border: 1px solid #1e1b4b; }
+        table td { padding: 6px 4px; border: 1px solid #cbd5e1; vertical-align: middle; }
         table tr:nth-child(even) { background: #fafafa; }
-        table tr:hover { background: #f1f5f9; }
         table td:first-child, table th:first-child { font-weight: 700; }
-        table td:nth-child(2) { text-align: left; font-weight: 600; padding-left: 12px; }
-        .sub-header th { background: #334155; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 2px; }
-        .grand-total-row td { background: #f1f5f9; font-weight: 800; font-size: 14px; border-top: 3px solid #1e1b4b; color: #0f172a; }
-
-        .commentary-box { margin: 15px 0 20px 0; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fafafa; position: relative; z-index: 1; }
-        .commentary-box h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 6px; font-size: 14px; }
-        .commentary-box p { font-style: italic; color: #1e293b; font-size: 14px; line-height: 1.6; }
-
-        .signature-section { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #cbd5e1; position: relative; z-index: 1; }
-        .signature-box { flex: 1; min-width: 180px; }
-        .signature-box .label { font-weight: 700; color: #475569; font-size: 14px; margin-bottom: 4px; }
-        .signature-box .line { border-bottom: 2px solid #1e293b; width: 100%; margin-top: 30px; margin-bottom: 4px; }
-        .signature-box .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
-        .signature-box .signature-img { max-width: 150px; max-height: 50px; display: block; margin-top: 5px; }
-        .signature-box.text-right { text-align: right; }
-        .signature-box.text-right .line { margin-left: auto; }
-
-        .report-footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px; position: relative; z-index: 1; }
-
+        table td:nth-child(2) { text-align: left; font-weight: 600; padding-left: 8px; }
+        .sub-header th { background: #334155; font-weight: 600; font-size: 10px; text-transform: uppercase; padding: 4px 2px; }
+        .grand-total-row td { background: #f1f5f9; font-weight: 800; font-size: 13px; border-top: 3px solid #1e1b4b; color: #0f172a; }
         .grade-distinction { color: #059669; font-weight: 800; }
         .grade-excellent { color: #059669; font-weight: 800; }
         .grade-verygood { color: #2563eb; font-weight: 800; }
@@ -194,158 +465,199 @@
         .grade-belowavg { color: #ea580c; font-weight: 700; }
         .grade-weak { color: #dc2626; font-weight: 700; }
         .grade-fail { color: #dc2626; font-weight: 800; }
-        .rating-stars { color: #f59e0b; letter-spacing: 2px; }
 
-        /* ===== ADMIN SIGNATURE SECTION ===== */
-        .admin-signature-area { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 15px; margin: 15px 0; }
-        .admin-signature-area .signature-title { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .admin-signature-area .signature-canvas { border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: crosshair; touch-action: none; width: 100%; max-width: 350px; height: 100px; display: block; }
-        .admin-signature-area .signature-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .admin-signature-area .signature-actions .btn-sm { padding: 6px 14px; border: none; border-radius: 30px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .admin-signature-area .signature-actions .btn-sm.clear { background: #fee2e2; color: #dc2626; }
-        .admin-signature-area .signature-actions .btn-sm.clear:hover { background: #fecaca; }
-        .admin-signature-area .signature-actions .btn-sm.save { background: #7c3aed; color: white; }
-        .admin-signature-area .signature-actions .btn-sm.save:hover { background: #6d28d9; }
-        .admin-signature-area .signature-actions .btn-sm.upload { background: #f59e0b; color: #1e1b4b; }
-        .admin-signature-area .signature-actions .btn-sm.upload:hover { background: #d97706; }
+        .commentary-box {
+            margin: 12px 0;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: #fafafa;
+            position: relative;
+            z-index: 1;
+        }
+        .commentary-box h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 4px; font-size: 13px; }
+        .commentary-box p { font-style: italic; color: #1e293b; font-size: 13px; line-height: 1.6; }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 2px dashed #cbd5e1;
+            position: relative;
+            z-index: 1;
+        }
+        .signature-box { flex: 1; min-width: 140px; }
+        .signature-box .label { font-weight: 700; color: #475569; font-size: 13px; margin-bottom: 4px; }
+        .signature-box .line { border-bottom: 2px solid #1e293b; width: 100%; margin-top: 25px; margin-bottom: 4px; }
+        .signature-box .sub { font-size: 11px; color: #64748b; margin-top: 4px; }
+        .signature-box.text-right { text-align: right; }
+        .signature-box.text-right .line { margin-left: auto; }
 
-        @media (max-width: 800px) {
-            body { padding: 0; }
-            #app { height: 100vh; border-radius: 0; max-width: 100%; }
-            #dashboardPage { flex-direction: column; }
-            .sidebar { width: 100%; min-width: unset; height: auto; max-height: 60px; overflow: hidden; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 15px; transition: max-height 0.3s ease; }
-            .sidebar.expanded { max-height: 100vh; overflow-y: auto; }
-            .sidebar .brand { font-size: 16px; }
-            .sidebar .user-info { margin-bottom: 10px; }
-            .sidebar-toggle { display: inline-block; }
-            .sidebar .class-list { display: none; }
-            .sidebar.expanded .class-list { display: block; }
-            .main-panel { padding: 15px; }
-            .info-grid { grid-template-columns: 1fr; }
-            .student-list-header, .student-list-item { grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px; }
-            .student-list-header > *:nth-child(3), .student-list-item > *:nth-child(3),
-            .student-list-header > *:nth-child(4), .student-list-item > *:nth-child(4) { display: none; }
-            .report-overlay { padding: 10px; }
-            .report-modal { padding: 15px; margin: 10px; }
-            .report-actions { flex-direction: column; }
-            .report-actions button { width: 100%; }
-            .signature-section { flex-direction: column; gap: 15px; }
-            .signature-box.text-right { text-align: left; }
-            .signature-box.text-right .line { margin-left: 0; }
+        .report-footer {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* Modal Actions */
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 2px solid #e2e8f0;
+        }
+        .modal-actions .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .toast {
+            background: white;
+            padding: 14px 20px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12);
+            border-left: 6px solid #4f46e5;
+            animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #0f172a;
+        }
+        .toast.hide { animation: slideOut 0.3s ease forwards; }
+        .toast .icon { font-size: 20px; }
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #dc2626; }
+        .toast.warning { border-color: #f59e0b; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container { padding: 12px; }
+            .report-grid { grid-template-columns: 1fr; }
+            .admin-header .brand { font-size: 18px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; }
+            .filter-bar select, .filter-bar input { width: 100%; }
+            .info-grid { grid-template-columns: 1fr; }
+            .modal { padding: 16px; }
+            .header-text .school-name { font-size: 20px; }
+            .student-meta { flex-direction: column; align-items: center; text-align: center; }
+            .student-details { text-align: center; }
+            .position-summary .pos-item { padding: 0 10px; }
+            .position-summary .pos-value { font-size: 20px; }
+        }
         @media print {
-            .report-overlay { position: static; background: white; padding: 0; }
-            .report-modal { box-shadow: none; border: none; padding: 10px; }
-            .report-actions, .close-btn, .admin-signature-area { display: none !important; }
-            .watermark-img { opacity: 0.05 !important; }
-            table th { background: #1e1b4b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .grand-total-row td { background: #1e1b4b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .modal-overlay { position: static; background: none; backdrop-filter: none; padding: 0; }
+            .modal { max-height: none; border-radius: 0; padding: 10px; box-shadow: none; }
+            .modal-header { display: none; }
+            .modal-actions { display: none; }
         }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div id="toastContainer" class="toast-container"></div>
+<div class="toast-container" id="toastContainer"></div>
 
-    <!-- ===== LOGIN ===== -->
-    <div id="loginPage" class="page active">
-        <div class="login-box">
-            <h2>👨‍💼 Admin Login</h2>
-            <p>Enter your admin credentials to manage report cards.</p>
-            <input id="loginName" placeholder="👤 Admin Full Name" />
-            <input id="loginPassword" type="password" placeholder="🔑 Admin Password" />
-            <button id="loginBtn">🚀 Enter Dashboard</button>
-            <p id="loginErr" class="login-error"></p>
+<div class="app-container">
+
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="brand">🏫 <span>Covenant</span> Arrows</div>
+        <div class="user-info" id="adminInfo">
+            👤 <span id="adminName">Admin</span>
+            <span class="role-badge" id="adminRole">Admin</span>
+        </div>
+        <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card total">
+            <div class="stat-number" id="totalCount">0</div>
+            <div class="stat-label">📋 Total Submitted</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-number" id="pendingCount">0</div>
+            <div class="stat-label">⏳ Pending Review</div>
+        </div>
+        <div class="stat-card approved">
+            <div class="stat-number" id="approvedCount">0</div>
+            <div class="stat-label">✅ Approved</div>
+        </div>
+        <div class="stat-card rejected">
+            <div class="stat-number" id="rejectedCount">0</div>
+            <div class="stat-label">❌ Rejected</div>
         </div>
     </div>
 
-    <!-- ===== DASHBOARD ===== -->
-    <div id="dashboardPage" class="page">
-        <div class="sidebar" id="sidebar">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div class="brand">🏫 <span>Covenant</span> Arrows</div>
-                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
-            </div>
-            <div class="user-info"><span class="name" id="sidebarName">Admin</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
-            <div class="sidebar-title"><span>📚 Classes</span><span id="classCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span></div>
-            <div class="class-list" id="classListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No classes yet.</div></div>
-        </div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <select id="classFilter">
+            <option value="">📚 All Classes</option>
+        </select>
+        <select id="statusFilter">
+            <option value="all">📊 All Status</option>
+            <option value="pending">⏳ Pending</option>
+            <option value="approved">✅ Approved</option>
+            <option value="rejected">❌ Rejected</option>
+        </select>
+        <input type="text" id="searchFilter" placeholder="🔍 Search student or teacher..." />
+        <button class="btn btn-success" id="approveAllBtn">✅ Approve All</button>
+        <button class="btn btn-danger" id="rejectAllBtn">❌ Reject All</button>
+        <button class="btn btn-outline" id="refreshBtn">🔄 Refresh</button>
+        <button class="btn btn-purple" id="adminSigBtn">✍️ Admin Signature</button>
+    </div>
 
-        <div class="main-panel">
-            <div class="panel-header">
-                <h2>📋 <span id="selectedClassName">Select a Class</span></h2>
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <div class="badge-points" id="totalBadge">📊 Total: 0</div>
-                </div>
-            </div>
-
-            <div class="stats-row" id="statsRow">
-                <div class="stat-card"><div class="number" id="statTotal">0</div><div class="label">Total Students</div></div>
-                <div class="stat-card" style="border-color:#f59e0b;"><div class="number" id="statSubmitted">0</div><div class="label">Submitted</div></div>
-                <div class="stat-card" style="border-color:#10b981;"><div class="number" id="statApproved">0</div><div class="label">Approved</div></div>
-                <div class="stat-card" style="border-color:#7c3aed;"><div class="number" id="statPublished">0</div><div class="label">Published</div></div>
-            </div>
-
-            <div class="filter-bar">
-                <select id="filterStatus">
-                    <option value="all">All Status</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="approved">Approved</option>
-                    <option value="published">Published</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-                <input id="filterSearch" placeholder="🔍 Search student..." />
-                <button id="applyFilterBtn">Apply Filter</button>
-                <button id="refreshBtn" style="background:#e2e8f0; color:#1e293b;">🔄 Refresh</button>
-            </div>
-
-            <div class="student-list-container">
-                <div class="student-list-header">
-                    <span>#</span>
-                    <span>Student Name</span>
-                    <span>Class</span>
-                    <span>Teacher</span>
-                    <span>Submitted</span>
-                    <span>Status</span>
-                </div>
-                <div id="studentListBody"></div>
-            </div>
+    <!-- Report Cards Grid -->
+    <div id="reportGrid" class="report-grid">
+        <div class="empty-state">
+            <div class="icon">📋</div>
+            <h3>No submitted report cards</h3>
+            <p>Teachers haven't submitted any report cards yet.</p>
         </div>
     </div>
 
-    <!-- ===== REPORT OVERLAY ===== -->
-    <div class="report-overlay" id="reportOverlay">
-        <div class="report-modal">
-            <button class="close-btn" id="closeReportBtn">✕</button>
-            
-            <div class="report-actions" id="reportActions">
-                <button class="btn-approve" id="approveBtn">✅ Approve</button>
-                <button class="btn-reject" id="rejectBtn">❌ Reject</button>
-                <button class="btn-publish" id="publishBtn">📤 Publish to Students</button>
-                <button class="btn-preview" id="previewBtn">👁️ Preview Student View</button>
-                <button class="btn-print" id="printReportBtn">🖨️ Print</button>
-            </div>
+</div>
 
-            <div class="admin-signature-area" id="adminSignatureArea">
-                <div class="signature-title">✍️ Admin Signature (Your approval signature)</div>
-                <canvas id="adminSignatureCanvas" class="signature-canvas"></canvas>
-                <div class="signature-actions">
-                    <button class="btn-sm clear" id="adminSigClear">🗑️ Clear</button>
-                    <button class="btn-sm save" id="adminSigSave">💾 Save</button>
-                    <button class="btn-sm upload" id="adminSigUpload">📤 Upload</button>
-                </div>
-                <small style="color:#94a3b8; font-size:11px;">Draw or upload your signature. This will appear on approved report cards.</small>
-            </div>
-
-            <div id="reportCardContainer"></div>
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">📋 Report Card Preview</h3>
+            <button class="modal-close" onclick="hideModal()">&times;</button>
         </div>
+        <div id="modalContent"></div>
     </div>
 </div>
 
@@ -367,17 +679,32 @@
     const db = firebase.firestore();
 
     // =============================================================
-    // CONSTANTS
+    // CLOUDINARY CONFIG
     // =============================================================
     const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
-    const ADMIN_PASSWORD = 'admin123'; // In production, use Firebase Auth with email/password
+    const cloudinaryConfig = {
+        cloudName: 'dmbjrohtn',
+        uploadPreset: 'pelumi',
+        folder: 'student_photos',
+        maxFileSize: 5000000,
+        allowedFormats: ['jpg', 'jpeg', 'png', 'webp']
+    };
+
+    // =============================================================
+    // STATE
+    // =============================================================
+    let currentUser = null;
+    let currentUserData = null;
+    let allReportCards = [];
+    let filteredReportCards = [];
+    let adminSigData = null;
 
     // =============================================================
     // TOAST
     // =============================================================
     function showToast(message, type = "success") {
         const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️' };
+        const icons = { success: '✅', error: '❌', warning: '⚠️', info: '📢' };
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
@@ -385,286 +712,437 @@
         setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 4000);
     }
 
-    const $ = (id) => document.getElementById(id);
+    function $(id) { return document.getElementById(id); }
 
     // =============================================================
-    // STATE
+    // HELPER FUNCTIONS
     // =============================================================
-    let currentAdmin = { name: '' };
-    let currentClass = '';
-    let allStudents = [];
-    let filteredStudents = [];
-    let currentReportData = null;
-    let currentReportDocId = null;
-    let adminSignatureData = null;
+    function getRemark(avg) {
+        if (avg >= 75) return 'Distinction';
+        if (avg >= 70) return 'Excellent';
+        if (avg >= 65) return 'Very Good';
+        if (avg >= 60) return 'Good';
+        if (avg >= 55) return 'Above Average';
+        if (avg >= 50) return 'Average';
+        if (avg >= 45) return 'Below Average';
+        if (avg >= 40) return 'Weak Pass';
+        return 'Fail';
+    }
 
-    // =============================================================
-    // LOGIN
-    // =============================================================
-    $('loginBtn').addEventListener('click', async () => {
-        const name = $('loginName').value.trim();
-        const password = $('loginPassword').value.trim();
-        const err = $('loginErr');
+    function getGradeClass(avg) {
+        if (avg >= 75) return 'grade-distinction';
+        if (avg >= 70) return 'grade-excellent';
+        if (avg >= 65) return 'grade-verygood';
+        if (avg >= 60) return 'grade-good';
+        if (avg >= 55) return 'grade-aboveavg';
+        if (avg >= 50) return 'grade-average';
+        if (avg >= 45) return 'grade-belowavg';
+        if (avg >= 40) return 'grade-weak';
+        return 'grade-fail';
+    }
 
-        if (!name) { err.innerText = '⚠️ Please enter your name.'; return; }
-        if (!password) { err.innerText = '⚠️ Please enter the admin password.'; return; }
+    function getOrdinalSuffix(n) { 
+        const s = ['th','st','nd','rd']; 
+        const v = n % 100; 
+        return s[(v-20)%10] || s[v] || s[0]; 
+    }
 
-        if (password !== ADMIN_PASSWORD) {
-            err.innerText = '❌ Incorrect password. Please try again.';
-            return;
-        }
-
-        err.innerText = '';
-        currentAdmin.name = name;
-
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('dashboardPage').classList.add('active');
-        $('sidebarName').innerText = name + ' 👨‍💼';
-
-        showToast(`👋 Welcome, Admin ${name}!`, 'success');
-        await loadClasses();
-    });
-
-    // =============================================================
-    // LOGOUT
-    // =============================================================
-    $('logoutBtn').addEventListener('click', () => {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('loginPage').classList.add('active');
-        currentAdmin = {};
-        showToast('👋 Logged out.', 'warning');
-    });
-
-    // =============================================================
-    // SIDEBAR TOGGLE
-    // =============================================================
-    $('sidebarToggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('expanded');
-    });
-
-    // =============================================================
-    // LOAD CLASSES
-    // =============================================================
-    async function loadClasses() {
-        try {
-            const doc = await db.collection('classList').doc('allClasses').get();
-            const classes = doc.exists ? doc.data().classes || [] : [];
-            
-            const container = $('classListContainer');
-            $('classCount').innerText = classes.length;
-            
-            if (!classes.length) {
-                container.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">No classes available.</div>`;
-                return;
-            }
-
-            // Count students per class
-            const classCounts = {};
-            for (let cls of classes) {
-                const snap = await db.collection('reportCards')
-                    .where('class', '==', cls)
-                    .get();
-                classCounts[cls] = snap.size;
-            }
-
-            container.innerHTML = classes.map(cls => `
-                <div class="class-item ${currentClass === cls ? 'active' : ''}" data-class="${cls}">
-                    <span>📚 ${cls}</span>
-                    <span class="badge-count">${classCounts[cls] || 0}</span>
-                </div>
-            `).join('');
-
-            container.querySelectorAll('.class-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const cls = el.dataset.class;
-                    currentClass = cls;
-                    container.querySelectorAll('.class-item').forEach(c => c.classList.remove('active'));
-                    el.classList.add('active');
-                    $('selectedClassName').innerText = cls;
-                    loadStudents(cls);
-                });
-            });
-
-            if (classes.length > 0 && !currentClass) {
-                const first = classes[0];
-                currentClass = first;
-                document.querySelector(`.class-item[data-class="${first}"]`)?.classList.add('active');
-                $('selectedClassName').innerText = first;
-                loadStudents(first);
-            }
-
-        } catch (e) {
-            console.error('Load classes error:', e);
-            showToast('❌ Failed to load classes.', 'error');
-        }
+    function formatDate(d) {
+        if (!d) return 'Not set';
+        if (d.toDate) d = d.toDate();
+        if (typeof d === 'string') d = new Date(d);
+        if (isNaN(d.getTime())) return 'Invalid date';
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
     // =============================================================
-    // LOAD STUDENTS
+    // LOAD REPORT CARDS
     // =============================================================
-    async function loadStudents(cls) {
+    async function loadReportCards() {
         try {
             const snap = await db.collection('reportCards')
-                .where('class', '==', cls)
+                .where('pushedToAdmin', '==', true)
+                .orderBy('pushedAt', 'desc')
                 .get();
 
-            allStudents = [];
+            allReportCards = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                allStudents.push({
+                allReportCards.push({
                     id: doc.id,
-                    studentName: data.studentName || 'Unknown',
-                    teacherName: data.teacherName || 'N/A',
-                    status: data.approved ? (data.published ? 'published' : 'approved') : (data.pushedToAdmin ? 'submitted' : 'draft'),
-                    pushedToAdmin: data.pushedToAdmin || false,
-                    approved: data.approved || false,
-                    published: data.published || false,
-                    data: data,
-                    submittedAt: data.pushedAt || data.updatedAt || null
+                    ...data,
+                    _docId: doc.id,
+                    _ref: doc.ref
                 });
             });
 
-            // Sort: submitted first, then approved, then published
-            allStudents.sort((a, b) => {
-                const order = { submitted: 0, approved: 1, published: 2, draft: 3 };
-                return (order[a.status] || 4) - (order[b.status] || 4);
-            });
+            // Load class list
+            const classSnap = await db.collection('classList').doc('allClasses').get();
+            const classList = classSnap.exists ? classSnap.data().classes || [] : [];
+            const classFilter = $('classFilter');
+            const currentVal = classFilter.value;
+            classFilter.innerHTML = '<option value="">📚 All Classes</option>' +
+                classList.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
 
-            updateStats();
             applyFilters();
+            updateStats();
 
         } catch (e) {
-            console.error('Load students error:', e);
-            showToast('❌ Failed to load students.', 'error');
+            console.error('Load report cards error:', e);
+            showToast('❌ Failed to load: ' + e.message, 'error');
         }
-    }
-
-    // =============================================================
-    // UPDATE STATS
-    // =============================================================
-    function updateStats() {
-        const total = allStudents.length;
-        const submitted = allStudents.filter(s => s.status === 'submitted').length;
-        const approved = allStudents.filter(s => s.status === 'approved').length;
-        const published = allStudents.filter(s => s.status === 'published').length;
-
-        $('statTotal').innerText = total;
-        $('statSubmitted').innerText = submitted;
-        $('statApproved').innerText = approved;
-        $('statPublished').innerText = published;
-        $('totalBadge').innerHTML = `📊 Total: ${total} | 📤 ${submitted} | ✅ ${approved} | 🌐 ${published}`;
     }
 
     // =============================================================
     // APPLY FILTERS
     // =============================================================
     function applyFilters() {
-        const statusFilter = $('filterStatus').value;
-        const search = $('filterSearch').value.toLowerCase().trim();
+        const selectedClass = $('classFilter').value;
+        const selectedStatus = $('statusFilter').value;
+        const searchQuery = $('searchFilter').value.toLowerCase();
 
-        filteredStudents = allStudents.filter(s => {
-            if (statusFilter !== 'all' && s.status !== statusFilter) return false;
-            if (search && !s.studentName.toLowerCase().includes(search)) return false;
+        filteredReportCards = allReportCards.filter(rc => {
+            if (selectedClass && rc.class !== selectedClass) return false;
+            if (selectedStatus !== 'all') {
+                const status = rc.approved ? 'approved' : (rc.rejected ? 'rejected' : 'pending');
+                if (status !== selectedStatus) return false;
+            }
+            if (searchQuery) {
+                const name = (rc.studentName || '').toLowerCase();
+                const teacher = (rc.teacherName || '').toLowerCase();
+                if (!name.includes(searchQuery) && !teacher.includes(searchQuery)) return false;
+            }
             return true;
         });
 
-        renderStudentList();
+        renderReportCards();
+        updateStats();
     }
 
-    $('applyFilterBtn').addEventListener('click', applyFilters);
-    $('filterSearch').addEventListener('input', applyFilters);
-    $('refreshBtn').addEventListener('click', () => {
-        if (currentClass) loadStudents(currentClass);
-    });
+    // =============================================================
+    // UPDATE STATS
+    // =============================================================
+    function updateStats() {
+        const total = allReportCards.length;
+        const pending = allReportCards.filter(rc => !rc.approved && !rc.rejected).length;
+        const approved = allReportCards.filter(rc => rc.approved).length;
+        const rejected = allReportCards.filter(rc => rc.rejected).length;
+
+        $('totalCount').textContent = total;
+        $('pendingCount').textContent = pending;
+        $('approvedCount').textContent = approved;
+        $('rejectedCount').textContent = rejected;
+    }
 
     // =============================================================
-    // RENDER STUDENT LIST
+    // RENDER REPORT CARDS
     // =============================================================
-    function renderStudentList() {
-        const container = $('studentListBody');
-        
-        if (!filteredStudents.length) {
-            container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">No students found.</div>`;
+    function renderReportCards() {
+        const grid = $('reportGrid');
+
+        if (filteredReportCards.length === 0) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📋</div>
+                    <h3>No report cards found</h3>
+                    <p>${allReportCards.length > 0 ? 'Try adjusting your filters.' : 'Teachers haven\'t submitted any report cards yet.'}</p>
+                </div>
+            `;
             return;
         }
 
-        container.innerHTML = filteredStudents.map((s, idx) => {
-            const statusMap = {
-                submitted: '<span class="status-badge submitted">📤 Submitted</span>',
-                approved: '<span class="status-badge approved">✅ Approved</span>',
-                published: '<span class="status-badge published">🌐 Published</span>',
-                rejected: '<span class="status-badge rejected">❌ Rejected</span>',
-                draft: '<span class="status-badge" style="background:#f1f5f9;color:#64748b;">📝 Draft</span>'
-            };
-            const dateStr = s.submittedAt ? new Date(s.submittedAt.toDate ? s.submittedAt.toDate() : s.submittedAt).toLocaleDateString() : '—';
-            return `
-                <div class="student-list-item" data-id="${s.id}">
-                    <span>${idx + 1}</span>
-                    <span style="font-weight:600;">${s.studentName}</span>
-                    <span>${currentClass}</span>
-                    <span>${s.teacherName}</span>
-                    <span style="font-size:12px; color:#64748b;">${dateStr}</span>
-                    <span>${statusMap[s.status] || s.status}</span>
-                </div>
-            `;
-        }).join('');
+        grid.innerHTML = filteredReportCards.map(rc => {
+            const status = rc.approved ? 'approved' : (rc.rejected ? 'rejected' : 'pending');
+            const statusLabel = rc.approved ? '✅ Approved' : (rc.rejected ? '❌ Rejected' : '⏳ Pending');
+            const statusClass = rc.approved ? 'approved' : (rc.rejected ? 'rejected' : 'pending');
 
-        container.querySelectorAll('.student-list-item').forEach(el => {
-            el.addEventListener('click', () => {
-                const id = el.dataset.id;
-                const student = allStudents.find(s => s.id === id);
-                if (student) openReport(student);
-            });
-        });
+            // Build condensed preview
+            let subjectsPreview = '';
+            if (rc.subjects) {
+                const entries = Object.entries(rc.subjects).slice(0, 4);
+                subjectsPreview = entries.map(([sub, data]) => 
+                    `<div class="scores-mini"><span class="subj">${sub}:</span> <span class="sc">${data.thirdTerm || data.average || 0}</span></div>`
+                ).join('');
+                if (Object.keys(rc.subjects).length > 4) {
+                    subjectsPreview += `<div style="color:#94a3b8; font-size:10px;">+${Object.keys(rc.subjects).length - 4} more</div>`;
+                }
+            }
+
+            // Photo
+            let photoHtml = rc.photoUrl ? 
+                `<img src="${rc.photoUrl}" alt="${rc.studentName}" />` : 
+                `<div class="no-photo">👤</div>`;
+
+            const teacherName = rc.teacherName || 'Unknown Teacher';
+            const pushedAt = rc.pushedAt?.toDate ? rc.pushedAt.toDate().toLocaleString() : 'N/A';
+
+            return `
+            <div class="report-card-item" data-id="${rc.id}">
+                <div class="card-header">
+                    <div class="student-info">
+                        <div class="photo-thumb">${photoHtml}</div>
+                        <div>
+                            <div class="student-name">${rc.studentName || 'Unknown'}</div>
+                            <div class="student-class">${rc.class || 'N/A'} · ${teacherName}</div>
+                            <div style="font-size:10px; color:#94a3b8;">Submitted: ${pushedAt}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="status-badge ${statusClass}">${statusLabel}</span>
+                        ${rc.overallPosition ? `<div style="font-size:11px; font-weight:700; color:#1e1b4b; margin-top:4px;">🏆 #${rc.overallPosition}</div>` : ''}
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="preview-condensed">
+                        <div class="preview-row"><span class="label">👨‍🏫 Teacher</span><span class="value">${teacherName}</span></div>
+                        ${rc.classTeacherCommentary ? `<div class="preview-row"><span class="label">📝 Commentary</span><span class="value" style="font-size:11px; font-style:italic;">"${rc.classTeacherCommentary.substring(0, 60)}${rc.classTeacherCommentary.length > 60 ? '...' : ''}"</span></div>` : ''}
+                        ${rc.promotionStatus ? `<div class="preview-row"><span class="label">📈 Promotion</span><span class="value">${rc.promotionStatus}</span></div>` : ''}
+                        ${rc.overallAverage ? `<div class="preview-row"><span class="label">📊 Overall Avg</span><span class="value" style="color:#4f46e5;">${rc.overallAverage.toFixed(1)}%</span></div>` : ''}
+                        <div style="margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
+                            <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">📚 Subjects</div>
+                            ${subjectsPreview || '<span style="color:#94a3b8; font-size:11px;">No subjects</span>'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    ${!rc.approved && !rc.rejected ? `
+                        <button class="btn btn-approve" onclick="approveReportCard('${rc.id}')">✅ Approve</button>
+                        <button class="btn btn-reject" onclick="rejectReportCard('${rc.id}')">❌ Reject</button>
+                    ` : `
+                        ${rc.approved ? `<button class="btn btn-danger" onclick="unapproveReportCard('${rc.id}')" style="font-size:11px; padding:6px 12px;">↩️ Revert</button>` : ''}
+                    `}
+                    <button class="btn btn-edit-photo" onclick="editStudentPhoto('${rc.id}')">📷 Photo</button>
+                    <button class="btn btn-preview" onclick="viewFullReport('${rc.id}')">👁️ Preview</button>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     // =============================================================
-    // OPEN REPORT
+    // APPROVE / REJECT
     // =============================================================
-    async function openReport(student) {
-        currentReportData = student.data;
-        currentReportDocId = student.id;
-        
-        // Load admin signature
-        adminSignatureData = localStorage.getItem(`admin_signature_${currentAdmin.name}_${currentClass}`);
-        
-        $('reportOverlay').classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        renderReportCard(student.data, false);
-        updateActionButtons(student.status);
-        
-        // Load signature into canvas
-        if (adminSignatureData) {
-            const canvas = $('adminSignatureCanvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = function() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            };
-            img.src = adminSignatureData;
+    async function approveReportCard(id) {
+        if (!confirm('✅ Approve this report card? It will become visible to students.')) return;
+
+        // Check admin signature
+        if (!adminSigData) {
+            showToast('⚠️ Please add your admin signature first.', 'warning');
+            openAdminSignatureModal();
+            return;
+        }
+
+        try {
+            await db.collection('reportCards').doc(id).update({
+                approved: true,
+                rejected: false,
+                approvedAt: new Date(),
+                approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
+                adminSignature: adminSigData,
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('✅ Report card approved and published to students!', 'success');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
+    }
+
+    async function rejectReportCard(id) {
+        if (!confirm('❌ Reject this report card?')) return;
+
+        try {
+            await db.collection('reportCards').doc(id).update({
+                rejected: true,
+                approved: false,
+                rejectedAt: new Date(),
+                rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('❌ Report card rejected.', 'error');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
+    }
+
+    async function unapproveReportCard(id) {
+        if (!confirm('↩️ Revert this report card to pending?')) return;
+
+        try {
+            await db.collection('reportCards').doc(id).update({
+                approved: false,
+                rejected: false,
+                approvedAt: null,
+                approvedBy: null,
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+            showToast('↩️ Report card reverted to pending.', 'warning');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
         }
     }
 
     // =============================================================
-    // UPDATE ACTION BUTTONS
+    // BULK APPROVE / REJECT
     // =============================================================
-    function updateActionButtons(status) {
-        const approveBtn = $('approveBtn');
-        const rejectBtn = $('rejectBtn');
-        const publishBtn = $('publishBtn');
+    async function approveAll() {
+        const pending = filteredReportCards.filter(rc => !rc.approved && !rc.rejected);
+        if (pending.length === 0) {
+            showToast('⚠️ No pending report cards to approve.', 'warning');
+            return;
+        }
+        if (!confirm(`✅ Approve ALL ${pending.length} pending report cards? They will become visible to students.`)) return;
 
-        approveBtn.style.display = (status === 'submitted') ? 'inline-block' : 'none';
-        rejectBtn.style.display = (status === 'submitted' || status === 'approved') ? 'inline-block' : 'none';
-        publishBtn.style.display = (status === 'approved') ? 'inline-block' : 'none';
+        if (!adminSigData) {
+            showToast('⚠️ Please add your admin signature first.', 'warning');
+            openAdminSignatureModal();
+            return;
+        }
+
+        try {
+            const batch = db.batch();
+            pending.forEach(rc => {
+                batch.update(rc._ref, {
+                    approved: true,
+                    rejected: false,
+                    approvedAt: new Date(),
+                    approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
+                    adminSignature: adminSigData,
+                    _version: firebase.firestore.FieldValue.increment(1)
+                });
+            });
+            await batch.commit();
+            showToast(`✅ ${pending.length} report cards approved and published!`, 'success');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
+    }
+
+    async function rejectAll() {
+        const pending = filteredReportCards.filter(rc => !rc.approved && !rc.rejected);
+        if (pending.length === 0) {
+            showToast('⚠️ No pending report cards to reject.', 'warning');
+            return;
+        }
+        if (!confirm(`❌ Reject ALL ${pending.length} pending report cards?`)) return;
+
+        try {
+            const batch = db.batch();
+            pending.forEach(rc => {
+                batch.update(rc._ref, {
+                    rejected: true,
+                    approved: false,
+                    rejectedAt: new Date(),
+                    rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
+                    _version: firebase.firestore.FieldValue.increment(1)
+                });
+            });
+            await batch.commit();
+            showToast(`❌ ${pending.length} report cards rejected.`, 'error');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
     }
 
     // =============================================================
-    // RENDER REPORT CARD
+    // EDIT STUDENT PHOTO
     // =============================================================
-    function renderReportCard(data, isPreview) {
-        const container = $('reportCardContainer');
+    function editStudentPhoto(id) {
+        const rc = allReportCards.find(r => r.id === id);
+        if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
+
+        if (typeof cloudinary === 'undefined') {
+            showToast('❌ Cloudinary not loaded.', 'error');
+            return;
+        }
+
+        const widget = cloudinary.createUploadWidget({
+            cloudName: cloudinaryConfig.cloudName,
+            uploadPreset: cloudinaryConfig.uploadPreset,
+            folder: `${cloudinaryConfig.folder}/${rc.class || 'general'}`,
+            maxFileSize: cloudinaryConfig.maxFileSize,
+            allowedFormats: cloudinaryConfig.allowedFormats,
+            cropping: true,
+            croppingAspectRatio: 1,
+            showSkipCropButton: false,
+            multiple: false,
+            singleUploadAutoClose: true,
+            publicId: `${rc.class || 'general'}_${(rc.studentName || 'student').replace(/\s+/g, '_')}_${Date.now()}`
+        }, async (error, result) => {
+            if (error) {
+                showToast('❌ Upload failed.', 'error');
+                return;
+            }
+            if (result && result.event === "success") {
+                try {
+                    await db.collection('reportCards').doc(id).update({
+                        photoUrl: result.info.secure_url,
+                        photoPublicId: result.info.public_id,
+                        photoUpdatedAt: new Date(),
+                        _version: firebase.firestore.FieldValue.increment(1)
+                    });
+                    showToast('📸 Photo updated successfully!', 'success');
+                    await loadReportCards();
+                } catch (e) {
+                    showToast('❌ Failed to save photo: ' + e.message, 'error');
+                }
+            }
+        });
+        widget.open();
+    }
+
+    // =============================================================
+    // VIEW FULL REPORT - STUDENT VIEW PREVIEW
+    // =============================================================
+    function viewFullReport(id) {
+        const rc = allReportCards.find(r => r.id === id);
+        if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
+
+        const modal = $('modalOverlay');
+        const title = $('modalTitle');
+        const content = $('modalContent');
+
+        title.textContent = `📋 ${rc.studentName || 'Student'} - Report Card Preview (Student View)`;
+
+        // Generate the full report card HTML (same as student view)
+        const reportHtml = generateFullReportCard(rc);
+
+        content.innerHTML = `
+            <div style="background:#f8fafc; border-radius:12px; padding:12px 16px; margin-bottom:16px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <span style="font-weight:700; color:#1e1b4b;">👁️ Student View Preview</span>
+                    <span style="font-size:12px; color:#64748b; margin-left:10px;">This is exactly how students will see their report card</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" onclick="approveFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#10b981; color:white;">✅ Approve & Publish</button>
+                    <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#dc2626; color:white;">❌ Reject</button>
+                    <button class="btn btn-outline" onclick="window.print()" style="padding:8px 20px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">🖨️ Print</button>
+                    <button class="btn btn-outline" onclick="hideModal()" style="padding:8px 20px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">Close</button>
+                </div>
+            </div>
+            <div class="report-card-preview" id="previewReportContainer">
+                ${reportHtml}
+            </div>
+            <div class="modal-actions no-print">
+                <button class="btn btn-success" onclick="approveFromModal('${rc.id}')">✅ Approve & Publish</button>
+                <button class="btn btn-danger" onclick="rejectFromModal('${rc.id}')">❌ Reject</button>
+                <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+                <button class="btn btn-outline" onclick="hideModal()">Close</button>
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    }
+
+    // =============================================================
+    // GENERATE FULL REPORT CARD (Student View)
+    // =============================================================
+    function generateFullReportCard(data) {
         const subjects = Object.keys(data.subjects || {});
         const att = data.attendance || {};
         const affective = data.affectiveDomain || {};
@@ -673,7 +1151,6 @@
         const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
         const principalRemarks = data.principalRemarks || '';
         const promotionStatus = data.promotionStatus || '';
-        
         const overallPosition = data.overallPosition || null;
         const overallAverage = data.overallAverage || 0;
         const totalStudents = data.totalStudents || 0;
@@ -762,7 +1239,7 @@
                         <div class="pos-label">Total Students</div>
                     </div>
                     <div class="pos-item">
-                        <div class="pos-value" style="font-size:24px;">${percentDisplay}%</div>
+                        <div class="pos-value" style="font-size:20px;">${percentDisplay}%</div>
                         <div class="pos-label">Top ${percentDisplay}%</div>
                     </div>` : ''}
                     ${promotionStatus ? `
@@ -779,53 +1256,36 @@
                 <div class="position-summary" style="background:#f1f5f9; border-color:#94a3b8;">
                     <div class="pos-item">
                         <div class="pos-value" style="font-size:16px; color:#64748b;">📊 Position not calculated yet</div>
-                        <div class="pos-label">Please ask teacher to calculate positions</div>
+                        <div class="pos-label">Please ask your teacher to calculate positions</div>
                     </div>
                 </div>
             `;
         }
 
-        // Student photo
-        let photoHtml = '';
-        const photoUrl = data._photoUrl || data.photoUrl || null;
-        if (photoUrl) {
-            photoHtml = `<div class="student-photo-container"><img src="${photoUrl}" alt="${data.studentName}" /></div>`;
-        } else {
-            photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
-        }
+        let photoHtml = data.photoUrl ? 
+            `<img src="${data.photoUrl}" alt="${data.studentName}" />` : 
+            `<span class="student-photo-placeholder">👤</span>`;
 
-        // Teacher signature
-        let teacherSigHtml = '';
-        if (data.teacherSignature) {
-            teacherSigHtml = `<img class="signature-img" src="${data.teacherSignature}" alt="Teacher Signature" />`;
-        }
+        // Admin signature from data or use the stored admin signature
+        const adminSig = data.adminSignature || adminSigData || '';
 
-        // Admin signature (show if approved)
-        let adminSigHtml = '';
-        if (data.adminSignature || adminSignatureData) {
-            const sig = data.adminSignature || adminSignatureData;
-            adminSigHtml = `<img class="signature-img" src="${sig}" alt="Admin Signature" />`;
-        } else if (data.approved) {
-            adminSigHtml = `<span style="color:#94a3b8; font-size:12px;">✓ Approved</span>`;
-        }
-
-        const html = `
+        return `
             <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
 
             <div class="report-header">
                 <div class="header-logo-row">
                     <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="School Logo" />
                     <div class="header-text">
-                        <div class="school-name">${data.schoolName || 'COVENANT ARROWS\' MODEL SCHOOL'}</div>
+                        <div class="school-name">${data.schoolName || 'COVENANT ARROWS\' MODEL'}</div>
                         <div class="motto">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
                         <div class="location">📍 Abiola Way, Abeokuta, Ogun State.</div>
                     </div>
                 </div>
-                <div class="term-info">${data.term || 'THIRD TERM'} REPORT — ${data.session || new Date().getFullYear()}</div>
+                <div class="term-info">${data.term || 'THIRD TERM'} REPORT — ${data.session || data.year || new Date().getFullYear()}</div>
             </div>
 
             <div class="student-meta">
-                ${photoHtml}
+                <div class="student-photo-container">${photoHtml}</div>
                 <div class="student-details">
                     <div class="name">👤 <span>${data.studentName}</span></div>
                     <div class="class">📚 Class: <strong>${data.class}</strong> | Category: <strong>${data.category || 'Day'}</strong></div>
@@ -834,14 +1294,14 @@
                 </div>
             </div>
 
-            <div class="attendance-grid">
-                <span>📅 Days Opened: <strong>${att.daysOpened || 0}</strong></span>
-                <span>✅ Present: <strong>${att.daysPresent || 0}</strong></span>
-                <span>❌ Absent: <strong>${att.daysAbsent || 0}</strong></span>
-                <span>📊 Attendance: <strong>${((att.daysPresent || 0) / (att.daysOpened || 1) * 100).toFixed(1)}%</strong></span>
+            <div class="attendance-grid" style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:8px; padding:8px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                <span>📅 Days Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
+                <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
+                <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
+                <span>📊 Attendance: <strong>${((att.daysPresent || att.present || 0) / (att.daysOpened || att.open || 1) * 100).toFixed(1)}%</strong></span>
             </div>
 
-            <div class="dates-row">
+            <div class="dates-row" style="display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; background:#f8fafc; padding:8px 16px; border-radius:12px; margin-bottom:15px; border:1px solid #e2e8f0; font-size:13px; font-weight:600; color:#475569;">
                 <span>📅 Resumption: <strong>${formatDate(att.resumptionDate || data.resumptionDate)}</strong></span>
                 <span>📅 Closing: <strong>${formatDate(att.closingDate || data.closingDate)}</strong></span>
                 <span>📅 Next Term: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
@@ -909,14 +1369,14 @@
                 <div class="signature-box">
                     <div class="label">Class Teacher</div>
                     <div class="line"></div>
-                    ${teacherSigHtml}
                     <div class="sub">${data.teacherName || 'Name & Signature'}</div>
+                    ${data.teacherSignature ? `<div style="margin-top:4px;"><img src="${data.teacherSignature}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" /></div>` : ''}
                 </div>
                 <div class="signature-box">
                     <div class="label">Principal / Admin</div>
                     <div class="line"></div>
-                    ${adminSigHtml}
-                    <div class="sub">${data.approved ? (currentAdmin.name || 'Admin') : 'Pending Approval'}</div>
+                    <div class="sub">${currentUserData?.fullName || currentUserData?.name || 'Admin'}</div>
+                    ${adminSig ? `<div style="margin-top:4px;"><img src="${adminSig}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" /></div>` : ''}
                 </div>
                 <div class="signature-box">
                     <div class="label">Parent/Guardian</div>
@@ -926,68 +1386,112 @@
             </div>
 
             <div class="report-footer">
-                🔐 ${data.approved ? '✅ Approved' : '⏳ Pending Approval'} | PIN: ${data.pin || '—'} | Generated by Covenant Arrows' Model School System
+                🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
+            </div>
+        `;
+    }
+
+    // =============================================================
+    // MODAL ACTIONS
+    // =============================================================
+    async function approveFromModal(id) {
+        if (!adminSigData) {
+            showToast('⚠️ Please add your admin signature first.', 'warning');
+            hideModal();
+            openAdminSignatureModal();
+            return;
+        }
+        await approveReportCard(id);
+        hideModal();
+        await loadReportCards();
+    }
+
+    async function rejectFromModal(id) {
+        await rejectReportCard(id);
+        hideModal();
+        await loadReportCards();
+    }
+
+    function hideModal() {
+        $('modalOverlay').style.display = 'none';
+    }
+
+    // =============================================================
+    // ADMIN SIGNATURE
+    // =============================================================
+    let adminSigCanvasInstance = null;
+
+    function openAdminSignatureModal() {
+        const modal = $('modalOverlay');
+        const title = $('modalTitle');
+        const content = $('modalContent');
+
+        title.textContent = '✍️ Admin Signature';
+
+        content.innerHTML = `
+            <div style="background:#f8fafc; border-radius:12px; padding:16px; border:1px solid #e2e8f0; margin-bottom:12px;">
+                <div style="font-weight:700; margin-bottom:8px;">Current Signature:</div>
+                ${adminSigData ? `<img src="${adminSigData}" style="max-height:80px; max-width:200px; border:1px solid #e2e8f0; border-radius:8px; padding:4px; background:white;" />` : '<span style="color:#94a3b8;">No signature saved.</span>'}
+            </div>
+
+            <div style="border:2px solid #e2e8f0; border-radius:12px; overflow:hidden; background:white; touch-action:none;">
+                <canvas id="adminSigCanvas" style="width:100%; height:150px; display:block; cursor:crosshair;"></canvas>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <button class="btn btn-sm" onclick="clearAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#fee2e2; color:#dc2626;">🗑️ Clear</button>
+                <button class="btn btn-sm" onclick="saveAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">💾 Save Signature</button>
+                <button class="btn btn-sm" onclick="uploadAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#f59e0b; color:#1e1b4b;">📤 Upload Image</button>
+            </div>
+            <p style="font-size:12px; color:#94a3b8; margin-top:8px;">Draw or upload your signature. It will be applied to all report cards you approve.</p>
+
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                <button class="btn btn-primary" onclick="closeAdminSignatureModal()" style="padding:10px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white;">✅ Done</button>
+                <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">Cancel</button>
             </div>
         `;
 
-        container.innerHTML = html;
+        modal.style.display = 'flex';
+
+        setTimeout(() => {
+            initAdminSignatureCanvas();
+        }, 100);
     }
 
-    // =============================================================
-    // HELPER FUNCTIONS
-    // =============================================================
-    function getRemark(avg) {
-        if (avg >= 75) return 'Distinction';
-        if (avg >= 70) return 'Excellent';
-        if (avg >= 65) return 'Very Good';
-        if (avg >= 60) return 'Good';
-        if (avg >= 55) return 'Above Average';
-        if (avg >= 50) return 'Average';
-        if (avg >= 45) return 'Below Average';
-        if (avg >= 40) return 'Weak Pass';
-        return 'Fail';
-    }
+    function initAdminSignatureCanvas() {
+        const canvas = document.getElementById('adminSigCanvas');
+        if (!canvas) return;
 
-    function getGradeClass(avg) {
-        if (avg >= 75) return 'grade-distinction';
-        if (avg >= 70) return 'grade-excellent';
-        if (avg >= 65) return 'grade-verygood';
-        if (avg >= 60) return 'grade-good';
-        if (avg >= 55) return 'grade-aboveavg';
-        if (avg >= 50) return 'grade-average';
-        if (avg >= 45) return 'grade-belowavg';
-        if (avg >= 40) return 'grade-weak';
-        return 'grade-fail';
-    }
-
-    function getOrdinalSuffix(n) { 
-        const s = ['th','st','nd','rd']; 
-        const v = n % 100; 
-        return s[(v-20)%10] || s[v] || s[0]; 
-    }
-
-    // =============================================================
-    // ADMIN SIGNATURE CANVAS
-    // =============================================================
-    function initAdminSignature() {
-        const canvas = $('adminSignatureCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
+        let lastX = 0, lastY = 0;
 
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width || 350;
-            canvas.height = rect.height || 100;
-            if (adminSignatureData) {
+            canvas.width = rect.width * 1.5;
+            canvas.height = rect.height * 1.5;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            if (adminSigData) {
                 const img = new Image();
                 img.onload = function() {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 };
-                img.src = adminSignatureData;
+                img.src = adminSigData;
             }
+        }
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
         }
 
         function startDrawing(e) {
@@ -1018,56 +1522,11 @@
             e.preventDefault();
             if (isDrawing) {
                 isDrawing = false;
-                saveAdminSignature();
+                const dataUrl = canvas.toDataURL('image/png');
+                adminSigData = dataUrl;
+                localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
+                showToast('✍️ Signature saved!', 'success');
             }
-        }
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function saveAdminSignature() {
-            const dataUrl = canvas.toDataURL('image/png');
-            adminSignatureData = dataUrl;
-            localStorage.setItem(`admin_signature_${currentAdmin.name}_${currentClass}`, dataUrl);
-            showToast('✅ Admin signature saved!', 'success');
-        }
-
-        function clearAdminSignature() {
-            if (confirm('Clear admin signature?')) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                adminSignatureData = null;
-                localStorage.removeItem(`admin_signature_${currentAdmin.name}_${currentClass}`);
-                showToast('🗑️ Signature cleared', 'warning');
-            }
-        }
-
-        function uploadAdminSignature() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        saveAdminSignature();
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            };
-            input.click();
         }
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -1078,166 +1537,165 @@
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stopDrawing, { passive: false });
 
-        $('adminSigClear').addEventListener('click', clearAdminSignature);
-        $('adminSigSave').addEventListener('click', saveAdminSignature);
-        $('adminSigUpload').addEventListener('click', uploadAdminSignature);
-
         window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 100);
+        setTimeout(resizeCanvas, 50);
+    }
+
+    function saveAdminSignature() {
+        const canvas = document.getElementById('adminSigCanvas');
+        if (!canvas) { showToast('❌ Canvas not found.', 'error'); return; }
+        const dataUrl = canvas.toDataURL('image/png');
+        adminSigData = dataUrl;
+        localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
+        showToast('✅ Admin signature saved!', 'success');
+        closeAdminSignatureModal();
+    }
+
+    function clearAdminSignature() {
+        const canvas = document.getElementById('adminSigCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        adminSigData = null;
+        localStorage.removeItem('adminSignature_' + (currentUser?.uid || 'admin'));
+        showToast('🗑️ Signature cleared.', 'warning');
+    }
+
+    function uploadAdminSignature() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('adminSigCanvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    adminSigData = dataUrl;
+                    localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
+                    showToast('📤 Signature uploaded and saved!', 'success');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+
+    function closeAdminSignatureModal() {
+        hideModal();
+        if (adminSigData) {
+            showToast('✅ Admin signature ready!', 'success');
+        }
     }
 
     // =============================================================
-    // CLOSE REPORT
+    // FILTER EVENTS
     // =============================================================
-    $('closeReportBtn').addEventListener('click', () => {
-        $('reportOverlay').classList.remove('active');
-        document.body.style.overflow = '';
+    $('classFilter').addEventListener('change', applyFilters);
+    $('statusFilter').addEventListener('change', applyFilters);
+    $('searchFilter').addEventListener('input', applyFilters);
+    $('refreshBtn').addEventListener('click', loadReportCards);
+    $('approveAllBtn').addEventListener('click', approveAll);
+    $('rejectAllBtn').addEventListener('click', rejectAll);
+    $('adminSigBtn').addEventListener('click', openAdminSignatureModal);
+
+    // Keyboard shortcut: Escape to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideModal();
     });
 
-    $('reportOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-            $('reportOverlay').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-
     // =============================================================
-    // APPROVE
+    // AUTH - Admin Login
     // =============================================================
-    $('approveBtn').addEventListener('click', async () => {
-        if (!currentReportDocId) return;
-        if (!adminSignatureData) {
-            showToast('⚠️ Please add your admin signature first!', 'warning');
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            try {
+                await auth.signInAnonymously();
+            } catch (e) {
+                showToast('❌ Auth error: ' + e.message, 'error');
+            }
             return;
         }
 
-        if (!confirm(`Approve "${currentReportData.studentName}"?`)) return;
+        currentUser = user;
 
+        // Get user data
         try {
-            await db.collection('reportCards').doc(currentReportDocId).update({
-                approved: true,
-                approvedAt: new Date(),
-                approvedBy: currentAdmin.name,
-                adminSignature: adminSignatureData,
-                status: 'approved',
-                _version: firebase.firestore.FieldValue.increment(1)
-            });
-
-            showToast(`✅ "${currentReportData.studentName}" approved!`, 'success');
-            loadStudents(currentClass);
-            $('reportOverlay').classList.remove('active');
-            document.body.style.overflow = '';
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                currentUserData = userDoc.data();
+                const name = currentUserData.fullName || currentUserData.name || 'Admin';
+                const role = currentUserData.role || 'Admin';
+                $('adminName').textContent = name;
+                $('adminRole').textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                
+                if (role !== 'admin' && role !== 'super_admin') {
+                    showToast('⚠️ You are logged in as ' + role + '. Some admin features may be limited.', 'warning');
+                }
+            } else {
+                $('adminName').textContent = 'Admin (Anonymous)';
+            }
         } catch (e) {
-            console.error('Approve error:', e);
-            showToast('❌ Failed to approve.', 'error');
+            $('adminName').textContent = 'Admin';
+        }
+
+        // Load saved admin signature
+        const savedSig = localStorage.getItem('adminSignature_' + (user.uid || 'admin'));
+        if (savedSig) {
+            adminSigData = savedSig;
+        }
+
+        // Load report cards
+        await loadReportCards();
+
+        if (allReportCards.length === 0) {
+            showToast('📋 No report cards submitted yet.', 'info');
         }
     });
 
     // =============================================================
-    // REJECT
+    // LOGOUT
     // =============================================================
-    $('rejectBtn').addEventListener('click', async () => {
-        if (!currentReportDocId) return;
-        const reason = prompt('Reason for rejection (optional):');
-        if (!confirm(`Reject "${currentReportData.studentName}"?`)) return;
-
-        try {
-            await db.collection('reportCards').doc(currentReportDocId).update({
-                approved: false,
-                rejected: true,
-                rejectedAt: new Date(),
-                rejectedBy: currentAdmin.name,
-                rejectionReason: reason || 'No reason provided',
-                status: 'rejected',
-                _version: firebase.firestore.FieldValue.increment(1)
-            });
-
-            showToast(`❌ "${currentReportData.studentName}" rejected.`, 'warning');
-            loadStudents(currentClass);
-            $('reportOverlay').classList.remove('active');
-            document.body.style.overflow = '';
-        } catch (e) {
-            console.error('Reject error:', e);
-            showToast('❌ Failed to reject.', 'error');
-        }
+    $('logoutBtn').addEventListener('click', async () => {
+        await auth.signOut();
+        window.location.reload();
     });
 
     // =============================================================
-    // PUBLISH
+    // EXPOSE FUNCTIONS TO GLOBAL SCOPE
     // =============================================================
-    $('publishBtn').addEventListener('click', async () => {
-        if (!currentReportDocId) return;
-        if (!confirm(`Publish "${currentReportData.studentName}" to students/parents?`)) return;
+    window.approveReportCard = approveReportCard;
+    window.rejectReportCard = rejectReportCard;
+    window.unapproveReportCard = unapproveReportCard;
+    window.editStudentPhoto = editStudentPhoto;
+    window.viewFullReport = viewFullReport;
+    window.hideModal = hideModal;
+    window.approveFromModal = approveFromModal;
+    window.rejectFromModal = rejectFromModal;
+    window.openAdminSignatureModal = openAdminSignatureModal;
+    window.saveAdminSignature = saveAdminSignature;
+    window.clearAdminSignature = clearAdminSignature;
+    window.uploadAdminSignature = uploadAdminSignature;
+    window.closeAdminSignatureModal = closeAdminSignatureModal;
 
-        try {
-            // Generate PIN
-            const pin = generatePIN();
-
-            await db.collection('reportCards').doc(currentReportDocId).update({
-                published: true,
-                publishedAt: new Date(),
-                publishedBy: currentAdmin.name,
-                pin: pin,
-                status: 'published',
-                _version: firebase.firestore.FieldValue.increment(1)
-            });
-
-            // Store PIN
-            await db.collection('pins').doc(pin).set({
-                pin: pin,
-                studentName: currentReportData.studentName,
-                class: currentClass,
-                used: false,
-                generatedAt: new Date(),
-                generatedBy: currentAdmin.name
-            });
-
-            showToast(`🌐 "${currentReportData.studentName}" published! PIN: ${pin}`, 'success');
-            loadStudents(currentClass);
-            $('reportOverlay').classList.remove('active');
-            document.body.style.overflow = '';
-        } catch (e) {
-            console.error('Publish error:', e);
-            showToast('❌ Failed to publish.', 'error');
-        }
-    });
-
-    function generatePIN() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let pin = '';
-        for (let i = 0; i < 8; i++) {
-            pin += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return pin;
-    }
-
-    // =============================================================
-    // PREVIEW STUDENT VIEW
-    // =============================================================
-    $('previewBtn').addEventListener('click', () => {
-        if (!currentReportData) return;
-        renderReportCard(currentReportData, true);
-        showToast('👁️ Previewing student view', 'success');
-    });
-
-    // =============================================================
-    // PRINT
-    // =============================================================
-    $('printReportBtn').addEventListener('click', () => {
-        window.print();
-    });
-
-    // =============================================================
-    // INIT
-    // =============================================================
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    $('loginPage').classList.add('active');
-
-    initAdminSignature();
-
-    console.log('✅ Admin Dashboard with Complete Report Card View');
-    console.log('📌 Features: View all teacher data, approve, reject, publish, preview, admin signature');
-    console.log('🔐 Admin Password: admin123 (change in production)');
+    console.log('✅ Admin Report Card Dashboard loaded!');
+    console.log('📌 Features:');
+    console.log('  - View all submitted report cards');
+    console.log('  - Full student view preview (exactly as students see it)');
+    console.log('  - Admin signature (draw or upload)');
+    console.log('  - Approve/Reject individual or bulk');
+    console.log('  - Edit student photos');
+    console.log('  - Print report cards');
+    console.log('  - Filter by class, status, search');
 </script>
+
 </body>
 </html>
