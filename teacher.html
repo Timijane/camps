@@ -100,7 +100,6 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
-        /* ===== RESULTS TAB - ACCORDION STYLES ===== */
         .subject-accordion { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
         .subject-accordion-header { background: #f8fafc; padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-weight: 700; font-size: 14px; color: #1e293b; }
         .subject-accordion-header:hover { background: #f1f5f9; }
@@ -241,7 +240,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* attendance and term settings */
         .attendance-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 12px; background: #f8fafc; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
         .attendance-section label { font-weight: 600; color: #1e293b; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
         .attendance-section input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; }
@@ -374,7 +372,6 @@
                 </div>
             </div>
 
-            <!-- ===== RESULTS TAB - NEW ACCORDION VIEW ===== -->
             <div id="tabResults" class="tab-content">
                 <div class="card-panel">
                     <h4>📊 Student Results</h4>
@@ -464,7 +461,6 @@
                 return;
             }
 
-            // Group results by subject
             const subjectGroups = {};
             snap.forEach(doc => {
                 const data = doc.data();
@@ -880,6 +876,31 @@
             }, { merge: true });
             classTermSettings = { resumptionDate: rd, closingDate: cd, totalDaysOpened: td };
             showToast('✅ Term settings saved!', 'success');
+            
+            // --- FIX: Refresh the attendance section for the currently selected student ---
+            if (currentSelectedStudent) {
+                await loadStudentData(currentSelectedStudent, cls);
+                // Also update the attendance section UI directly
+                const totalDaysInput = document.querySelector('.attendance-section input[disabled]');
+                if (totalDaysInput) {
+                    totalDaysInput.value = td;
+                }
+                // Recalculate days absent
+                const daysPresentInput = document.querySelector('.attendance-days-present');
+                const daysAbsentInput = document.getElementById('attendance-days-absent');
+                if (daysPresentInput && daysAbsentInput) {
+                    const present = parseInt(daysPresentInput.value) || 0;
+                    const absent = Math.max(td - present, 0);
+                    daysAbsentInput.value = absent;
+                }
+                // Update the resumption/closing date display in attendance section
+                const infoDiv = document.querySelector('.attendance-section .info-text');
+                if (infoDiv) {
+                    infoDiv.textContent = `Resumption: ${rd || 'Not set'} | Closing: ${cd || 'Not set'}`;
+                }
+            }
+            // --- END FIX ---
+            
         } catch (e) {
             showToast('❌ Failed to save term settings: ' + e.message, 'error');
         }
@@ -905,7 +926,6 @@
                 const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
                 const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
 
-                // FIX: Always read value from input, no 'touched' check
                 const firstVal = fi ? parseFloat(fi.value) || 0 : 0;
                 const secondVal = si ? parseFloat(si.value) || 0 : 0;
                 const thirdVal = ti ? parseFloat(ti.value) || 0 : 0;
@@ -934,7 +954,6 @@
             const principal = document.querySelector('.principal-input')?.value || '';
             const promotion = document.querySelector('.promotion-select')?.value || '';
 
-            // Attendance: read days present from input, compute absent
             const totalDays = classTermSettings.totalDaysOpened || 90;
             const daysPresentInput = document.querySelector('.attendance-days-present');
             const daysPresent = daysPresentInput ? parseInt(daysPresentInput.value) || 0 : 0;
@@ -1018,7 +1037,6 @@
         const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
         const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
 
-        // Reset attendance
         const daysPresentInput = document.querySelector('.attendance-days-present');
         if (daysPresentInput) daysPresentInput.value = 0;
 
@@ -1041,7 +1059,12 @@
             }
             if (data.attendance && data.attendance.daysPresent !== undefined) {
                 const dp = document.querySelector('.attendance-days-present');
-                if (dp) dp.value = data.attendance.daysPresent || 0;
+                if (dp) {
+                    dp.value = data.attendance.daysPresent || 0;
+                    // --- FIX: Dispatch input event to trigger days absent calculation ---
+                    dp.dispatchEvent(new Event('input'));
+                    // --- END FIX ---
+                }
             }
             if (data.affectiveDomain) {
                 Object.keys(data.affectiveDomain).forEach(t => {
@@ -1697,7 +1720,6 @@
 
             await batch.commit();
             showToast(`✅ Removed orphan subjects from ${totalStudents} student(s) (${totalRemoved} subjects removed).`, 'success');
-            // Reload current student if any
             if (currentSelectedStudent) {
                 await loadStudentData(currentSelectedStudent, cls);
             }
@@ -1735,7 +1757,6 @@
                 <button class="btn-action btn-warning" id="recoverBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
             </div>
 
-            <!-- Signatures -->
             <div class="signature-section">
                 <div class="signature-title">✍️ Teacher Signature (${currentUser.name})</div>
                 <canvas id="teacherSignatureCanvas" class="signature-canvas"></canvas>
@@ -1758,7 +1779,6 @@
                 <small style="color:#94a3b8; font-size:11px;">Draw or upload admin signature. Auto-saves when you stop.</small>
             </div>
 
-            <!-- Merge Section -->
             <div class="merge-section" id="mergeSection">
                 <div class="merge-title">🔀 Merge Duplicate Students</div>
                 <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge.</p>
@@ -1776,7 +1796,6 @@
                 <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
             </div>
 
-            <!-- Student Selector -->
             <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                 <label class="section-label">👤 Select Student:</label>
                 <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
@@ -1790,7 +1809,6 @@
                 <div id="nameSuggestions" style="margin-top:8px;"></div>
             </div>
 
-            <!-- Student Work Area -->
             <div id="studentWorkArea" style="display:none;">
                 <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
                     <div class="photo-container-small" style="width:90px; height:90px; position:relative;">
@@ -1814,7 +1832,6 @@
                     <div class="pos-percentage" id="positionPercentage"></div>
                 </div>
 
-                <!-- Subject Scores -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">📖 Subject Scores</div>
                     <div style="overflow-x:auto;">
@@ -1836,7 +1853,6 @@
                     </div>
                 </div>
 
-                <!-- Attendance -->
                 <div class="attendance-section">
                     <label>📅 Total Days Opened <span style="font-weight:400; color:#64748b;">(from Term Settings)</span>
                         <input type="number" value="${classTermSettings.totalDaysOpened}" disabled style="background:#e2e8f0;" />
@@ -1847,12 +1863,11 @@
                     <label>❌ Days Absent
                         <input type="number" id="attendance-days-absent" value="0" disabled style="background:#e2e8f0;" />
                     </label>
-                    <div style="grid-column:1/-1; font-size:12px; color:#64748b;">
+                    <div style="grid-column:1/-1; font-size:12px; color:#64748b;" class="info-text">
                         Resumption: ${classTermSettings.resumptionDate || 'Not set'} | Closing: ${classTermSettings.closingDate || 'Not set'}
                     </div>
                 </div>
 
-                <!-- Affective, Psychomotor, Clubs, Comments, etc. (unchanged) -->
                 <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
                     <div class="section-label">⭐ Affective Domain</div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
@@ -2190,17 +2205,23 @@
             el.addEventListener('blur', () => { saveCurrentStudent(cls); });
         });
 
-        // Update days absent automatically when days present changes
+        // --- FIX: Update days absent automatically when days present changes ---
         const daysPresentInput = document.querySelector('.attendance-days-present');
         const daysAbsentInput = document.getElementById('attendance-days-absent');
         if (daysPresentInput && daysAbsentInput) {
-            daysPresentInput.addEventListener('input', () => {
+            daysPresentInput.addEventListener('input', function() {
                 const total = classTermSettings.totalDaysOpened || 90;
-                const present = parseInt(daysPresentInput.value) || 0;
+                const present = parseInt(this.value) || 0;
                 const absent = Math.max(total - present, 0);
                 daysAbsentInput.value = absent;
             });
+            
+            // Also trigger initial calculation if there's a value
+            if (daysPresentInput.value) {
+                daysPresentInput.dispatchEvent(new Event('input'));
+            }
         }
+        // --- END FIX ---
 
         rebuildMergeList();
         updateStudentCount();
@@ -2452,9 +2473,7 @@
         await saveTermSettings(currentUser.class);
         // Refresh the report builder UI to show updated dates and total days
         if (document.getElementById('reportBuilderArea').innerHTML !== '') {
-            // Rebuild UI with new settings
             await loadTermSettings(currentUser.class);
-            // Reload student if any
             if (currentSelectedStudent) {
                 await loadStudentData(currentSelectedStudent, currentUser.class);
             }
@@ -2576,6 +2595,8 @@
     console.log('🧹 "Remove Orphan Subjects" deletes any subject not in class list from ALL students');
     console.log('📅 Term Settings: set resumption, closing dates, and total days opened');
     console.log('✅ SAVE FIX: now reads input values directly, no data loss!');
+    console.log('✅ ATTENDANCE FIX: Days absent auto-calculates when loading a student');
+    console.log('✅ TERM SETTINGS FIX: Total days opened updates attendance section when saved');
 </script>
 </body>
 </html>
