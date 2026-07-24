@@ -836,7 +836,7 @@
     }
 
     // =============================================================
-    // TERM SETTINGS
+    // TERM SETTINGS - UPDATED WITH COMPLETE FIX
     // =============================================================
     async function loadTermSettings(cls) {
         try {
@@ -863,6 +863,9 @@
         }
     }
 
+    // =============================================================
+    // SAVE TERM SETTINGS - UPDATED WITH COMPLETE FIX
+    // =============================================================
     async function saveTermSettings(cls) {
         const rd = document.getElementById('resumptionDate')?.value || '';
         const cd = document.getElementById('closingDate')?.value || '';
@@ -876,31 +879,40 @@
             }, { merge: true });
             classTermSettings = { resumptionDate: rd, closingDate: cd, totalDaysOpened: td };
             showToast('✅ Term settings saved!', 'success');
-            
-            // --- FIX: Refresh the attendance section for the currently selected student ---
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, cls);
-                // Also update the attendance section UI directly
-                const totalDaysInput = document.querySelector('.attendance-section input[disabled]');
-                if (totalDaysInput) {
-                    totalDaysInput.value = td;
-                }
-                // Recalculate days absent
-                const daysPresentInput = document.querySelector('.attendance-days-present');
-                const daysAbsentInput = document.getElementById('attendance-days-absent');
-                if (daysPresentInput && daysAbsentInput) {
-                    const present = parseInt(daysPresentInput.value) || 0;
-                    const absent = Math.max(td - present, 0);
-                    daysAbsentInput.value = absent;
-                }
-                // Update the resumption/closing date display in attendance section
-                const infoDiv = document.querySelector('.attendance-section .info-text');
-                if (infoDiv) {
-                    infoDiv.textContent = `Resumption: ${rd || 'Not set'} | Closing: ${cd || 'Not set'}`;
+
+            // --- COMPLETE FIX: Update attendance section immediately ---
+            // 1. Update the disabled total days input
+            const totalDaysInput = document.querySelector('.attendance-section input[disabled]');
+            if (totalDaysInput) {
+                totalDaysInput.value = td;
+            }
+
+            // 2. Recalculate days absent
+            const daysPresentInput = document.querySelector('.attendance-days-present');
+            const daysAbsentInput = document.getElementById('attendance-days-absent');
+            if (daysPresentInput && daysAbsentInput) {
+                const present = parseInt(daysPresentInput.value) || 0;
+                const absent = Math.max(td - present, 0);
+                daysAbsentInput.value = absent;
+                // Update max attribute
+                daysPresentInput.max = td;
+            }
+
+            // 3. Update the info text
+            const infoDiv = document.querySelector('.attendance-section .info-text');
+            if (infoDiv) {
+                infoDiv.textContent = `Resumption: ${rd || 'Not set'} | Closing: ${cd || 'Not set'}`;
+            }
+
+            // 4. Also update the term settings display in the sidebar (already done)
+            // 5. Refresh the report builder UI if open
+            if (document.getElementById('reportBuilderArea').innerHTML !== '') {
+                if (currentSelectedStudent) {
+                    await loadStudentData(currentSelectedStudent, cls);
                 }
             }
             // --- END FIX ---
-            
+
         } catch (e) {
             showToast('❌ Failed to save term settings: ' + e.message, 'error');
         }
@@ -1022,7 +1034,7 @@
     }
 
     // =============================================================
-    // LOAD STUDENT DATA (includes attendance)
+    // LOAD STUDENT DATA - UPDATED WITH COMPLETE FIX
     // =============================================================
     async function loadStudentData(student, cls) {
         const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
@@ -1039,6 +1051,22 @@
 
         const daysPresentInput = document.querySelector('.attendance-days-present');
         if (daysPresentInput) daysPresentInput.value = 0;
+
+        // --- FIX: Ensure attendance shows current term settings ---
+        const totalDaysInput = document.querySelector('.attendance-section input[disabled]');
+        if (totalDaysInput) {
+            totalDaysInput.value = classTermSettings.totalDaysOpened || 90;
+        }
+
+        if (daysPresentInput) {
+            daysPresentInput.max = classTermSettings.totalDaysOpened || 90;
+        }
+
+        const infoDiv = document.querySelector('.attendance-section .info-text');
+        if (infoDiv) {
+            infoDiv.textContent = `Resumption: ${classTermSettings.resumptionDate || 'Not set'} | Closing: ${classTermSettings.closingDate || 'Not set'}`;
+        }
+        // --- END FIX ---
 
         if (doc.exists) {
             const data = doc.data();
@@ -1061,9 +1089,8 @@
                 const dp = document.querySelector('.attendance-days-present');
                 if (dp) {
                     dp.value = data.attendance.daysPresent || 0;
-                    // --- FIX: Dispatch input event to trigger days absent calculation ---
+                    // Dispatch input event to trigger days absent calculation
                     dp.dispatchEvent(new Event('input'));
-                    // --- END FIX ---
                 }
             }
             if (data.affectiveDomain) {
@@ -2205,7 +2232,7 @@
             el.addEventListener('blur', () => { saveCurrentStudent(cls); });
         });
 
-        // --- FIX: Update days absent automatically when days present changes ---
+        // Update days absent automatically when days present changes
         const daysPresentInput = document.querySelector('.attendance-days-present');
         const daysAbsentInput = document.getElementById('attendance-days-absent');
         if (daysPresentInput && daysAbsentInput) {
@@ -2215,13 +2242,12 @@
                 const absent = Math.max(total - present, 0);
                 daysAbsentInput.value = absent;
             });
-            
+
             // Also trigger initial calculation if there's a value
             if (daysPresentInput.value) {
                 daysPresentInput.dispatchEvent(new Event('input'));
             }
         }
-        // --- END FIX ---
 
         rebuildMergeList();
         updateStudentCount();
@@ -2489,7 +2515,7 @@
             tab.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(tab.dataset.tab).classList.add('active');
-            
+
             if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
             if (tab.dataset.tab === 'tabResults') {
                 if (currentUser.class) {
