@@ -1,2581 +1,1054 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Teacher Dashboard · Complete</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>Report Card · Covenant Arrows</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        #app { width: 100%; max-width: 1400px; height: 90vh; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  <style>
+    /* ---- RESET & BASE ---- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #eef2f7;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    #app {
+      max-width: 1150px;
+      width: 100%;
+    }
 
-        .page { display: none; height: 100%; width: 100%; animation: fadeIn 0.3s ease; }
-        .page.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    /* ---- TOAST ---- */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 360px;
+      width: 100%;
+      pointer-events: none;
+    }
+    .toast {
+      background: white;
+      padding: 14px 22px;
+      border-radius: 14px;
+      box-shadow: 0 15px 30px -8px rgba(0,0,0,0.12);
+      border-left: 6px solid #4f46e5;
+      pointer-events: auto;
+      animation: slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #0f172a;
+    }
+    .toast.hide { animation: slideOut 0.3s ease forwards; }
+    .toast .icon { font-size: 20px; }
+    .toast.success { border-color: #10b981; }
+    .toast.error { border-color: #dc2626; }
+    .toast.warning { border-color: #f59e0b; }
+    @keyframes slideIn { 0% { opacity:0; transform:translateX(50px); } 100% { opacity:1; transform:translateX(0); } }
+    @keyframes slideOut { 0% { opacity:1; transform:translateX(0); } 100% { opacity:0; transform:translateX(50px); } }
 
-        #loginPage { align-items: center; justify-content: center; background: linear-gradient(135deg, #e0f2fe, #ede9fe); }
-        .login-box { background: white; padding: 50px 40px; border-radius: 40px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); }
-        .login-box h2 { font-size: 28px; color: #1e1b4b; margin-bottom: 6px; }
-        .login-box p { color: #64748b; margin-bottom: 25px; }
-        .login-box input, .login-box select { width: 100%; padding: 16px 20px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 15px; margin-bottom: 12px; background: #f8fafc; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .login-box input:focus, .login-box select:focus { border-color: #4f46e5; background: white; }
-        .login-box button { width: 100%; padding: 16px; background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; border: none; border-radius: 60px; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .login-box button:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(79,70,229,0.3); }
-        .login-error { color: #dc2626; font-weight: 600; margin-top: 10px; font-size: 14px; }
+    /* ---- LOGIN CARD ---- */
+    .login-card {
+      background: white;
+      padding: 36px 32px;
+      border-radius: 28px;
+      max-width: 540px;
+      margin: 30px auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+    }
+    .login-card h2 { color: #1e1b4b; font-size: 26px; margin-bottom: 6px; }
+    .login-card p { color: #64748b; margin-bottom: 18px; }
+    .login-card .flex { display: flex; flex-wrap: wrap; gap: 10px; }
+    .login-card input, .login-card select {
+      flex: 1; min-width: 140px;
+      padding: 13px 18px;
+      border: 2px solid #e2e8f0;
+      border-radius: 60px;
+      font-size: 14px;
+      background: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: 0.2s;
+    }
+    .login-card input:focus, .login-card select:focus { border-color: #4f46e5; background: white; }
+    .login-card button {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      padding: 14px 32px;
+      background: linear-gradient(to right, #4f46e5, #7c3aed);
+      color: white;
+      border: none;
+      border-radius: 60px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .login-card button:hover { transform: scale(1.01); box-shadow: 0 8px 20px rgba(79,70,229,0.25); }
+    .error-text { color: #dc2626; font-weight: 700; margin-top: 10px; }
+    .status-text { font-size: 13px; color: #64748b; margin-top: 6px; }
 
-        .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 400px; width: 100%; pointer-events: none; }
-        .toast { background: white; padding: 16px 24px; border-radius: 16px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12); border-left: 6px solid #4f46e5; pointer-events: auto; animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; color: #0f172a; }
-        .toast.hide { animation: slideOut 0.3s ease forwards; }
-        .toast .icon { font-size: 22px; }
-        .toast.success { border-color: #10b981; }
-        .toast.error { border-color: #dc2626; }
-        .toast.warning { border-color: #f59e0b; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
-        @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(60px); } }
+    /* ---- PAGE SWITCH ---- */
+    .page { display: none; animation: fadeUp 0.35s ease; }
+    .page.active { display: block; }
+    @keyframes fadeUp { 0% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
 
-        #dashboardPage { flex-direction: row; background: #f8fafc; }
-        .sidebar { width: 320px; min-width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 25px 20px; display: flex; flex-direction: column; overflow-y: auto; height: 100%; }
-        .sidebar .brand { font-weight: 900; font-size: 20px; color: #1e1b4b; margin-bottom: 5px; }
-        .sidebar .brand span { color: #4f46e5; }
-        .sidebar .user-info { font-size: 14px; color: #64748b; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .sidebar .user-info .name { font-weight: 700; color: #0f172a; }
-        .sidebar .logout-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px 16px; border-radius: 60px; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif; }
-        .sidebar .logout-btn:hover { background: #fecaca; }
-        .class-switcher { display: flex; gap: 8px; margin-bottom: 25px; }
-        .class-switcher select { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 14px; font-weight: 600; outline: none; background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .class-switcher select:focus { border-color: #4f46e5; }
-        .class-switcher button { padding: 12px 20px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; white-space: nowrap; }
-        .class-switcher button:hover { background: #4338ca; }
-        .sidebar-toggle { display: none; background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: #1e293b; }
+    /* ---- REPORT WRAPPER (A4 optimized) ---- */
+    .report-wrapper {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+      padding: 28px 24px;
+      border: 1px solid #e2e8f0;
+    }
+    .report-card {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      padding: 6px 4px;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      position: relative;
+      overflow: hidden;
+      /* A4 single-page friendly */
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
 
-        .sidebar-title { font-weight: 800; color: #1e293b; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .add-subject-row { display: flex; gap: 6px; margin-bottom: 15px; }
-        .add-subject-row input { flex: 1; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 60px; font-size: 13px; outline: none; font-family: 'Inter', sans-serif; }
-        .add-subject-row input:focus { border-color: #4f46e5; }
-        .add-subject-row button { padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .add-subject-row button:hover { background: #059669; }
+    /* ---- WATERMARK (perfectly faded) ---- */
+    .watermark-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-22deg);
+      width: 480px;
+      height: auto;
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+    }
 
-        .subject-list { flex: 1; overflow-y: auto; margin-top: 5px; }
-        .subject-item { padding: 14px 18px; border-radius: 16px; margin-bottom: 6px; cursor: pointer; transition: 0.15s; font-weight: 600; color: #334155; display: flex; justify-content: space-between; align-items: center; border: 2px solid transparent; background: #f8fafc; }
-        .subject-item:hover { background: #eef2ff; border-color: #c7d2fe; }
-        .subject-item.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-        .subject-item .edit-sub { background: transparent; border: none; color: #94a3b8; font-weight: 800; cursor: pointer; font-size: 14px; padding: 0 5px; transition: 0.2s; }
-        .subject-item .edit-sub:hover { color: #4f46e5; transform: scale(1.1); }
-        .subject-item.active .edit-sub { color: rgba(255,255,255,0.6); }
-        .subject-item.active .edit-sub:hover { color: white; }
-        .subject-item .del-sub { background: transparent; border: none; color: #94a3b8; font-weight: 800; cursor: pointer; font-size: 18px; padding: 0 5px; transition: 0.2s; }
-        .subject-item .del-sub:hover { color: #dc2626; transform: scale(1.2); }
-        .subject-item.active .del-sub { color: rgba(255,255,255,0.6); }
-        .subject-item.active .del-sub:hover { color: white; }
+    /* ---- SCHOOL HEADER ---- */
+    .header-logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .school-logo {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      border-radius: 50%;
+      border: 2px solid #1e1b4b;
+      background: white;
+    }
+    .header-text { text-align: center; }
+    .header-text .school-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: #1e1b4b;
+      letter-spacing: 0.5px;
+    }
+    .header-text .motto {
+      font-weight: 600;
+      color: #4f46e5;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+    }
+    .header-text .location {
+      font-size: 10px;
+      color: #475569;
+      font-weight: 500;
+    }
+    .term-info {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 4px;
+      background: #f1f5f9;
+      display: inline-block;
+      padding: 1px 28px;
+      border-radius: 30px;
+    }
 
-        .main-panel { flex: 1; padding: 25px 30px; overflow-y: auto; height: 100%; background: #f8fafc; display: flex; flex-direction: column; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-        .panel-header h2 { font-size: 24px; color: #0f172a; font-weight: 800; }
-        .panel-header h2 span { color: #4f46e5; }
-        .panel-header .badge-points { background: #1e1b4b; color: white; padding: 6px 18px; border-radius: 60px; font-weight: 700; font-size: 14px; }
+    /* ---- STUDENT META (photo + details) ---- */
+    .student-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin: 6px 0 8px 0;
+      padding: 8px 14px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      position: relative;
+      z-index: 1;
+    }
+    .student-photo-container {
+      width: 70px;
+      height: 85px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      background: #f1f5f9;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .student-photo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .student-photo-placeholder { font-size: 36px; color: #94a3b8; }
+    .student-details { flex: 1; min-width: 160px; }
+    .student-details .name { font-size: 16px; font-weight: 800; color: #0f172a; }
+    .student-details .name span { color: #4f46e5; }
+    .student-details .class { font-weight: 700; font-size: 12px; color: #1e293b; }
+    .student-details .teacher { font-weight: 600; font-size: 11px; color: #475569; }
+    .student-details .issue-date { font-size: 10px; color: #64748b; }
 
-        .sync-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 30px; }
-        .sync-status.connected { background: #d1fae5; color: #065f46; }
-        .sync-status.connecting { background: #fef3c7; color: #92400e; }
-        .sync-status.disconnected { background: #fee2e2; color: #991b1b; }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .sync-status.connected .sync-dot { background: #10b981; }
-        .sync-status.connecting .sync-dot { background: #f59e0b; animation: pulse-dot 1s infinite; }
-        .sync-status.disconnected .sync-dot { background: #dc2626; }
-        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    /* ---- ATTENDANCE & DATES ---- */
+    .attendance-grid, .dates-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+      padding: 4px 14px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-weight: 600;
+      font-size: 11px;
+      color: #334155;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .attendance-grid span, .dates-row span {
+      background: white;
+      padding: 2px 12px;
+      border-radius: 30px;
+      border: 1px solid #e2e8f0;
+    }
+    .dates-row { margin-bottom: 6px; }
 
-        .main-tabs { display: flex; gap: 6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .main-tab { padding: 10px 22px; border-radius: 60px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.15s; border: 2px solid transparent; background: transparent; color: #64748b; font-family: 'Inter', sans-serif; }
-        .main-tab:hover { background: #f1f5f9; color: #0f172a; }
-        .main-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
+    /* ---- POSITION SUMMARY ---- */
+    .position-summary {
+      display: flex;
+      justify-content: center;
+      gap: 12px 24px;
+      flex-wrap: wrap;
+      margin: 6px 0 8px 0;
+      padding: 8px 12px;
+      background: #fefce8;
+      border-radius: 10px;
+      border: 2px solid #f59e0b;
+      position: relative;
+      z-index: 1;
+    }
+    .position-summary .pos-item {
+      text-align: center;
+      padding: 0 14px;
+      border-right: 1px solid #f59e0b;
+    }
+    .position-summary .pos-item:last-child { border-right: none; }
+    .position-summary .pos-value { font-size: 22px; font-weight: 900; color: #1e1b4b; }
+    .position-summary .pos-value small { font-size: 13px; }
+    .position-summary .pos-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
 
-        /* ===== RESULTS TAB - ACCORDION STYLES ===== */
-        .subject-accordion { border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
-        .subject-accordion-header { background: #f8fafc; padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-weight: 700; font-size: 14px; color: #1e293b; }
-        .subject-accordion-header:hover { background: #f1f5f9; }
-        .subject-accordion-header .subject-name { color: #4f46e5; }
-        .subject-accordion-header .subject-count { background: #e2e8f0; padding: 2px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; color: #64748b; }
-        .subject-accordion-header .subject-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .subject-accordion-header .subject-actions .btn-sm { padding: 4px 12px; border: none; border-radius: 30px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .subject-accordion-header .subject-actions .btn-sm.multiply { background: #dbeafe; color: #1e3a8a; }
-        .subject-accordion-header .subject-actions .btn-sm.multiply:hover { background: #bfdbfe; }
-        .subject-accordion-header .subject-actions .btn-sm.copy { background: #ede9fe; color: #5b21b6; }
-        .subject-accordion-header .subject-actions .btn-sm.copy:hover { background: #ddd6fe; }
-        .subject-accordion-header .subject-actions .btn-sm.save { background: #d1fae5; color: #065f46; }
-        .subject-accordion-header .subject-actions .btn-sm.save:hover { background: #a7f3d0; }
-        .subject-accordion-header .arrow { transition: transform 0.3s ease; font-size: 12px; color: #94a3b8; }
-        .subject-accordion-header .arrow.open { transform: rotate(180deg); }
-        .subject-accordion-body { display: none; padding: 0 20px 16px; background: white; }
-        .subject-accordion-body.open { display: block; }
-        .subject-accordion-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .subject-accordion-body th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .subject-accordion-body td { padding: 6px 6px; border-bottom: 1px solid #f1f5f9; }
-        .subject-accordion-body tr:hover { background: #f8fafc; }
-        .subject-accordion-body .score-cell { font-weight: 700; color: #0f172a; text-align: right; }
-        .subject-accordion-body .student-name { color: #334155; }
+    .promotion-badge {
+      padding: 2px 12px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+    .promotion-badge.promoted { background: #d1fae5; color: #065f46; }
+    .promotion-badge.not-promoted { background: #fee2e2; color: #991b1b; }
+    .promotion-badge.probation { background: #fef3c7; color: #92400e; }
 
-        .question-grid { display: flex; flex-direction: column; gap: 10px; }
-        .q-item { background: white; border-radius: 16px; padding: 14px 20px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; transition: 0.15s; }
-        .q-item:hover { border-color: #c7d2fe; }
-        .q-item .q-text { font-weight: 600; color: #0f172a; flex: 2; min-width: 200px; }
-        .q-item .q-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .q-item .q-meta span { background: #f1f5f9; padding: 4px 12px; border-radius: 60px; font-size: 13px; font-weight: 600; color: #475569; }
-        .q-item .q-meta .points-badge { background: #dbeafe; color: #1e3a8a; }
-        .q-item .q-del { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0 8px; }
-        .q-item .q-del:hover { color: #dc2626; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .empty-state h3 { color: #64748b; font-size: 18px; margin-bottom: 6px; }
+    /* ---- INFO GRID (Affective / Psychomotor) ---- */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 6px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .info-grid .box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 6px 12px;
+    }
+    .info-grid .box h4 {
+      font-weight: 700;
+      color: #1e1b4b;
+      font-size: 11px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 3px;
+      margin-bottom: 4px;
+    }
+    .info-grid .box .item {
+      display: flex;
+      justify-content: space-between;
+      padding: 1px 0;
+      font-size: 10.5px;
+      font-weight: 500;
+    }
+    .info-grid .box .item .num-rating {
+      font-weight: 700;
+      color: #1e1b4b;
+      min-width: 20px;
+      text-align: right;
+    }
 
-        .add-q-form { background: white; border-radius: 24px; padding: 20px 25px; margin-top: 20px; border: 1px solid #e2e8f0; }
-        .add-q-form h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
-        .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-        .form-row input, .form-row select, .form-row textarea { flex: 1; min-width: 120px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; background: #f8fafc; transition: 0.2s; }
-        .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #4f46e5; background: white; }
-        .form-row textarea { flex-basis: 100%; min-height: 60px; resize: vertical; }
-        .form-row .btn-add-q { padding: 12px 32px; background: #4f46e5; color: white; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .form-row .btn-add-q:hover { background: #4338ca; }
+    /* ---- EXTRACURRICULAR BADGES ---- */
+    .extra-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 3px;
+    }
+    .extra-badges .badge {
+      padding: 1px 10px;
+      border-radius: 30px;
+      font-size: 9.5px;
+      font-weight: 600;
+      background: #dbeafe;
+      color: #1e3a8a;
+    }
+    .extra-badges .badge.missing { background: #f1f5f9; color: #94a3b8; }
 
-        .csv-paste-section { background: #f1f5f9; border-radius: 16px; padding: 16px 20px; margin-top: 12px; border: 2px dashed #cbd5e1; }
-        .csv-paste-section textarea { width: 100%; min-height: 120px; padding: 12px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Inter', sans-serif; font-size: 13px; outline: none; resize: vertical; background: white; }
-        .csv-paste-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
-        .csv-paste-section .btn-csv.download { background: #f59e0b; color: #1e1b4b; }
-        .csv-paste-section .btn-csv.download:hover { background: #d97706; }
-        .csv-paste-section .btn-csv.upload { background: #10b981; color: white; }
-        .csv-paste-section .btn-csv.upload:hover { background: #059669; }
-        .csv-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-top: 12px; }
-        .csv-section label { font-weight: 600; color: #334155; font-size: 14px; }
-        .csv-section input[type="file"] { flex: 1; font-size: 13px; font-family: 'Inter', sans-serif; }
-        .csv-section .btn-csv { padding: 8px 20px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; background: #0f172a; color: white; font-size: 13px; }
-        .csv-section .btn-csv.upload { background: #10b981; color: white; }
-        .csv-section .btn-csv.upload:hover { background: #059669; }
+    /* ---- SUBJECT TABLE (compact for A4) ---- */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 6px 0;
+      position: relative;
+      z-index: 1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    table th {
+      background: #1e1b4b;
+      color: white;
+      font-weight: 700;
+      padding: 4px 2px;
+      border: 1px solid #1e1b4b;
+    }
+    table td {
+      padding: 3px 2px;
+      border: 1px solid #cbd5e1;
+      vertical-align: middle;
+    }
+    table tr:nth-child(even) { background: #fafafa; }
+    table td:first-child, table th:first-child { font-weight: 700; }
+    table td:nth-child(2) { text-align: left; font-weight: 600; padding-left: 6px; }
+    .sub-header th { background: #334155; font-weight: 600; font-size: 9px; text-transform: uppercase; padding: 3px 2px; }
+    .grand-total-row td {
+      background: #f1f5f9;
+      font-weight: 800;
+      font-size: 11px;
+      border-top: 3px solid #1e1b4b;
+      color: #0f172a;
+    }
 
-        .card-panel { background: white; border-radius: 24px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-        .card-panel h4 { font-weight: 800; color: #1e1b4b; margin-bottom: 12px; }
+    /* ---- GRADE COLORS ---- */
+    .grade-distinction { color: #059669; font-weight: 800; }
+    .grade-excellent { color: #059669; font-weight: 800; }
+    .grade-verygood { color: #2563eb; font-weight: 800; }
+    .grade-good { color: #2563eb; font-weight: 700; }
+    .grade-aboveavg { color: #7c3aed; font-weight: 700; }
+    .grade-average { color: #d97706; font-weight: 700; }
+    .grade-belowavg { color: #ea580c; font-weight: 700; }
+    .grade-weak { color: #dc2626; font-weight: 700; }
+    .grade-fail { color: #dc2626; font-weight: 800; }
 
-        .btn-action { padding: 12px 32px; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .btn-primary { background: #4f46e5; color: white; }
-        .btn-primary:hover { background: #4338ca; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; }
-        .btn-warning { background: #f59e0b; color: #1e1b4b; }
-        .btn-warning:hover { background: #d97706; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-outline { background: white; border: 2px solid #e2e8f0; color: #1e293b; }
-        .btn-outline:hover { background: #f8fafc; }
-        .btn-push { background: #8b5cf6; color: white; }
-        .btn-push:hover { background: #7c3aed; }
-        .btn-push-all { background: #6d28d9; color: white; }
-        .btn-push-all:hover { background: #5b21b6; }
-        .btn-pushed { background: #d1fae5; color: #065f46; }
-        .btn-pushed:hover { background: #a7f3d0; }
+    /* ---- COMMENTARY ---- */
+    .commentary-box {
+      margin: 6px 0;
+      padding: 6px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #fafafa;
+      position: relative;
+      z-index: 1;
+    }
+    .commentary-box h4 { font-weight: 700; color: #1e1b4b; font-size: 11px; margin-bottom: 2px; }
+    .commentary-box p { font-style: italic; color: #1e293b; font-size: 11px; line-height: 1.5; }
 
-        .report-builder-container { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; margin-top: 15px; }
-        .section-label { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 8px; display: block; }
-        .student-count-badge { background: #4f46e5; color: white; padding: 2px 14px; border-radius: 30px; font-size: 13px; font-weight: 700; }
+    /* ---- SIGNATURES (with images) ---- */
+    .signature-section {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 2px dashed #cbd5e1;
+      position: relative;
+      z-index: 1;
+    }
+    .signature-box {
+      flex: 1;
+      min-width: 110px;
+      text-align: center;
+    }
+    .signature-box .label {
+      font-weight: 700;
+      color: #475569;
+      font-size: 10.5px;
+      margin-bottom: 2px;
+    }
+    .signature-box .sig-image-container {
+      margin: 4px auto;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .signature-box .sig-image-container img {
+      max-height: 48px;
+      max-width: 140px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 2px;
+      background: white;
+      object-fit: contain;
+    }
+    .signature-box .sig-image-container .no-sig {
+      color: #94a3b8;
+      font-size: 10px;
+      font-style: italic;
+    }
+    .signature-box .line {
+      border-bottom: 2px solid #1e293b;
+      width: 100%;
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+    .signature-box .sub {
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 1px;
+    }
 
-        .photo-container-small { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid #e2e8f0; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
-        .photo-container-small:hover { border-color: #4f46e5; }
-        .photo-img-small { width: 100%; height: 100%; object-fit: cover; display: none; }
+    /* ---- FOOTER ---- */
+    .report-footer {
+      text-align: center;
+      font-size: 8.5px;
+      color: #94a3b8;
+      margin-top: 10px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 6px;
+      position: relative;
+      z-index: 1;
+    }
 
-        .position-card { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin: 15px 0; text-align: center; display: none; }
-        .position-card .pos-number { font-size: 48px; font-weight: 900; color: #1e1b4b; }
-        .position-card .pos-label { font-size: 14px; color: #64748b; }
-        .position-card .pos-percentage { font-size: 14px; color: #4f46e5; font-weight: 700; margin-top: 4px; }
+    /* ---- PRINT STYLES (A4 single page) ---- */
+    @media print {
+      body { background: white; padding: 0; margin: 0; }
+      #app { max-width: 100%; padding: 0; }
+      .no-print { display: none !important; }
+      .report-wrapper { box-shadow: none; border: none; border-radius: 0; padding: 6px 10px; margin: 0; }
+      .report-card { max-width: 100%; padding: 0; overflow: visible; font-size: 10.5px; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: center; }
-        th { background: #f1f5f9; font-weight: 700; }
-        .score-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-family: 'Inter', sans-serif; }
-        .score-input.third { background: #fefce8; font-weight: 700; }
+      .watermark-img {
+        opacity: 0.06 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
 
-        .suggestion-item { padding: 8px 14px; background: #eef2ff; border-radius: 12px; margin: 4px 0; cursor: pointer; font-size: 13px; font-weight: 600; border: 1px solid #c7d2fe; }
-        .suggestion-item:hover { background: #ddd6fe; }
+      table th {
+        background: #1e1b4b !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .grand-total-row td {
+        background: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .student-meta, .dates-row, .info-grid .box, .commentary-box, .position-summary,
+      .attendance-grid {
+        background: #f8fafc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .position-summary { background: #fefce8 !important; border-color: #f59e0b !important; }
+      .school-logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .student-photo-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .signature-box .sig-image-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-        .merge-section { background: #fefce8; border: 2px solid #f59e0b; border-radius: 16px; padding: 15px; margin-bottom: 15px; }
-        .merge-section .merge-title { font-weight: 800; color: #1e1b4b; margin-bottom: 8px; font-size: 14px; }
-        .merge-student-checkbox { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-radius: 12px; margin: 4px 0; border: 1px solid #e2e8f0; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .merge-student-checkbox:hover { background: #eef2ff; border-color: #4f46e5; }
-        .merge-student-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #4f46e5; cursor: pointer; }
-        .merge-target-select { width: 100%; padding: 10px 14px; border: 2px solid #4f46e5; border-radius: 60px; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; background: white; margin-top: 8px; }
-        .merge-btn { padding: 10px 20px; background: #f59e0b; color: #1e1b4b; border: none; border-radius: 60px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px; }
-        .merge-btn:hover { background: #d97706; }
-        .merge-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+      .header-text .school-name { font-size: 20px; }
+      .term-info { font-size: 13px; padding: 1px 20px; }
+      table { font-size: 9.5px; }
+      table td { padding: 2px 2px; }
+      .info-grid .box .item { font-size: 9.5px; }
+      .student-details .name { font-size: 14px; }
+      .position-summary .pos-value { font-size: 18px; }
 
-        .save-status-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0; padding: 8px 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .save-status-bar .status-icon { font-size: 18px; }
-        .save-status-bar .status-text { font-size: 13px; font-weight: 600; color: #64748b; }
-        .save-status-bar .last-saved { font-size: 11px; color: #94a3b8; margin-left: auto; }
+      /* Force single page */
+      .report-card { page-break-after: avoid; page-break-inside: avoid; }
+      .report-wrapper { page-break-after: avoid; }
+    }
 
-        .push-progress { background: #ede9fe; border: 2px solid #8b5cf6; border-radius: 12px; padding: 12px 16px; margin: 10px 0; display: none; }
-        .push-progress .push-title { font-weight: 800; color: #5b21b6; font-size: 14px; }
-        .push-progress .push-bar { width: 100%; height: 8px; background: #e2e8f0; border-radius: 10px; margin: 8px 0; overflow: hidden; }
-        .push-progress .push-bar-fill { height: 100%; background: #8b5cf6; border-radius: 10px; transition: width 0.3s ease; width: 0%; }
-        .push-progress .push-status { font-size: 13px; color: #64748b; }
+    /* ---- BUTTONS ---- */
+    .flex-center {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .btn-print, .btn-back {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      padding: 12px 34px;
+      border-radius: 60px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: none;
+    }
+    .btn-print { background: #0f172a; color: white; }
+    .btn-print:hover { background: #1e293b; transform: scale(1.01); }
+    .btn-back { background: white; color: #1e293b; border: 2px solid #e2e8f0; }
+    .btn-back:hover { border-color: #4f46e5; background: #f8fafc; }
 
-        .signature-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 15px; margin-bottom: 15px; }
-        .signature-section .signature-title { font-weight: 700; color: #1e1b4b; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .signature-canvas { border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: crosshair; touch-action: none; width: 100%; max-width: 350px; height: 120px; display: block; }
-        .signature-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .signature-actions .btn-sm { padding: 6px 14px; border: none; border-radius: 30px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.2s; }
-        .signature-actions .btn-sm.clear { background: #fee2e2; color: #dc2626; }
-        .signature-actions .btn-sm.clear:hover { background: #fecaca; }
-        .signature-actions .btn-sm.save { background: #4f46e5; color: white; }
-        .signature-actions .btn-sm.save:hover { background: #4338ca; }
-        .signature-actions .btn-sm.upload { background: #f59e0b; color: #1e1b4b; }
-        .signature-actions .btn-sm.upload:hover { background: #d97706; }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* attendance and term settings */
-        .attendance-section { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 12px; background: #f8fafc; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
-        .attendance-section label { font-weight: 600; color: #1e293b; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
-        .attendance-section input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; }
-        .attendance-section input:focus { border-color: #4f46e5; outline: none; }
-
-        .term-settings { background: #f1f5f9; padding: 15px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
-        .term-settings h4 { font-weight: 700; color: #1e1b4b; margin-bottom: 10px; font-size: 14px; }
-        .term-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; }
-        .term-grid label { font-weight: 600; color: #1e293b; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
-        .term-grid input { padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; }
-        .term-grid input:focus { border-color: #4f46e5; outline: none; }
-
-        @media (max-width: 800px) {
-            body { padding: 0; }
-            #app { height: 100vh; border-radius: 0; max-width: 100%; }
-            #dashboardPage { flex-direction: column; }
-            .sidebar { width: 100%; min-width: unset; height: auto; max-height: 60px; overflow: hidden; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 15px; transition: max-height 0.3s ease; }
-            .sidebar.expanded { max-height: 100vh; overflow-y: auto; }
-            .sidebar .brand { font-size: 16px; }
-            .sidebar .user-info { margin-bottom: 10px; }
-            .sidebar .class-switcher { margin-bottom: 10px; }
-            .sidebar-toggle { display: inline-block; }
-            .sidebar .subject-list, .sidebar .add-subject-row, .sidebar .sidebar-title { display: none; }
-            .sidebar.expanded .subject-list, .sidebar.expanded .add-subject-row, .sidebar.expanded .sidebar-title { display: block; }
-            .main-panel { padding: 15px; }
-            .btn-action { width: 100%; text-align: center; }
-            .score-input { width: 40px !important; font-size: 11px !important; }
-            .photo-container-small { width: 70px !important; height: 70px !important; }
-            #studentSelector { font-size: 14px; }
-            .signature-canvas { max-width: 100%; height: 100px; }
-            .subject-accordion-header { flex-wrap: wrap; gap: 8px; }
-            .subject-accordion-header .subject-actions { width: 100%; justify-content: flex-start; }
-        }
-    </style>
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 700px) {
+      body { padding: 8px; }
+      .report-wrapper { padding: 12px; }
+      .login-card { padding: 20px 16px; }
+      .header-text .school-name { font-size: 18px; }
+      .student-meta { flex-direction: column; align-items: center; text-align: center; }
+      .student-details { text-align: center; }
+      .info-grid { grid-template-columns: 1fr; }
+      .position-summary .pos-item { padding: 0 8px; }
+      .position-summary .pos-value { font-size: 18px; }
+      .signature-section { flex-direction: column; align-items: center; }
+      .signature-box { width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-container"></div>
 
-    <div id="loginPage" class="page active">
-        <div class="login-box">
-            <h2>👨‍🏫 Teacher Login</h2>
-            <p>Select your class from the list below.</p>
-            <input id="loginName" placeholder="👤 Your Full Name" />
-            <select id="loginClassSelect"><option value="">-- Loading Classes --</option></select>
-            <button id="loginBtn">🚀 Enter Dashboard</button>
-            <p id="loginErr" class="login-error"></p>
-        </div>
+  <!-- ===== LOGIN PAGE ===== -->
+  <div id="loginPage" class="page active">
+    <div class="login-card">
+      <h2>📋 Report Card</h2>
+      <p>Enter student name, class, and 8‑digit PIN provided by school.</p>
+      <div class="flex">
+        <input id="studentName" placeholder="👤 Full Name" style="flex:2;" />
+        <select id="classSelect" style="flex:2;">
+          <option value="">-- Class --</option>
+        </select>
+        <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" style="flex:1;" />
+      </div>
+      <button id="checkReportBtn">🔍 View Report Card</button>
+      <p id="reportErr" class="error-text"></p>
+      <p id="authStatus" class="status-text">⏳ Connecting...</p>
     </div>
+  </div>
 
-    <div id="dashboardPage" class="page">
-        <div class="sidebar" id="sidebar">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div class="brand">🏫 <span>Covenant</span> Arrows</div>
-                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
-            </div>
-            <div class="user-info"><span class="name" id="sidebarName">Teacher</span><button class="logout-btn" id="logoutBtn">🚪 Logout</button></div>
-            <div class="class-switcher"><select id="classSelect"><option value="">-- Select Class --</option></select><button id="switchClassBtn">Switch</button></div>
-            
-            <!-- Term Settings (Class-wide) -->
-            <div class="term-settings" id="termSettings">
-                <h4>📅 Term Settings</h4>
-                <div class="term-grid">
-                    <label>Resumption Date <input type="date" id="resumptionDate" /></label>
-                    <label>Closing Date <input type="date" id="closingDate" /></label>
-                    <label>Total Days Opened <input type="number" id="totalDaysOpened" min="1" max="120" value="90" /></label>
-                    <button class="btn-action btn-primary" id="saveTermSettingsBtn" style="padding:8px 16px; font-size:13px; align-self:end;">💾 Save Term</button>
-                </div>
-            </div>
-
-            <div class="sidebar-title"><span>📚 Subjects</span><span id="subjectCount" style="background:#e2e8f0; padding:2px 12px; border-radius:60px; font-size:12px;">0</span></div>
-            <div class="add-subject-row"><input id="newSubjectInput" placeholder="New Subject..." /><button id="addSubjectBtn">➕</button></div>
-            <div class="subject-list" id="subjectListContainer"><div style="color:#94a3b8; text-align:center; padding:20px;">No subjects yet.</div></div>
-        </div>
-
-        <div class="main-panel">
-            <div class="panel-header">
-                <h2>📖 <span id="selectedSubjectName">Select a Subject</span></h2>
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                    <div class="badge-points" id="totalPointsBadge">⭐ Total Points: 0</div>
-                    <div class="sync-status connected" id="syncStatus">
-                        <span class="sync-dot"></span>
-                        <span id="syncText">Live</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="main-tabs">
-                <button class="main-tab active" data-tab="tabQuestions">📝 Questions</button>
-                <button class="main-tab" data-tab="tabPublish">📢 Publish</button>
-                <button class="main-tab" data-tab="tabResults">📊 Results</button>
-                <button class="main-tab" data-tab="tabReports">📋 Reports</button>
-            </div>
-
-            <div id="tabQuestions" class="tab-content active">
-                <div id="questionsContainer"><div class="empty-state"><h3>👈 Select a subject</h3></div></div>
-                <div id="addQuestionArea" style="display:none;" class="add-q-form">
-                    <h4>✏️ Add New Question</h4>
-                    <div class="form-row"><textarea id="qText" placeholder="Type your question here..."></textarea></div>
-                    <div class="form-row"><input id="optA" placeholder="Option A" /><input id="optB" placeholder="Option B" /><input id="optC" placeholder="Option C" /><input id="optD" placeholder="Option D" /></div>
-                    <div class="form-row"><select id="correctAns"><option>A</option><option>B</option><option>C</option><option>D</option></select><input id="qPoints" type="number" placeholder="Points" value="5" min="1" /><button class="btn-add-q" id="addQuestionBtn">➕ Add Question</button></div>
-                    <div class="csv-paste-section">
-                        <h4 style="font-weight:700;">📋 Bulk Paste CSV</h4>
-                        <textarea id="csvPasteArea" placeholder="Paste your CSV here..."></textarea>
-                        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                            <button class="btn-csv upload" id="pasteCsvBtn">⬆️ Upload CSV</button>
-                            <button class="btn-csv download" id="downloadCsvBtn">📥 Template</button>
-                            <button class="btn-outline" id="clearPasteBtn" style="padding:8px 20px; border-radius:60px; border:2px solid #e2e8f0; background:white; font-weight:700;">🗑️ Clear</button>
-                        </div>
-                        <div id="pasteStatus" style="margin-top:8px; font-weight:600;"></div>
-                    </div>
-                    <div class="csv-section"><label>📄 OR Upload CSV File:</label><input type="file" id="csvFileInput" accept=".csv" /><button class="btn-csv upload" id="uploadCsvBtn">⬆️ Upload</button></div>
-                </div>
-            </div>
-
-            <div id="tabPublish" class="tab-content">
-                <div class="card-panel"><h4>📢 Publish Exams</h4><div id="examToggles" class="toggle-group">Loading...</div>
-                    <div class="schedule-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:10px;">
-                        <label>📅 Start <input type="datetime-local" id="startDateTime" /></label>
-                        <label>📅 End <input type="datetime-local" id="endDateTime" /></label>
-                        <label>⏱️ Duration <input type="number" id="durationMinutes" value="30" min="1" max="180" /></label>
-                        <div style="display:flex; gap:8px;"><button class="btn-action btn-warning" id="forceStartBtn" style="flex:1;">⚡ Force</button><button class="btn-action btn-danger" id="stopExamBtn" style="flex:1;">🛑 Stop</button></div>
-                    </div>
-                    <div class="flex-actions" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px;">
-                        <button class="btn-action btn-success" id="publishWithScheduleBtn">📤 Publish</button>
-                        <button class="btn-action btn-outline" id="clearScheduleBtn">🗑️ Clear</button>
-                    </div>
-                    <p id="publishStatus" style="margin-top:10px; font-weight:600;"></p>
-                </div>
-            </div>
-
-            <!-- ===== RESULTS TAB - NEW ACCORDION VIEW ===== -->
-            <div id="tabResults" class="tab-content">
-                <div class="card-panel">
-                    <h4>📊 Student Results</h4>
-                    <div id="resultsContainer"></div>
-                </div>
-            </div>
-
-            <div id="tabReports" class="tab-content">
-                <div class="card-panel">
-                    <h4>📋 Build Report Cards</h4>
-                    <p style="color:#64748b; margin-bottom:15px;">
-                        <span class="student-count-badge" id="studentCountBadge">0 Students</span>
-                        <span style="margin-left:12px;">📚 <span id="subjectCountDisplay">0</span> Subjects</span>
-                    </p>
-                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
-                        <button class="btn-action btn-primary" id="buildReportBtn">📋 Load Students</button>
-                        <button class="btn-action btn-warning" id="cleanOrphanSubjectsBtn" style="font-size:13px; padding:10px 20px;">🧹 Remove Orphan Subjects</button>
-                    </div>
-                    <div id="reportBuilderArea"></div>
-                </div>
-            </div>
-        </div>
+  <!-- ===== REPORT PAGE ===== -->
+  <div id="reportPage" class="page">
+    <div class="report-wrapper">
+      <div class="flex-center no-print" style="margin-bottom:14px;">
+        <button class="btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+        <button class="btn-back" id="backBtn">⬅ Back</button>
+      </div>
+      <div class="report-card" id="reportContainer">
+        <!-- dynamically filled -->
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-    // =============================================================
-    // FIREBASE CONFIG
-    // =============================================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
-        authDomain: "scholars-a8087.firebaseapp.com",
-        projectId: "scholars-a8087",
-        storageBucket: "scholars-a8087.firebasestorage.app",
-        messagingSenderId: "406251764422",
-        appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
-        measurementId: "G-TEFG74LD7J"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    auth.signInAnonymously().catch(e => console.error("Auth failed:", e));
-
-    // =============================================================
-    // STATE
-    // =============================================================
-    let currentUser = { name: '', class: '' };
-    let currentSubjects = [];
-    let selectedSubject = null;
-    let currentQuestions = [];
-    let masterClassList = [];
-    let allStudentResults = {};
-    let reportStudentsList = [];
-    let currentSelectedStudent = null;
-    let studentPositions = {};
-    let isSaving = false;
-    let saveTimeout = null;
-    let classTermSettings = { resumptionDate: '', closingDate: '', totalDaysOpened: 90 };
-
-    // =============================================================
-    // TOAST
-    // =============================================================
-    function showToast(message, type = "success") {
-        const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️' };
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
-        container.appendChild(toast);
-        setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 400); }, 4000);
-    }
-
-    const $ = (id) => document.getElementById(id);
-
-    // =============================================================
-    // LOAD RESULTS - NEW ACCORDION VIEW
-    // =============================================================
-    async function loadResultsWithAccordion(cls) {
-        const container = document.getElementById('resultsContainer');
-        if (!container) return;
-        
-        try {
-            const snap = await db.collection('results').where('class', '==', cls).get();
-            
-            if (snap.empty) {
-                container.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:20px;">No results found.</p>';
-                return;
-            }
-
-            // Group results by subject
-            const subjectGroups = {};
-            snap.forEach(doc => {
-                const data = doc.data();
-                const subject = data.subject || 'Unknown';
-                const studentName = data.studentName || 'Unknown';
-                const score = data.score || 0;
-                
-                if (!subjectGroups[subject]) {
-                    subjectGroups[subject] = [];
-                }
-                subjectGroups[subject].push({ student: studentName, score: score });
-            });
-
-            Object.keys(subjectGroups).forEach(subject => {
-                subjectGroups[subject].sort((a, b) => a.student.localeCompare(b.student));
-            });
-
-            let html = '<div class="results-accordion">';
-            const sortedSubjects = Object.keys(subjectGroups).sort();
-            
-            sortedSubjects.forEach((subject, index) => {
-                const students = subjectGroups[subject];
-                const totalStudents = students.length;
-                const isOpen = index === 0 ? 'open' : '';
-                
-                html += `
-                <div class="subject-accordion">
-                    <div class="subject-accordion-header" data-subject="${subject}">
-                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                            <span class="subject-name">📚 ${subject}</span>
-                            <span class="subject-count">${totalStudents} students</span>
-                        </div>
-                        <div class="subject-actions">
-                            <button class="btn-sm multiply" data-subject="${subject}" data-multiplier="2">×2</button>
-                            <button class="btn-sm multiply" data-subject="${subject}" data-multiplier="3">×3</button>
-                            <button class="btn-sm copy" data-subject="${subject}">📋 Copy</button>
-                            <span class="arrow ${isOpen}">▼</span>
-                        </div>
-                    </div>
-                    <div class="subject-accordion-body ${isOpen}" data-subject="${subject}">
-                        <table>
-                            <thead>
-                                <tr><th>Student</th><th style="text-align:right;">Score</th></tr>
-                            </thead>
-                            <tbody>
-                                ${students.map(s => `
-                                    <tr>
-                                        <td class="student-name">${s.student}</td>
-                                        <td class="score-cell">${s.score}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                `;
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
-
-            document.querySelectorAll('.subject-accordion-header').forEach(header => {
-                header.addEventListener('click', function(e) {
-                    if (e.target.closest('.btn-sm')) return;
-                    const subject = this.dataset.subject;
-                    const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
-                    const arrow = this.querySelector('.arrow');
-                    if (body) { body.classList.toggle('open'); if (arrow) arrow.classList.toggle('open'); }
-                });
-            });
-
-            document.querySelectorAll('.btn-sm.multiply').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const subject = this.dataset.subject;
-                    const multiplier = parseInt(this.dataset.multiplier);
-                    if (!confirm(`Multiply ALL "${subject}" scores by ${multiplier}?`)) return;
-                    multiplySubjectScores(subject, multiplier, cls);
-                });
-            });
-
-            document.querySelectorAll('.btn-sm.copy').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const subject = this.dataset.subject;
-                    copySubjectScores(subject);
-                });
-            });
-
-        } catch (e) {
-            console.error('Load results error:', e);
-            container.innerHTML = `<p style="color:#dc2626;">Error loading results: ${e.message}</p>`;
-        }
-    }
-
-    // =============================================================
-    // MULTIPLY SUBJECT SCORES
-    // =============================================================
-    async function multiplySubjectScores(subject, multiplier, cls) {
-        try {
-            showToast(`⏳ Multiplying ${subject} scores by ${multiplier}...`, 'warning');
-            const snap = await db.collection('results').where('class', '==', cls).where('subject', '==', subject).get();
-            if (snap.empty) { showToast('No scores found.', 'warning'); return; }
-            const batch = db.batch();
-            let count = 0;
-            snap.forEach(doc => {
-                const data = doc.data();
-                const newScore = Math.min(Math.round((data.score || 0) * multiplier), 100);
-                batch.update(doc.ref, { score: newScore });
-                count++;
-            });
-            await batch.commit();
-            showToast(`✅ ${count} scores multiplied by ${multiplier}`, 'success');
-            await loadResultsWithAccordion(cls);
-        } catch (e) {
-            console.error('Multiply error:', e);
-            showToast('❌ Failed to multiply: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // COPY SUBJECT SCORES
-    // =============================================================
-    function copySubjectScores(subject) {
-        const body = document.querySelector(`.subject-accordion-body[data-subject="${subject}"]`);
-        if (!body) return;
-        const rows = body.querySelectorAll('tr');
-        let text = `📊 ${subject} Scores\n`;
-        text += '─'.repeat(40) + '\n';
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length === 2) {
-                const student = cells[0].textContent.trim();
-                const score = cells[1].textContent.trim();
-                text += `${student}: ${score}\n`;
-            }
-        });
-        navigator.clipboard.writeText(text).then(() => {
-            showToast(`📋 Copied ${subject} scores to clipboard!`, 'success');
-        }).catch(() => {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            showToast(`📋 Copied ${subject} scores to clipboard!`, 'success');
-        });
-    }
-
-    // =============================================================
-    // CLOUDINARY
-    // =============================================================
-    const cloudinaryConfig = {
-        cloudName: 'dmbjrohtn',
-        uploadPreset: 'pelumi',
-        folder: 'student_photos',
-        maxFileSize: 5000000,
-        allowedFormats: ['jpg', 'jpeg', 'png', 'webp']
-    };
-
-    function openCloudinaryWidget(studentName, callback) {
-        if (typeof cloudinary === 'undefined') {
-            showToast('❌ Cloudinary not loaded.', 'error');
-            return;
-        }
-        const widget = cloudinary.createUploadWidget({
-            cloudName: cloudinaryConfig.cloudName,
-            uploadPreset: cloudinaryConfig.uploadPreset,
-            folder: `${cloudinaryConfig.folder}/${currentUser.class || 'general'}`,
-            maxFileSize: cloudinaryConfig.maxFileSize,
-            allowedFormats: cloudinaryConfig.allowedFormats,
-            cropping: true,
-            croppingAspectRatio: 1,
-            showSkipCropButton: false,
-            multiple: false,
-            singleUploadAutoClose: true,
-            publicId: `${currentUser.class || 'general'}_${studentName.replace(/\s+/g, '_')}_${Date.now()}`
-        }, (error, result) => {
-            if (error) { showToast('❌ Upload failed.', 'error'); return; }
-            if (result && result.event === "success") {
-                const photoData = {
-                    url: result.info.secure_url,
-                    publicId: result.info.public_id,
-                    uploadedAt: new Date().toISOString()
-                };
-                saveStudentPhoto(studentName, photoData);
-                if (callback) callback(photoData);
-                showToast('📸 Photo uploaded!', 'success');
-            }
-        });
-        widget.open();
-    }
-
-    async function saveStudentPhoto(studentName, photoData) {
-        try {
-            await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).set({
-                className: currentUser.class,
-                studentName: studentName,
-                photoUrl: photoData.url,
-                publicId: photoData.publicId,
-                updatedAt: new Date()
-            }, { merge: true });
-        } catch (e) {}
-    }
-
-    async function getStudentPhoto(studentName) {
-        try {
-            const doc = await db.collection('studentPhotos').doc(`${currentUser.class}_${studentName}`).get();
-            return doc.exists ? doc.data().photoUrl || null : null;
-        } catch (e) { return null; }
-    }
-
-    // =============================================================
-    // SIGNATURE FUNCTIONS
-    // =============================================================
-    function initSignatureCanvas(canvasId, signatureType, saveCallback) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return null;
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0, lastY = 0;
-
-        function resizeCanvas() {
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width || 350;
-            canvas.height = rect.height || 120;
-            loadSignature(signatureType);
-        }
-
-        function startDrawing(e) {
-            e.preventDefault();
-            isDrawing = true;
-            const pos = getPos(e);
-            lastX = pos.x; lastY = pos.y;
-        }
-
-        function draw(e) {
-            e.preventDefault();
-            if (!isDrawing) return;
-            const pos = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.strokeStyle = '#1e1b4b';
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-            lastX = pos.x; lastY = pos.y;
-        }
-
-        function stopDrawing(e) {
-            e.preventDefault();
-            if (isDrawing) {
-                isDrawing = false;
-                saveSignature(signatureType, canvas.toDataURL('image/png'), saveCallback);
-            }
-        }
-
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
-
-        function loadSignature(type) {
-            const sigData = localStorage.getItem(`signature_${currentUser.class}_${type}`);
-            if (sigData) {
-                const img = new Image();
-                img.onload = function() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                };
-                img.src = sigData;
-            }
-        }
-
-        function clearSignature() {
-            if (confirm(`Clear ${signatureType} signature?`)) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                localStorage.removeItem(`signature_${currentUser.class}_${signatureType}`);
-                if (saveCallback) saveCallback(null);
-                showToast('🗑️ Signature cleared', 'warning');
-            }
-        }
-
-        function saveSignature(type, dataUrl, callback) {
-            try {
-                localStorage.setItem(`signature_${currentUser.class}_${type}`, dataUrl);
-                if (callback) callback(dataUrl);
-                showToast('✅ Signature saved!', 'success');
-            } catch (e) {
-                showToast('❌ Failed to save signature', 'error');
-            }
-        }
-
-        function uploadSignature() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const dataUrl = canvas.toDataURL('image/png');
-                        saveSignature(signatureType, dataUrl, saveCallback);
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            };
-            input.click();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 100);
-
-        return {
-            canvas, ctx,
-            clear: clearSignature,
-            upload: uploadSignature,
-            save: function() {
-                const dataUrl = canvas.toDataURL('image/png');
-                saveSignature(signatureType, dataUrl, saveCallback);
-            },
-            load: loadSignature,
-            resize: resizeCanvas
-        };
-    }
-
-    // =============================================================
-    // CORE FUNCTIONS
-    // =============================================================
-    function getRemarkText(avg) {
-        if (avg >= 75) return 'Distinction';
-        if (avg >= 70) return 'Excellent';
-        if (avg >= 65) return 'Very Good';
-        if (avg >= 60) return 'Good';
-        if (avg >= 55) return 'Above Avg';
-        if (avg >= 50) return 'Average';
-        if (avg >= 45) return 'Below Avg';
-        if (avg >= 40) return 'Weak Pass';
-        return 'Fail';
-    }
-
-    function calculateStudentScores() {
-        currentSubjects.forEach(sub => {
-            const f = parseFloat(document.querySelector(`.score-first[data-sub="${sub}"]`)?.value) || 0;
-            const s = parseFloat(document.querySelector(`.score-second[data-sub="${sub}"]`)?.value) || 0;
-            const t = parseFloat(document.querySelector(`.score-third[data-sub="${sub}"]`)?.value) || 0;
-            const scores = [f, s, t].filter(v => v > 0);
-            const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-            const ac = document.querySelector(`.avg-cell[data-sub="${sub}"]`);
-            if (ac) ac.innerText = avg > 0 ? avg.toFixed(1) + '%' : '--';
-            const rc = document.querySelector(`.remark-cell[data-sub="${sub}"]`);
-            if (rc) rc.innerText = avg > 0 ? getRemarkText(avg) : '--';
-        });
-    }
-
-    // =============================================================
-    // TERM SETTINGS
-    // =============================================================
-    async function loadTermSettings(cls) {
-        try {
-            const doc = await db.collection('classSettings').doc(cls).get();
-            if (doc.exists) {
-                const data = doc.data();
-                classTermSettings = {
-                    resumptionDate: data.resumptionDate || '',
-                    closingDate: data.closingDate || '',
-                    totalDaysOpened: data.totalDaysOpened || 90
-                };
-            } else {
-                classTermSettings = { resumptionDate: '', closingDate: '', totalDaysOpened: 90 };
-            }
-            // Update UI
-            const rd = document.getElementById('resumptionDate');
-            const cd = document.getElementById('closingDate');
-            const td = document.getElementById('totalDaysOpened');
-            if (rd) rd.value = classTermSettings.resumptionDate;
-            if (cd) cd.value = classTermSettings.closingDate;
-            if (td) td.value = classTermSettings.totalDaysOpened;
-        } catch (e) {
-            console.error('Load term settings error:', e);
-        }
-    }
-
-    async function saveTermSettings(cls) {
-        const rd = document.getElementById('resumptionDate')?.value || '';
-        const cd = document.getElementById('closingDate')?.value || '';
-        const td = parseInt(document.getElementById('totalDaysOpened')?.value) || 90;
-        try {
-            await db.collection('classSettings').doc(cls).set({
-                resumptionDate: rd,
-                closingDate: cd,
-                totalDaysOpened: td,
-                updatedAt: new Date()
-            }, { merge: true });
-            classTermSettings = { resumptionDate: rd, closingDate: cd, totalDaysOpened: td };
-            showToast('✅ Term settings saved!', 'success');
-        } catch (e) {
-            showToast('❌ Failed to save term settings: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // SAVE CURRENT STUDENT - FIXED VERSION (reads inputs directly)
-    // =============================================================
-    async function saveCurrentStudent(cls) {
-        if (!currentSelectedStudent) return;
-        if (isSaving) return;
-        isSaving = true;
-
-        try {
-            const docRef = db.collection('reportCards').doc(`${cls}_${currentSelectedStudent}`);
-            const docSnap = await docRef.get();
-            const existingData = docSnap.exists ? docSnap.data() : {};
-            const currentVersion = existingData._version || 0;
-
-            const subjectsData = {};
-            currentSubjects.forEach(sub => {
-                const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
-                const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
-                const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-
-                // FIX: Always read value from input, no 'touched' check
-                const firstVal = fi ? parseFloat(fi.value) || 0 : 0;
-                const secondVal = si ? parseFloat(si.value) || 0 : 0;
-                const thirdVal = ti ? parseFloat(ti.value) || 0 : 0;
-
-                const scores = [firstVal, secondVal, thirdVal].filter(v => v > 0);
-                const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-                const remark = getRemarkText(avg);
-
-                subjectsData[sub] = {
-                    firstTerm: firstVal,
-                    secondTerm: secondVal,
-                    thirdTerm: thirdVal,
-                    average: avg,
-                    remark: remark
-                };
-            });
-
-            const affective = {};
-            document.querySelectorAll('.affective-select').forEach(el => affective[el.dataset.trait] = parseInt(el.value) || 3);
-
-            const psychomotor = {};
-            document.querySelectorAll('.psychomotor-select').forEach(el => psychomotor[el.dataset.skill] = parseInt(el.value) || 3);
-
-            const clubs = Array.from(document.querySelectorAll('.club-check:checked')).map(cb => cb.value);
-            const commentary = document.querySelector('.commentary-input')?.value || '';
-            const principal = document.querySelector('.principal-input')?.value || '';
-            const promotion = document.querySelector('.promotion-select')?.value || '';
-
-            // Attendance: read days present from input, compute absent
-            const totalDays = classTermSettings.totalDaysOpened || 90;
-            const daysPresentInput = document.querySelector('.attendance-days-present');
-            const daysPresent = daysPresentInput ? parseInt(daysPresentInput.value) || 0 : 0;
-            const daysAbsent = Math.max(totalDays - daysPresent, 0);
-
-            const teacherSig = localStorage.getItem(`signature_${currentUser.class}_teacher`);
-            const adminSig = localStorage.getItem(`signature_${currentUser.class}_admin`);
-
-            await docRef.set({
-                class: cls,
-                studentName: currentSelectedStudent,
-                term: 'Third',
-                session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
-                schoolName: "COVENANT ARROWS' MODEL SCHOOL",
-                teacherName: currentUser.name,
-                dateOfIssue: new Date().toISOString().slice(0, 10),
-                category: 'Day',
-                attendance: {
-                    daysOpened: totalDays,
-                    daysPresent: daysPresent,
-                    daysAbsent: daysAbsent
-                },
-                resumptionDate: classTermSettings.resumptionDate || '',
-                closingDate: classTermSettings.closingDate || '',
-                subjects: subjectsData,
-                affectiveDomain: affective,
-                psychomotorDomain: psychomotor,
-                extracurriculars: clubs,
-                classTeacherCommentary: commentary,
-                principalRemarks: principal,
-                promotionStatus: promotion,
-                teacherSignature: teacherSig || null,
-                adminSignature: adminSig || null,
-                totalStudents: reportStudentsList.length,
-                _version: currentVersion + 1,
-                updatedAt: new Date()
-            }, { merge: true });
-
-            updateSaveStatus('saved', 'All changes saved');
-
-        } catch (e) {
-            console.error('Save error:', e);
-            showToast('❌ Save failed: ' + e.message, 'error');
-        } finally {
-            isSaving = false;
-        }
-    }
-
-    function updateSaveStatus(status, message) {
-        const text = document.querySelector('.save-status-bar .status-text');
-        if (text) {
-            const colors = { saved: '#059669', saving: '#f59e0b', error: '#dc2626' };
-            text.textContent = message || 'All changes saved';
-            text.style.color = colors[status] || '#64748b';
-        }
-        const timeEl = document.querySelector('.save-status-bar .last-saved');
-        if (timeEl && status !== 'saving') {
-            timeEl.textContent = `Last saved: ${new Date().toLocaleTimeString()}`;
-        }
-    }
-
-    function triggerAutoSave(cls) {
-        clearTimeout(saveTimeout);
-        updateSaveStatus('saving', 'Saving...');
-        saveTimeout = setTimeout(() => { saveCurrentStudent(cls); }, 800);
-    }
-
-    // =============================================================
-    // LOAD STUDENT DATA (includes attendance)
-    // =============================================================
-    async function loadStudentData(student, cls) {
-        const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
-
-        document.querySelectorAll('.score-input').forEach(el => {
-            el.value = '';
-            el.dataset.touched = 'false';
-        });
-        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => el.dataset.touched = 'false');
-        document.querySelectorAll('.club-check').forEach(el => el.checked = false);
-        const ce = document.querySelector('.commentary-input'); if (ce) ce.value = '';
-        const pe = document.querySelector('.principal-input'); if (pe) pe.value = '';
-        const pr = document.querySelector('.promotion-select'); if (pr) pr.value = '';
-
-        // Reset attendance
-        const daysPresentInput = document.querySelector('.attendance-days-present');
-        if (daysPresentInput) daysPresentInput.value = 0;
-
-        if (doc.exists) {
-            const data = doc.data();
-            if (data.subjects) {
-                Object.keys(data.subjects).forEach(sub => {
-                    const sd = data.subjects[sub];
-                    const fi = document.querySelector(`.score-first[data-sub="${sub}"]`);
-                    if (fi) fi.value = sd.firstTerm || '';
-                    const si = document.querySelector(`.score-second[data-sub="${sub}"]`);
-                    if (si) si.value = sd.secondTerm || '';
-                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti) {
-                        ti.value = sd.thirdTerm || '';
-                        ti.style.background = '#fefce8';
-                        ti.style.fontWeight = '700';
-                    }
-                });
-            }
-            if (data.attendance && data.attendance.daysPresent !== undefined) {
-                const dp = document.querySelector('.attendance-days-present');
-                if (dp) dp.value = data.attendance.daysPresent || 0;
-            }
-            if (data.affectiveDomain) {
-                Object.keys(data.affectiveDomain).forEach(t => {
-                    const s = document.querySelector(`.affective-select[data-trait="${t}"]`);
-                    if (s) s.value = data.affectiveDomain[t];
-                });
-            }
-            if (data.psychomotorDomain) {
-                Object.keys(data.psychomotorDomain).forEach(sk => {
-                    const s = document.querySelector(`.psychomotor-select[data-skill="${sk}"]`);
-                    if (s) s.value = data.psychomotorDomain[sk];
-                });
-            }
-            if (data.extracurriculars) {
-                data.extracurriculars.forEach(c => {
-                    const cb = document.querySelector(`.club-check[value="${c}"]`);
-                    if (cb) cb.checked = true;
-                });
-            }
-            if (data.classTeacherCommentary && ce) ce.value = data.classTeacherCommentary;
-            if (data.principalRemarks && pe) pe.value = data.principalRemarks;
-            if (data.promotionStatus && pr) pr.value = data.promotionStatus;
-            if (data.overallPosition) {
-                studentPositions[student] = { position: data.overallPosition, average: data.overallAverage || 0 };
-            }
-        }
-
-        if (allStudentResults[student]) {
-            currentSubjects.forEach(sub => {
-                if (allStudentResults[student][sub] !== undefined) {
-                    const ti = document.querySelector(`.score-third[data-sub="${sub}"]`);
-                    if (ti && (!ti.value || ti.value === '')) {
-                        ti.value = allStudentResults[student][sub];
-                        ti.style.background = '#fef08a';
-                        ti.style.fontWeight = '700';
-                    }
-                }
-            });
-        }
-
-        calculateStudentScores();
-        updateSaveStatus('saved', 'Data loaded');
-    }
-
-    // =============================================================
-    // CALCULATE POSITIONS
-    // =============================================================
-    async function calculateAllPositions(cls) {
-        studentPositions = {};
-        const studentAverages = [];
-
-        if (currentSelectedStudent) {
-            await saveCurrentStudent(cls);
-        }
-
-        for (let student of reportStudentsList) {
-            const doc = await db.collection('reportCards').doc(`${cls}_${student}`).get();
-            if (!doc.exists) continue;
-            const data = doc.data();
-            if (!data.subjects) continue;
-
-            let totalAvg = 0;
-            let count = 0;
-            Object.values(data.subjects).forEach(sd => {
-                const hasScore = (sd.firstTerm > 0) || (sd.secondTerm > 0) || (sd.thirdTerm > 0);
-                if (hasScore && sd.average > 0) {
-                    totalAvg += sd.average;
-                    count++;
-                }
-            });
-            if (count === 0) continue;
-            const overallAvg = totalAvg / count;
-            studentAverages.push({ student, overallAvg });
-        }
-
-        studentAverages.sort((a, b) => b.overallAvg - a.overallAvg);
-
-        const totalStudents = studentAverages.length;
-        let position = 1;
-        for (let i = 0; i < studentAverages.length; i++) {
-            if (i > 0 && studentAverages[i].overallAvg < studentAverages[i - 1].overallAvg) {
-                position = i + 1;
-            }
-            studentPositions[studentAverages[i].student] = {
-                position: position,
-                average: studentAverages[i].overallAvg
-            };
-            await db.collection('reportCards').doc(`${cls}_${studentAverages[i].student}`).update({
-                overallPosition: position,
-                overallAverage: studentAverages[i].overallAvg,
-                totalStudents: totalStudents,
-                _version: firebase.firestore.FieldValue.increment(1)
-            }).catch(() => {});
-        }
-
-        if (currentSelectedStudent) {
-            updatePositionDisplay(currentSelectedStudent);
-        }
-        showToast(`✅ Positions calculated for ${totalStudents} students`, 'success');
-    }
-
-    function updatePositionDisplay(student) {
-        const posDisplay = document.getElementById('positionDisplay');
-        const posNumber = document.getElementById('positionNumber');
-        const posPercentage = document.getElementById('positionPercentage');
-
-        if (studentPositions[student]) {
-            posDisplay.style.display = 'block';
-            const pos = studentPositions[student].position;
-            const total = reportStudentsList.length;
-
-            const suffixes = ['th', 'st', 'nd', 'rd'];
-            const v = pos % 100;
-            const suffix = suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
-            posNumber.innerHTML = pos + '<small style="font-size:20px;">' + suffix + '</small>';
-
-            const percentage = total > 1 ? ((total - pos) / (total - 1)) * 100 : 100;
-            posPercentage.innerText = `📊 Top ${Math.round(percentage)}% of ${total} students`;
-        } else {
-            posDisplay.style.display = 'none';
-        }
-    }
-
-    // =============================================================
-    // REBUILD FUNCTIONS
-    // =============================================================
-    function rebuildSelector() {
-        const selector = document.getElementById('studentSelector');
-        if (!selector) return;
-        const currentVal = selector.value;
-        selector.innerHTML = '<option value="">-- Choose a student --</option>' +
-            reportStudentsList.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
-    }
-
-    function rebuildMergeList() {
-        const container = document.getElementById('mergeStudentList');
-        if (!container) return;
-        container.innerHTML = reportStudentsList.map(s => `
-            <label class="merge-student-checkbox">
-                <input type="checkbox" class="merge-check" value="${s}" /> ${s}
-            </label>
-        `).join('');
-
-        document.querySelectorAll('.merge-check').forEach(cb => {
-            cb.addEventListener('change', () => {
-                const checked = document.querySelectorAll('.merge-check:checked');
-                const target = document.getElementById('mergeTargetSelect');
-                const btn = document.getElementById('executeMergeBtn');
-                const status = document.getElementById('mergeStatus');
-                if (checked.length >= 2) {
-                    target.style.display = 'block';
-                    target.innerHTML = '<option value="">-- Choose which name to keep --</option>' +
-                        Array.from(checked).map(c => `<option value="${c.value}">${c.value}</option>`).join('');
-                    btn.disabled = false;
-                    if (status) {
-                        status.innerText = `✅ ${checked.length} students selected. Choose which name to keep.`;
-                        status.style.color = '#059669';
-                    }
-                } else {
-                    target.style.display = 'none';
-                    btn.disabled = true;
-                    if (status) {
-                        if (checked.length === 1) {
-                            status.innerText = '⚠️ Select at least 2 students to merge.';
-                            status.style.color = '#d97706';
-                        } else {
-                            status.innerText = '';
-                        }
-                    }
-                }
-            });
-        });
-    }
-
-    function updateStudentCount() {
-        const badge = document.getElementById('studentCountBadge');
-        if (badge) {
-            badge.innerText = `${reportStudentsList.length} Students`;
-        }
-    }
-
-    // =============================================================
-    // DELETE, RENAME, MERGE (unchanged)
-    // =============================================================
-    async function deleteStudent(studentName) {
-        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
-        if (!confirm(`⚠️ Delete "${studentName}"? This CANNOT be undone!`)) return;
-        try {
-            await db.collection('reportCards').doc(`${currentUser.class}_${studentName}`).delete();
-            reportStudentsList = reportStudentsList.filter(s => s !== studentName);
-            if (currentSelectedStudent === studentName) {
-                currentSelectedStudent = null;
-                document.getElementById('studentWorkArea').style.display = 'none';
-            }
-            rebuildSelector();
-            rebuildMergeList();
-            updateStudentCount();
-            showToast(`🗑️ Deleted "${studentName}"`, 'warning');
-        } catch (e) {
-            showToast('❌ Delete failed: ' + e.message, 'error');
-        }
-    }
-
-    async function renameStudent(oldName, newName) {
-        if (!newName || newName.trim().length < 2) {
-            showToast('⚠️ Please enter a valid name.', 'error');
-            return;
-        }
-        try {
-            const cls = currentUser.class;
-            const oldDoc = await db.collection('reportCards').doc(`${cls}_${oldName}`).get();
-            if (!oldDoc.exists) { showToast('❌ Student not found.', 'error'); return; }
-            const data = oldDoc.data();
-
-            const newDoc = await db.collection('reportCards').doc(`${cls}_${newName}`).get();
-            if (newDoc.exists) {
-                if (confirm(`"${newName}" already exists. Merge "${oldName}" into "${newName}"?`)) {
-                    await mergeStudents([oldName], newName);
-                    return;
-                }
-                showToast('❌ Name already exists. Use merge instead.', 'error');
-                return;
-            }
-
-            await db.collection('reportCards').doc(`${cls}_${newName}`).set({
-                ...data,
-                studentName: newName,
-                previousName: oldName,
-                renamedAt: new Date(),
-                _version: (data._version || 0) + 1
-            }, { merge: true });
-
-            await db.collection('reportCards').doc(`${cls}_${oldName}`).delete();
-
-            const resultsSnap = await db.collection('results')
-                .where('class', '==', cls)
-                .where('studentName', '==', oldName)
-                .get();
-            const batch = db.batch();
-            resultsSnap.forEach(doc => {
-                batch.update(doc.ref, { studentName: newName, previousName: oldName, renamedAt: new Date() });
-            });
-            await batch.commit();
-
-            reportStudentsList = reportStudentsList.map(s => s === oldName ? newName : s);
-            reportStudentsList.sort();
-            currentSelectedStudent = newName;
-            rebuildSelector();
-            rebuildMergeList();
-            updateStudentCount();
-            await loadStudentData(newName, cls);
-            document.getElementById('selectedStudentName').innerText = newName;
-            showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
-        } catch (e) {
-            console.error('Rename error:', e);
-            showToast('❌ Rename failed: ' + e.message, 'error');
-        }
-    }
-
-    async function mergeStudents(fromNames, toName) {
-        try {
-            const cls = currentUser.class;
-            const toDoc = await db.collection('reportCards').doc(`${cls}_${toName}`).get();
-            let toData = toDoc.exists ? toDoc.data() : { subjects: {} };
-            const toVersion = toData._version || 0;
-
-            for (let fromName of fromNames) {
-                const fromDoc = await db.collection('reportCards').doc(`${cls}_${fromName}`).get();
-                if (!fromDoc.exists) continue;
-                const fromData = fromDoc.data();
-
-                if (fromData.subjects) {
-                    Object.keys(fromData.subjects).forEach(sub => {
-                        const fromSub = fromData.subjects[sub];
-                        if (!toData.subjects[sub]) toData.subjects[sub] = {};
-                        ['firstTerm', 'secondTerm', 'thirdTerm'].forEach(term => {
-                            if (fromSub[term] > (toData.subjects[sub][term] || 0)) {
-                                toData.subjects[sub][term] = fromSub[term];
-                            }
-                        });
-                        const scores = [toData.subjects[sub].firstTerm || 0, toData.subjects[sub].secondTerm || 0, toData.subjects[sub].thirdTerm || 0].filter(v => v > 0);
-                        toData.subjects[sub].average = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-                        toData.subjects[sub].remark = getRemarkText(toData.subjects[sub].average);
-                    });
-                }
-
-                if (fromData.affectiveDomain) {
-                    if (!toData.affectiveDomain) toData.affectiveDomain = {};
-                    Object.keys(fromData.affectiveDomain).forEach(trait => {
-                        toData.affectiveDomain[trait] = Math.max(toData.affectiveDomain[trait] || 0, fromData.affectiveDomain[trait] || 0);
-                    });
-                }
-
-                if (fromData.psychomotorDomain) {
-                    if (!toData.psychomotorDomain) toData.psychomotorDomain = {};
-                    Object.keys(fromData.psychomotorDomain).forEach(skill => {
-                        toData.psychomotorDomain[skill] = Math.max(toData.psychomotorDomain[skill] || 0, fromData.psychomotorDomain[skill] || 0);
-                    });
-                }
-
-                if (fromData.extracurriculars) {
-                    if (!toData.extracurriculars) toData.extracurriculars = [];
-                    const combined = [...new Set([...(toData.extracurriculars || []), ...fromData.extracurriculars])];
-                    toData.extracurriculars = combined;
-                }
-
-                const resultsSnap = await db.collection('results')
-                    .where('class', '==', cls)
-                    .where('studentName', '==', fromName)
-                    .get();
-                const batch = db.batch();
-                resultsSnap.forEach(doc => {
-                    batch.update(doc.ref, { studentName: toName, mergedFrom: fromName, mergedAt: new Date() });
-                });
-                await batch.commit();
-
-                await db.collection('reportCards').doc(`${cls}_${fromName}`).delete();
-                reportStudentsList = reportStudentsList.filter(s => s !== fromName);
-            }
-
-            toData.mergedFrom = [...(toData.mergedFrom || []), ...fromNames];
-            toData.mergedAt = new Date();
-            toData.studentName = toName;
-            toData._version = toVersion + 1;
-
-            await db.collection('reportCards').doc(`${cls}_${toName}`).set(toData, { merge: true });
-
-            if (!reportStudentsList.includes(toName)) reportStudentsList.push(toName);
-            reportStudentsList.sort();
-            currentSelectedStudent = toName;
-            rebuildSelector();
-            rebuildMergeList();
-            updateStudentCount();
-            await loadStudentData(toName, cls);
-            document.getElementById('selectedStudentName').innerText = toName;
-            showToast(`✅ Merged ${fromNames.length} student(s) into "${toName}"!`, 'success');
-        } catch (e) {
-            console.error('Merge error:', e);
-            showToast('❌ Merge failed: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // RECOVER SCORES
-    // =============================================================
-    async function recoverFirstSecondFromThirdTerm() {
-        const cls = currentUser.class;
-        if (!cls) { showToast('⚠️ Login first.', 'error'); return; }
-        showToast('🔄 Recovering first/second term from third term...', 'warning');
-        try {
-            const snap = await db.collection('reportCards').where('class', '==', cls).get();
-            let count = 0;
-            for (let doc of snap.docs) {
-                const data = doc.data();
-                let changed = false;
-                if (data.subjects) {
-                    Object.keys(data.subjects).forEach(sub => {
-                        const subData = data.subjects[sub];
-                        if (subData.thirdTerm && subData.thirdTerm > 0) {
-                            if (!subData.firstTerm || subData.firstTerm === 0) {
-                                subData.firstTerm = subData.thirdTerm;
-                                changed = true;
-                            }
-                            if (!subData.secondTerm || subData.secondTerm === 0) {
-                                subData.secondTerm = subData.thirdTerm;
-                                changed = true;
-                            }
-                            if (changed) {
-                                const scores = [subData.firstTerm || 0, subData.secondTerm || 0, subData.thirdTerm || 0].filter(v => v > 0);
-                                subData.average = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-                                subData.remark = getRemarkText(subData.average);
-                            }
-                        }
-                    });
-                }
-                if (changed) {
-                    await doc.ref.update({
-                        subjects: data.subjects,
-                        _version: firebase.firestore.FieldValue.increment(1),
-                        updatedAt: new Date()
-                    });
-                    count++;
-                }
-            }
-            await calculateAllPositions(cls);
-            if (currentSelectedStudent) { await loadStudentData(currentSelectedStudent, cls); }
-            showToast(`✅ Recovered ${count} student records.`, 'success');
-        } catch (e) {
-            showToast('❌ Recovery failed: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // PUSH TO ADMIN (unchanged)
-    // =============================================================
-    async function pushStudentToAdmin(studentName) {
-        if (!studentName) { showToast('⚠️ No student selected.', 'error'); return; }
-        if (!confirm(`📤 Push "${studentName}" to Admin?`)) return;
-        try {
-            await saveCurrentStudent(currentUser.class);
-            const docRef = db.collection('reportCards').doc(`${currentUser.class}_${studentName}`);
-            const doc = await docRef.get();
-            const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
-            await docRef.update({
-                pushedToAdmin: true,
-                pushedAt: new Date(),
-                pushedBy: currentUser.name,
-                approved: false,
-                _version: currentVersion + 1
-            });
-            showToast(`✅ "${studentName}" pushed to Admin!`, 'push');
-        } catch (e) {
-            showToast('❌ Push failed: ' + e.message, 'error');
-        }
-    }
-
-    async function pushAllStudentsToAdmin() {
-        if (reportStudentsList.length === 0) { showToast('⚠️ No students to push.', 'error'); return; }
-        if (!confirm(`📤 Push ALL ${reportStudentsList.length} students to Admin?`)) return;
-        const progressEl = document.getElementById('pushProgress');
-        const progressFill = document.getElementById('pushProgressFill');
-        const progressStatus = document.getElementById('pushStatus');
-        if (progressEl) progressEl.style.display = 'block';
-        if (progressFill) progressFill.style.width = '0%';
-        if (progressStatus) progressStatus.innerText = '⏳ Starting...';
-        let pushed = 0;
-        const total = reportStudentsList.length;
-        try {
-            if (currentSelectedStudent) { await saveCurrentStudent(currentUser.class); }
-            for (let i = 0; i < total; i++) {
-                const student = reportStudentsList[i];
-                try {
-                    const docRef = db.collection('reportCards').doc(`${currentUser.class}_${student}`);
-                    const doc = await docRef.get();
-                    const currentVersion = doc.exists ? (doc.data()._version || 0) : 0;
-                    await docRef.update({
-                        pushedToAdmin: true,
-                        pushedAt: new Date(),
-                        pushedBy: currentUser.name,
-                        approved: false,
-                        _version: currentVersion + 1
-                    });
-                    pushed++;
-                    const progress = Math.round(((i + 1) / total) * 100);
-                    if (progressFill) progressFill.style.width = progress + '%';
-                    if (progressStatus) progressStatus.innerText = `📤 ${pushed}/${total} pushed`;
-                } catch (e) { console.error(`Failed to push ${student}:`, e); }
-            }
-            if (pushed === total) {
-                showToast(`✅ All ${pushed} students pushed to Admin!`, 'push');
-                if (progressStatus) progressStatus.innerText = `✅ All ${pushed} students pushed successfully!`;
-            } else {
-                showToast(`⚠️ ${pushed}/${total} pushed. Some failed.`, 'warning');
-            }
-            setTimeout(() => { if (progressEl) progressEl.style.display = 'none'; }, 3000);
-        } catch (e) {
-            showToast('❌ Push all failed: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // LOAD STUDENTS FROM RESULTS
-    // =============================================================
-    async function loadStudentsFromResults(cls) {
-        const area = document.getElementById('reportBuilderArea');
-        area.innerHTML = `<div style="text-align:center; padding:20px;">⏳ Loading students...</div>`;
-
-        try {
-            const reportSnap = await db.collection('reportCards').where('class', '==', cls).get();
-            const existingStudents = [];
-            reportSnap.forEach(doc => {
-                const data = doc.data();
-                if (data.studentName) { existingStudents.push(data.studentName); }
-            });
-
-            const resultsSnap = await db.collection('results').where('class', '==', cls).get();
-            if (resultsSnap.empty && existingStudents.length === 0) {
-                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No results found.</div>`;
-                return;
-            }
-
-            const rawEntries = [];
-            resultsSnap.forEach(d => {
-                const data = d.data();
-                rawEntries.push({
-                    originalName: (data.studentName || '').trim(),
-                    subject: data.subject,
-                    score: data.score || 0
-                });
-            });
-
-            const groups = groupSimilarNames(rawEntries);
-            const mergedResults = {};
-            const canonicalNames = [];
-
-            groups.forEach((entries, canonicalName) => {
-                mergedResults[canonicalName] = {};
-                entries.forEach(entry => {
-                    const existing = mergedResults[canonicalName][entry.subject];
-                    if (!existing || entry.score > existing) {
-                        mergedResults[canonicalName][entry.subject] = entry.score;
-                    }
-                });
-                canonicalNames.push(canonicalName);
-            });
-
-            allStudentResults = mergedResults;
-
-            const combinedList = [...new Set([...existingStudents, ...canonicalNames])];
-            reportStudentsList = combinedList
-                .filter(name => name.trim().split(/\s+/).length >= 2 && name.length > 5)
-                .sort();
-
-            updateStudentCount();
-
-            if (reportStudentsList.length === 0) {
-                area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">No valid students found.</div>`;
-                return;
-            }
-
-            buildReportBuilderUI(cls);
-            showToast(`✅ ${reportStudentsList.length} students loaded`, 'success');
-
-        } catch (e) {
-            console.error('Load students error:', e);
-            area.innerHTML = `<div style="text-align:center; padding:20px; color:#dc2626;">Error: ${e.message}</div>`;
-        }
-    }
-
-    // =============================================================
-    // NAME DEDUPLICATION (unchanged)
-    // =============================================================
-    function normalizeNameForGrouping(name) {
-        return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^a-z\s]/g, '');
-    }
-
-    function levenshteinDistance(a, b) {
-        const matrix = [];
-        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-        for (let i = 1; i <= b.length; i++) {
-            for (let j = 1; j <= a.length; j++) {
-                matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1) ?
-                    matrix[i - 1][j - 1] :
-                    Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
-            }
-        }
-        return matrix[b.length][a.length];
-    }
-
-    function areNamesSamePerson(name1, name2) {
-        const n1 = normalizeNameForGrouping(name1);
-        const n2 = normalizeNameForGrouping(name2);
-        if (n1 === n2) return true;
-
-        const words1 = n1.split(' ').sort();
-        const words2 = n2.split(' ').sort();
-        if (words1.join(' ') === words2.join(' ')) return false;
-        if (n1.includes(n2) || n2.includes(n1)) return true;
-
-        const set1 = new Set(words1);
-        const set2 = new Set(words2);
-        let matches = 0;
-        set1.forEach(w => { if (set2.has(w)) matches++; });
-        const maxLen = Math.max(set1.size, set2.size);
-        const overlapRatio = matches / maxLen;
-
-        if (overlapRatio >= 0.7 && Math.abs(words1.join('').length - words2.join('').length) < 3) return true;
-        if (overlapRatio >= 0.5 && matches >= 1) {
-            if (levenshteinDistance(words1.join(''), words2.join('')) <= 2) return true;
-        }
-        return false;
-    }
-
-    function pickBestName(names) {
-        if (names.length === 1) return names[0];
-        return names.sort((a, b) => {
-            const aSpace = a.includes(' ') ? 1 : 0;
-            const bSpace = b.includes(' ') ? 1 : 0;
-            if (aSpace !== bSpace) return bSpace - aSpace;
-            if (a.length !== b.length) return b.length - a.length;
-            return ((b.match(/[A-Z]/g) || []).length) - ((a.match(/[A-Z]/g) || []).length);
-        })[0];
-    }
-
-    function groupSimilarNames(rawEntries) {
-        const allNames = [...new Set(rawEntries.map(e => e.originalName))].filter(n => n.length > 0);
-        const groups = new Map();
-        const assigned = new Set();
-
-        allNames.forEach(name => {
-            if (assigned.has(name)) return;
-            const similarNames = allNames.filter(other => {
-                if (assigned.has(other)) return false;
-                return areNamesSamePerson(name, other);
-            });
-            const canonicalName = pickBestName(similarNames);
-            const groupEntries = [];
-            similarNames.forEach(sn => {
-                assigned.add(sn);
-                groupEntries.push(...rawEntries.filter(e => e.originalName === sn));
-            });
-            groups.set(canonicalName, groupEntries);
-        });
-        return groups;
-    }
-
-    // =============================================================
-    // ORPHAN SUBJECT CLEANUP
-    // =============================================================
-    async function removeOrphanSubjects() {
-        const cls = currentUser.class;
-        if (!cls) { showToast('⚠️ Please login first.', 'error'); return; }
-        if (!confirm(`Remove all subjects from students that are not in the class subject list? This will affect all students in ${cls}.`)) return;
-
-        try {
-            const studentsSnap = await db.collection('reportCards').where('class', '==', cls).get();
-            if (studentsSnap.empty) { showToast('ℹ️ No students found.', 'warning'); return; }
-
-            const allowedSubjects = new Set(currentSubjects.map(s => s.trim()));
-            let totalStudents = 0;
-            let totalRemoved = 0;
-            const batch = db.batch();
-
-            studentsSnap.forEach(doc => {
-                const data = doc.data();
-                const subjects = data.subjects || {};
-                let changed = false;
-                const newSubjects = {};
-                for (const [key, value] of Object.entries(subjects)) {
-                    if (allowedSubjects.has(key)) {
-                        newSubjects[key] = value;
-                    } else {
-                        changed = true;
-                        totalRemoved++;
-                        console.log(`🗑️ Removing orphan subject "${key}" from ${data.studentName}`);
-                    }
-                }
-                if (changed) {
-                    batch.update(doc.ref, {
-                        subjects: newSubjects,
-                        _version: firebase.firestore.FieldValue.increment(1),
-                        updatedAt: new Date()
-                    });
-                    totalStudents++;
-                }
-            });
-
-            if (totalStudents === 0) {
-                showToast('✅ No orphan subjects found.', 'success');
-                return;
-            }
-
-            await batch.commit();
-            showToast(`✅ Removed orphan subjects from ${totalStudents} student(s) (${totalRemoved} subjects removed).`, 'success');
-            // Reload current student if any
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, cls);
-            }
-        } catch (e) {
-            console.error('Cleanup error:', e);
-            showToast('❌ Failed to clean up: ' + e.message, 'error');
-        }
-    }
-
-    // =============================================================
-    // BUILD REPORT BUILDER UI (includes attendance fields)
-    // =============================================================
-    function buildReportBuilderUI(cls) {
-        const area = document.getElementById('reportBuilderArea');
-        area.innerHTML = `
-        <div class="report-builder-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
-                <div style="font-weight:800; font-size:18px; color:#1e1b4b;">📋 ${cls} - Report Cards</div>
-                <span class="student-count-badge">${reportStudentsList.length} Students</span>
-            </div>
-
-            <div class="save-status-bar">
-                <span class="status-icon">💾</span>
-                <span class="status-text" style="color:#059669;">All changes saved</span>
-                <span class="last-saved">Last saved: Just now</span>
-            </div>
-
-            <div class="push-progress" id="pushProgress">
-                <div class="push-title">📤 Pushing to Admin</div>
-                <div class="push-bar"><div class="push-bar-fill" id="pushProgressFill"></div></div>
-                <div class="push-status" id="pushStatus">⏳ Starting...</div>
-            </div>
-
-            <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:8px;">
-                <button class="btn-action btn-warning" id="recoverBtn" style="font-size:12px; padding:8px 16px;">🔄 Recover First/Second Term</button>
-            </div>
-
-            <!-- Signatures -->
-            <div class="signature-section">
-                <div class="signature-title">✍️ Teacher Signature (${currentUser.name})</div>
-                <canvas id="teacherSignatureCanvas" class="signature-canvas"></canvas>
-                <div class="signature-actions">
-                    <button class="btn-sm clear" onclick="window.teacherSig?.clear()">🗑️ Clear</button>
-                    <button class="btn-sm save" onclick="window.teacherSig?.save()">💾 Save</button>
-                    <button class="btn-sm upload" onclick="window.teacherSig?.upload()">📤 Upload</button>
-                </div>
-                <small style="color:#94a3b8; font-size:11px;">Draw or upload signature. Auto-saves when you stop.</small>
-            </div>
-
-            <div class="signature-section">
-                <div class="signature-title">✍️ Admin Signature</div>
-                <canvas id="adminSignatureCanvas" class="signature-canvas"></canvas>
-                <div class="signature-actions">
-                    <button class="btn-sm clear" onclick="window.adminSig?.clear()">🗑️ Clear</button>
-                    <button class="btn-sm save" onclick="window.adminSig?.save()">💾 Save</button>
-                    <button class="btn-sm upload" onclick="window.adminSig?.upload()">📤 Upload</button>
-                </div>
-                <small style="color:#94a3b8; font-size:11px;">Draw or upload admin signature. Auto-saves when you stop.</small>
-            </div>
-
-            <!-- Merge Section -->
-            <div class="merge-section" id="mergeSection">
-                <div class="merge-title">🔀 Merge Duplicate Students</div>
-                <p style="font-size:12px; color:#64748b; margin-bottom:8px;">Select 2+ students to merge.</p>
-                <div id="mergeStudentList" style="max-height:200px; overflow-y:auto; margin-bottom:8px;">
-                    ${reportStudentsList.map(s => `
-                        <label class="merge-student-checkbox">
-                            <input type="checkbox" class="merge-check" value="${s}" /> ${s}
-                        </label>
-                    `).join('')}
-                </div>
-                <select class="merge-target-select" id="mergeTargetSelect" style="display:none;">
-                    <option value="">-- Choose which name to keep --</option>
-                </select>
-                <button class="merge-btn" id="executeMergeBtn" disabled>🔀 Merge Selected Students</button>
-                <p id="mergeStatus" style="font-size:12px; color:#64748b; margin-top:6px;"></p>
-            </div>
-
-            <!-- Student Selector -->
-            <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                <label class="section-label">👤 Select Student:</label>
-                <select id="studentSelector" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:60px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; background:white;">
-                    <option value="">-- Choose a student --</option>
-                    ${reportStudentsList.map(s => `<option value="${s}">${s}</option>`).join('')}
-                </select>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <input id="newStudentInput" placeholder="➕ Add student manually..." style="flex:1; padding:10px 14px; border:2px solid #e2e8f0; border-radius:60px; font-size:13px; font-family:'Inter',sans-serif;" />
-                    <button id="addStudentBtn" style="padding:10px 16px; background:#10b981; color:white; border:none; border-radius:60px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; white-space:nowrap;">➕ Add</button>
-                </div>
-                <div id="nameSuggestions" style="margin-top:8px;"></div>
-            </div>
-
-            <!-- Student Work Area -->
-            <div id="studentWorkArea" style="display:none;">
-                <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap; margin-bottom:15px; padding:15px; background:#f8fafc; border-radius:16px; border:1px solid #e2e8f0;">
-                    <div class="photo-container-small" style="width:90px; height:90px; position:relative;">
-                        <span style="font-size:40px;">👤</span>
-                        <img class="photo-img-small" src="" style="display:none; width:100%; height:100%; object-fit:cover;" />
-                    </div>
-                    <div style="flex:1; min-width:150px;">
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                            <span style="font-size:18px; font-weight:800;" id="selectedStudentName">--</span>
-                            <button id="editStudentNameBtn" style="background:none;border:none;font-size:16px;cursor:pointer;color:#4f46e5;" title="Edit student name">✏️</button>
-                        </div>
-                        <div style="font-size:13px; color:#64748b;">${cls} | ${currentUser.name}</div>
-                        <button id="uploadPhotoBtn" style="margin-top:6px; padding:6px 14px; background:white; border:2px solid #4f46e5; color:#4f46e5; border-radius:30px; font-weight:700; font-size:12px; cursor:pointer;">📷 Photo</button>
-                    </div>
-                </div>
-
-                <div class="position-card" id="positionDisplay">
-                    <div class="pos-label">Overall Position</div>
-                    <div class="pos-number" id="positionNumber">--</div>
-                    <div style="font-size:13px; color:#64748b;">out of ${reportStudentsList.length} students</div>
-                    <div class="pos-percentage" id="positionPercentage"></div>
-                </div>
-
-                <!-- Subject Scores -->
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📖 Subject Scores</div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead><tr style="background:#f1f5f9;"><th>Subject</th><th>1st</th><th>2nd</th><th>3rd</th><th>Avg%</th><th>Remark</th></tr></thead>
-                            <tbody>
-                                ${currentSubjects.map(sub => `
-                                    <tr>
-                                        <td style="font-weight:600;">${sub}</td>
-                                        <td><input type="number" class="score-input score-first" data-sub="${sub}" min="0" max="100" placeholder="-" /></td>
-                                        <td><input type="number" class="score-input score-second" data-sub="${sub}" min="0" max="100" placeholder="-" /></td>
-                                        <td><input type="number" class="score-input score-third" data-sub="${sub}" min="0" max="100" placeholder="-" style="background:#fefce8; font-weight:700;" /></td>
-                                        <td class="avg-cell" data-sub="${sub}" style="font-weight:700;">--</td>
-                                        <td class="remark-cell" data-sub="${sub}" style="font-size:11px; font-weight:600;">--</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Attendance -->
-                <div class="attendance-section">
-                    <label>📅 Total Days Opened <span style="font-weight:400; color:#64748b;">(from Term Settings)</span>
-                        <input type="number" value="${classTermSettings.totalDaysOpened}" disabled style="background:#e2e8f0;" />
-                    </label>
-                    <label>✅ Days Present
-                        <input type="number" class="attendance-days-present" min="0" max="${classTermSettings.totalDaysOpened}" value="0" />
-                    </label>
-                    <label>❌ Days Absent
-                        <input type="number" id="attendance-days-absent" value="0" disabled style="background:#e2e8f0;" />
-                    </label>
-                    <div style="grid-column:1/-1; font-size:12px; color:#64748b;">
-                        Resumption: ${classTermSettings.resumptionDate || 'Not set'} | Closing: ${classTermSettings.closingDate || 'Not set'}
-                    </div>
-                </div>
-
-                <!-- Affective, Psychomotor, Clubs, Comments, etc. (unchanged) -->
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⭐ Affective Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Attentiveness','Punctuality','Neatness','Honesty','Respectfulness','Diligence','Leadership','Self-Control','Cooperation','Politeness','Obedience'].map(t => `
-                            <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
-                                <span style="font-size:11px; font-weight:600;">${t}</span>
-                                <select class="affective-select" data-trait="${t}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;">
-                                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
-                                </select>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">🤸 Psychomotor Domain</div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:6px;">
-                        ${['Handwriting','Drawing','Sports','Crafts','Music','Verbal','Fitness','Creative'].map(s => `
-                            <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
-                                <span style="font-size:11px; font-weight:600;">${s}</span>
-                                <select class="psychomotor-select" data-skill="${s}" style="padding:2px 4px; border-radius:20px; border:1px solid #e2e8f0; font-size:11px;">
-                                    <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
-                                </select>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">⚽ Clubs</div>
-                    <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                        ${['JETS','Debating','Press','Red Cross','Scout','Brass Band','Drama','Road Safety','Farmers','Home Makers','Choral'].map(c => `
-                            <label style="display:flex; align-items:center; gap:3px; padding:5px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:30px; font-size:11px; cursor:pointer;">
-                                <input type="checkbox" class="club-check" value="${c}" style="accent-color:#4f46e5;" /> ${c}
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📝 Teacher's Comment</div>
-                    <textarea class="commentary-input" placeholder="Comment..." style="width:100%; min-height:70px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">👨‍💼 Principal's Remark</div>
-                    <textarea class="principal-input" placeholder="Remark..." style="width:100%; min-height:60px; padding:10px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif; font-size:13px; resize:vertical;"></textarea>
-                </div>
-
-                <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:15px; margin-bottom:15px;">
-                    <div class="section-label">📈 Promotion</div>
-                    <select class="promotion-select" style="width:100%; padding:10px; border:2px solid #e2e8f0; border-radius:60px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif;">
-                        <option value="">-- Select --</option>
-                        <option value="Promoted">✅ Promoted</option>
-                        <option value="Not Promoted">❌ Not Promoted</option>
-                        <option value="Probation">⚠️ Probation</option>
-                    </select>
-                </div>
-
-                <div style="display:flex; gap:8px; flex-wrap:wrap; padding-top:15px; border-top:2px solid #e2e8f0;">
-                    <button class="btn-action btn-success" id="saveStudentBtn" style="font-size:13px; padding:10px 20px;">💾 Save Now</button>
-                    <button class="btn-action btn-push" id="pushStudentBtn" style="font-size:13px; padding:10px 20px;">📤 Push to Admin</button>
-                    <button class="btn-action btn-danger" id="deleteStudentBtn" style="font-size:13px; padding:10px 20px;">🗑️ Delete Student</button>
-                    <button class="btn-action btn-outline" id="nextStudentBtn" style="font-size:13px; padding:10px 20px;">Next ➡</button>
-                </div>
-            </div>
-
-            <div style="margin-top:20px; padding-top:15px; border-top:2px solid #e2e8f0; display:flex; flex-wrap:wrap; gap:8px;">
-                <button class="btn-action btn-primary" id="calculatePositionsBtn" style="font-size:13px; padding:10px 20px;">🏆 Calculate Positions</button>
-                <button class="btn-action btn-push-all" id="pushAllBtn" style="font-size:13px; padding:10px 20px;">📤 Push All to Admin</button>
-            </div>
-        </div>`;
-
-        // =============================================================
-        // ATTACH EVENTS
-        // =============================================================
-
-        let teacherSig = null;
-        let adminSig = null;
-
-        function onSignatureSaved(dataUrl) {
-            if (currentSelectedStudent) {
-                saveCurrentStudent(currentUser.class);
-            }
-        }
-
-        teacherSig = initSignatureCanvas('teacherSignatureCanvas', 'teacher', onSignatureSaved);
-        adminSig = initSignatureCanvas('adminSignatureCanvas', 'admin', onSignatureSaved);
-
-        window.teacherSig = teacherSig;
-        window.adminSig = adminSig;
-
-        document.getElementById('recoverBtn')?.addEventListener('click', async () => {
-            await recoverFirstSecondFromThirdTerm();
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, cls);
-            }
-        });
-
-        document.getElementById('deleteStudentBtn')?.addEventListener('click', () => {
-            if (currentSelectedStudent) deleteStudent(currentSelectedStudent);
-        });
-
-        document.getElementById('pushStudentBtn')?.addEventListener('click', async () => {
-            await pushStudentToAdmin(currentSelectedStudent);
-        });
-
-        document.getElementById('pushAllBtn')?.addEventListener('click', async () => {
-            await pushAllStudentsToAdmin();
-        });
-
-        document.getElementById('editStudentNameBtn')?.addEventListener('click', async () => {
-            if (!currentSelectedStudent) return;
-            const newName = prompt('✏️ Edit student name:', currentSelectedStudent);
-            if (newName && newName.trim() && newName.trim() !== currentSelectedStudent) {
-                await renameStudent(currentSelectedStudent, newName.trim());
-            }
-        });
-
-        document.getElementById('executeMergeBtn')?.addEventListener('click', async () => {
-            const checked = document.querySelectorAll('.merge-check:checked');
-            const checkedNames = Array.from(checked).map(c => c.value);
-            const targetName = document.getElementById('mergeTargetSelect')?.value;
-            if (!targetName || checkedNames.length < 2) {
-                showToast('⚠️ Select at least 2 students and choose a target name.', 'error');
-                return;
-            }
-            const otherNames = checkedNames.filter(n => n !== targetName);
-            if (!confirm(`Merge ${otherNames.length} student(s) into "${targetName}"?`)) return;
-            await mergeStudents(otherNames, targetName);
-        });
-
-        const selector = document.getElementById('studentSelector');
-        const workArea = document.getElementById('studentWorkArea');
-        const newStudentInput = document.getElementById('newStudentInput');
-        const suggestionsDiv = document.getElementById('nameSuggestions');
-
-        const photoContainer = document.querySelector('.photo-container-small');
-        const uploadBtn = document.getElementById('uploadPhotoBtn');
-
-        async function handlePhotoUpload() {
-            if (!currentSelectedStudent) {
-                showToast('⚠️ Please select a student first.', 'warning');
-                return;
-            }
-            openCloudinaryWidget(currentSelectedStudent, (data) => {
-                updatePhotoDisplay(data.url);
-            });
-        }
-
-        if (photoContainer) photoContainer.addEventListener('click', handlePhotoUpload);
-        if (uploadBtn) uploadBtn.addEventListener('click', handlePhotoUpload);
-
-        async function loadPhotoForStudent(student) {
-            if (!student) return;
-            const photoUrl = await getStudentPhoto(student);
-            updatePhotoDisplay(photoUrl);
-        }
-
-        function updatePhotoDisplay(photoUrl) {
-            const placeholder = document.querySelector('.photo-container-small span');
-            const img = document.querySelector('.photo-img-small');
-            if (photoUrl && img) {
-                img.src = photoUrl;
-                img.style.display = 'block';
-                if (placeholder) placeholder.style.display = 'none';
-            } else if (img) {
-                img.style.display = 'none';
-                if (placeholder) placeholder.style.display = 'block';
-            }
-        }
-
-        newStudentInput?.addEventListener('input', async () => {
-            const query = newStudentInput.value.trim().toLowerCase();
-            if (query.length < 2) { suggestionsDiv.innerHTML = ''; return; }
-            const snap = await db.collection('reportCards').where('class', '==', cls).get();
-            const matches = [];
-            snap.forEach(d => {
-                const name = d.data().studentName;
-                if (name && name.toLowerCase().includes(query) && !reportStudentsList.includes(name)) matches.push(name);
-            });
-            const uniqueMatches = [...new Set(matches)];
-            if (uniqueMatches.length > 0) {
-                suggestionsDiv.innerHTML = uniqueMatches.slice(0, 5).map(n =>
-                    `<div class="suggestion-item" data-name="${n}">📋 ${n} (existing)</div>`
-                ).join('');
-                document.querySelectorAll('.suggestion-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const name = item.dataset.name;
-                        if (!reportStudentsList.includes(name)) {
-                            reportStudentsList.push(name);
-                            reportStudentsList.sort();
-                        }
-                        rebuildSelector();
-                        rebuildMergeList();
-                        updateStudentCount();
-                        selector.value = name;
-                        newStudentInput.value = '';
-                        suggestionsDiv.innerHTML = '';
-                        selector.dispatchEvent(new Event('change'));
-                        showToast(`📋 Loaded: ${name}`, 'success');
-                    });
-                });
-            } else {
-                suggestionsDiv.innerHTML = query.length >= 3 ?
-                    `<div class="suggestion-item" style="background:#fefce8; border-color:#f59e0b;">🆕 Will add as new student</div>` : '';
-            }
-        });
-
-        document.getElementById('addStudentBtn')?.addEventListener('click', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const name = newStudentInput?.value.trim();
-            if (!name) { showToast('⚠️ Please enter a name.', 'warning'); return; }
-            if (name.split(/\s+/).length < 2) { showToast('⚠️ Please enter first AND last name.', 'warning'); return; }
-            try {
-                const cls = currentUser.class;
-                const docRef = db.collection('reportCards').doc(`${cls}_${name}`);
-                const doc = await docRef.get();
-                if (doc.exists) {
-                    showToast(`⚠️ "${name}" already exists.`, 'warning');
-                    if (!reportStudentsList.includes(name)) {
-                        reportStudentsList.push(name);
-                        reportStudentsList.sort();
-                        rebuildSelector();
-                        rebuildMergeList();
-                        updateStudentCount();
-                        selector.value = name;
-                        selector.dispatchEvent(new Event('change'));
-                    }
-                    newStudentInput.value = '';
-                    suggestionsDiv.innerHTML = '';
-                    return;
-                }
-                await docRef.set({
-                    class: cls,
-                    studentName: name,
-                    subjects: {},
-                    term: 'Third',
-                    session: `${new Date().getFullYear()}/${new Date().getFullYear()+1}`,
-                    schoolName: "COVENANT ARROWS' MODEL SCHOOL",
-                    teacherName: currentUser.name,
-                    createdAt: new Date(),
-                    _version: 1
-                });
-                if (!reportStudentsList.includes(name)) {
-                    reportStudentsList.push(name);
-                    reportStudentsList.sort();
-                }
-                rebuildSelector();
-                rebuildMergeList();
-                updateStudentCount();
-                selector.value = name;
-                newStudentInput.value = '';
-                suggestionsDiv.innerHTML = '';
-                selector.dispatchEvent(new Event('change'));
-                showToast(`✅ Added "${name}" successfully!`, 'success');
-            } catch (e) {
-                console.error('Add student error:', e);
-                showToast('❌ Failed to add student: ' + e.message, 'error');
-            }
-        });
-
-        selector?.addEventListener('change', async () => {
-            const student = selector.value;
-            if (currentSelectedStudent) {
-                await saveCurrentStudent(cls);
-            }
-            if (!student) {
-                workArea.style.display = 'none';
-                currentSelectedStudent = null;
-                return;
-            }
-            currentSelectedStudent = student;
-            workArea.style.display = 'block';
-            document.getElementById('selectedStudentName').innerText = student;
-            await loadStudentData(student, cls);
-            await loadPhotoForStudent(student);
-            updatePositionDisplay(student);
-        });
-
-        document.getElementById('saveStudentBtn')?.addEventListener('click', async () => {
-            await saveCurrentStudent(cls);
-            showToast('✅ Saved!', 'success');
-        });
-
-        document.getElementById('nextStudentBtn')?.addEventListener('click', async () => {
-            await saveCurrentStudent(cls);
-            const idx = reportStudentsList.indexOf(currentSelectedStudent);
-            if (idx < reportStudentsList.length - 1) {
-                selector.value = reportStudentsList[idx + 1];
-                selector.dispatchEvent(new Event('change'));
-            } else {
-                showToast('✅ Last student!', 'warning');
-            }
-        });
-
-        document.getElementById('calculatePositionsBtn')?.addEventListener('click', async () => {
-            const btn = document.getElementById('calculatePositionsBtn');
-            btn.innerText = '⏳ Calculating...';
-            btn.disabled = true;
-            await saveCurrentStudent(cls);
-            await calculateAllPositions(cls);
-            btn.innerText = '🏆 Calculate Positions';
-            btn.disabled = false;
-            if (currentSelectedStudent) {
-                updatePositionDisplay(currentSelectedStudent);
-            }
-        });
-
-        document.querySelectorAll('.score-input').forEach(input => {
-            input.addEventListener('focus', () => { input.dataset.touched = 'true'; });
-            input.addEventListener('input', () => {
-                input.dataset.touched = 'true';
-                calculateStudentScores();
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-            input.addEventListener('blur', () => { saveCurrentStudent(cls); });
-        });
-
-        document.querySelectorAll('.affective-select, .psychomotor-select').forEach(el => {
-            el.addEventListener('change', () => {
-                el.dataset.touched = 'true';
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-        });
-
-        document.querySelectorAll('.club-check, .commentary-input, .principal-input, .promotion-select, .attendance-days-present').forEach(el => {
-            el.addEventListener('input', () => {
-                updateSaveStatus('saving', 'Saving...');
-                triggerAutoSave(cls);
-            });
-            el.addEventListener('blur', () => { saveCurrentStudent(cls); });
-        });
-
-        // Update days absent automatically when days present changes
-        const daysPresentInput = document.querySelector('.attendance-days-present');
-        const daysAbsentInput = document.getElementById('attendance-days-absent');
-        if (daysPresentInput && daysAbsentInput) {
-            daysPresentInput.addEventListener('input', () => {
-                const total = classTermSettings.totalDaysOpened || 90;
-                const present = parseInt(daysPresentInput.value) || 0;
-                const absent = Math.max(total - present, 0);
-                daysAbsentInput.value = absent;
-            });
-        }
-
-        rebuildMergeList();
-        updateStudentCount();
-    }
-
-    // =============================================================
-    // LOAD MASTER CLASS LIST
-    // =============================================================
-    async function loadMasterClassList() {
-        try {
-            const doc = await db.collection('classList').doc('allClasses').get();
-            masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
-            if (!doc.exists) await db.collection('classList').doc('allClasses').set({ classes: masterClassList });
-            populateDropdowns();
-        } catch (e) {
-            masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5', 'Basic 6'];
-            populateDropdowns();
-        }
-    }
-
-    function populateDropdowns() {
-        const loginSelect = $('loginClassSelect');
-        loginSelect.innerHTML = '<option value="">-- Select Class --</option>';
-        masterClassList.forEach(cls => loginSelect.innerHTML += `<option value="${cls}">${cls}</option>`);
-        const sidebarSelect = $('classSelect');
-        sidebarSelect.innerHTML = '<option value="">-- Select Class --</option>';
-        masterClassList.forEach(cls => sidebarSelect.innerHTML += `<option value="${cls}">${cls}</option>`);
-        if (currentUser.class) $('classSelect').value = currentUser.class;
-    }
-
-    // =============================================================
-    // SUBJECTS
-    // =============================================================
-    async function loadSubjects(cls) {
-        try {
-            const doc = await db.collection('classes').doc(cls).get();
-            currentSubjects = doc.exists ? doc.data().subjects || [] : [];
-            if (!doc.exists || !currentSubjects.length) {
-                currentSubjects = ['English', 'Mathematics', 'Science'];
-                await db.collection('classes').doc(cls).set({ subjects: currentSubjects });
-            }
-            renderSubjects();
-            if (selectedSubject && currentSubjects.includes(selectedSubject)) selectSubject(selectedSubject);
-            else { selectedSubject = null; clearQuestionPanel(); }
-            loadExamToggles(cls);
-            document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-        } catch (e) { showToast('❌ Error loading subjects.', 'error'); }
-    }
-
-    function renderSubjects() {
-        const container = $('subjectListContainer');
-        $('subjectCount').innerText = currentSubjects.length;
-        if (!currentSubjects.length) {
-            container.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">No subjects. Add one below.</div>`;
-            return;
-        }
-        container.innerHTML = currentSubjects.map(sub => `
-            <div class="subject-item ${selectedSubject === sub ? 'active' : ''}" data-sub="${sub}">
-                <span class="subject-name" data-sub="${sub}">📘 ${sub}</span>
-                <div>
-                    <button class="edit-sub" data-sub="${sub}" title="Edit subject name">✏️</button>
-                    <button class="del-sub" data-sub="${sub}" title="Delete subject">✕</button>
-                </div>
-            </div>
-        `).join('');
-
-        container.querySelectorAll('.subject-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.closest('.edit-sub') || e.target.closest('.del-sub')) return;
-                selectSubject(el.dataset.sub);
-            });
-        });
-
-        container.querySelectorAll('.edit-sub').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const oldName = btn.dataset.sub;
-                const newName = prompt('✏️ Edit subject name:', oldName);
-                if (newName && newName.trim() && newName.trim() !== oldName) {
-                    await renameSubject(oldName, newName.trim());
-                }
-            });
-        });
-
-        container.querySelectorAll('.del-sub').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const sub = btn.dataset.sub;
-                if (!confirm(`Delete "${sub}"?`)) return;
-                const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==', sub).get();
-                const batch = db.batch();
-                snap.forEach(d => batch.delete(d.ref));
-                await batch.commit();
-                currentSubjects = currentSubjects.filter(s => s !== sub);
-                await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
-                if (selectedSubject === sub) { selectedSubject = null; clearQuestionPanel(); }
-                renderSubjects();
-                document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-                showToast(`🗑️ Deleted "${sub}".`, 'warning');
-            });
-        });
-    }
-
-    async function renameSubject(oldName, newName) {
-        try {
-            currentSubjects = currentSubjects.map(s => s === oldName ? newName : s);
-            await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
-
-            const questionsSnap = await db.collection('questions')
-                .where('class', '==', currentUser.class)
-                .where('subject', '==', oldName)
-                .get();
-            const batch = db.batch();
-            questionsSnap.forEach(doc => batch.update(doc.ref, { subject: newName }));
-            await batch.commit();
-
-            if (selectedSubject === oldName) selectedSubject = newName;
-            renderSubjects();
-            if (selectedSubject) await selectSubject(selectedSubject);
-            document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-            showToast(`✅ Renamed "${oldName}" → "${newName}"`, 'success');
-        } catch (e) {
-            showToast('❌ Rename failed: ' + e.message, 'error');
-        }
-    }
-
-    $('addSubjectBtn').addEventListener('click', async () => {
-        const val = $('newSubjectInput').value.trim();
-        if (!val) return showToast('⚠️ Enter name.', 'warning');
-        if (currentSubjects.includes(val)) return showToast('⚠️ Already exists.', 'warning');
-        currentSubjects = [...currentSubjects, val];
-        await db.collection('classes').doc(currentUser.class).update({ subjects: currentSubjects });
-        $('newSubjectInput').value = '';
-        renderSubjects();
-        document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-        showToast(`✅ Added "${val}"!`, 'success');
-    });
-
-    // =============================================================
-    // QUESTIONS (abbreviated)
-    // =============================================================
-    async function selectSubject(subject) {
-        selectedSubject = subject;
-        renderSubjects();
-        $('selectedSubjectName').innerText = subject;
-        $('addQuestionArea').style.display = 'block';
-        $('questionsContainer').innerHTML = '<p>⏳ Loading...</p>';
-        const snap = await db.collection('questions').where('class', '==', currentUser.class).where('subject', '==', subject.trim()).get();
-        currentQuestions = [];
-        snap.forEach(doc => currentQuestions.push({ id: doc.id, ...doc.data() }));
-        renderQuestions();
-    }
-
-    function renderQuestions() {
-        const container = $('questionsContainer');
-        const totalPoints = currentQuestions.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
-        $('totalPointsBadge').innerHTML = `⭐ Total Points: ${totalPoints}`;
-        if (!currentQuestions.length) {
-            container.innerHTML = `<div class="empty-state"><h3>📭 No questions</h3></div>`;
-            return;
-        }
-        let html = `<div class="question-grid">`;
-        currentQuestions.forEach((q, idx) => {
-            const opts = q.options ? q.options.join(' | ') : 'N/A';
-            html += `<div class="q-item"><div class="q-text">${idx + 1}. ${q.question || ''}</div><div class="q-meta"><span>${opts}</span><span class="points-badge">⭐ ${q.points || 5}</span><span>✅ ${q.correct || '?'}</span><button class="q-del" data-id="${q.id}">✕</button></div></div>`;
-        });
-        container.innerHTML = html + '</div>';
-        container.querySelectorAll('.q-del').forEach(btn => btn.addEventListener('click', async () => {
-            if (!confirm('Delete?')) return;
-            await db.collection('questions').doc(btn.dataset.id).delete();
-            currentQuestions = currentQuestions.filter(q => q.id !== btn.dataset.id);
-            renderQuestions();
-        }));
-    }
-
-    function clearQuestionPanel() {
-        $('selectedSubjectName').innerText = 'Select a Subject';
-        $('totalPointsBadge').innerHTML = '⭐ Total Points: 0';
-        $('questionsContainer').innerHTML = `<div class="empty-state"><h3>👈 Select a subject</h3></div>`;
-        $('addQuestionArea').style.display = 'none';
-    }
-
-    $('addQuestionBtn').addEventListener('click', async () => {
-        if (!selectedSubject) return showToast('⚠️ Select subject.', 'warning');
-        const question = $('qText').value.trim();
-        const options = [$('optA').value.trim(), $('optB').value.trim(), $('optC').value.trim(), $('optD').value.trim()];
-        if (!question || options.some(o => !o)) return showToast('⚠️ Fill all fields.', 'error');
-        await db.collection('questions').add({
-            class: currentUser.class,
-            subject: selectedSubject.trim(),
-            question,
-            options,
-            correct: $('correctAns').value,
-            points: parseInt($('qPoints').value) || 5,
-            createdAt: new Date()
-        });
-        $('qText').value = '';
-        ['optA', 'optB', 'optC', 'optD'].forEach(id => $(id).value = '');
-        await selectSubject(selectedSubject);
-        showToast('✅ Question added!', 'success');
-    });
-
-    // =============================================================
-    // EXAM PUBLISHING (abbreviated)
-    // =============================================================
-    async function loadExamToggles(cls) {
-        const status = await db.collection('examStatus').doc(cls).get();
-        const active = status.exists ? status.data().activeSubjects || [] : [];
-        const container = $('examToggles');
-        if (!currentSubjects.length) return container.innerHTML = '<p>Add subjects first.</p>';
-        container.innerHTML = currentSubjects.map(s =>
-            `<label class="${active.includes(s) ? 'active-toggle' : ''}"><input type="checkbox" class="examCb" value="${s}" ${active.includes(s) ? 'checked' : ''} /> ${s}</label>`
-        ).join('');
-    }
-
-    async function loadSchedule(cls) {
-        try {
-            const doc = await db.collection('examControls').doc(cls).get();
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.scheduledStart) $('startDateTime').value = data.scheduledStart.toDate().toISOString().slice(0, 16);
-                if (data.scheduledEnd) $('endDateTime').value = data.scheduledEnd.toDate().toISOString().slice(0, 16);
-                document.getElementById('durationMinutes').value = data.durationMinutes || 30;
-            }
-        } catch (e) {}
-    }
-
-    // =============================================================
-    // BUILD REPORT BUTTON
-    // =============================================================
-    $('buildReportBtn').addEventListener('click', async () => {
-        const cls = currentUser.class;
-        if (!cls) return showToast('⚠️ Login first.', 'error');
-        await loadStudentsFromResults(cls);
-    });
-
-    // =============================================================
-    // ORPHAN CLEANUP BUTTON
-    // =============================================================
-    document.getElementById('cleanOrphanSubjectsBtn')?.addEventListener('click', async () => {
-        await removeOrphanSubjects();
-    });
-
-    // =============================================================
-    // TERM SETTINGS SAVE BUTTON
-    // =============================================================
-    document.getElementById('saveTermSettingsBtn')?.addEventListener('click', async () => {
-        if (!currentUser.class) { showToast('⚠️ Please select a class.', 'error'); return; }
-        await saveTermSettings(currentUser.class);
-        // Refresh the report builder UI to show updated dates and total days
-        if (document.getElementById('reportBuilderArea').innerHTML !== '') {
-            // Rebuild UI with new settings
-            await loadTermSettings(currentUser.class);
-            // Reload student if any
-            if (currentSelectedStudent) {
-                await loadStudentData(currentSelectedStudent, currentUser.class);
-            }
-        }
-    });
-
-    // =============================================================
-    // TAB SWITCHING - LOAD RESULTS WITH ACCORDION
-    // =============================================================
-    document.querySelectorAll('.main-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(tab.dataset.tab).classList.add('active');
-            
-            if (tab.dataset.tab === 'tabPublish') loadSchedule(currentUser.class);
-            if (tab.dataset.tab === 'tabResults') {
-                if (currentUser.class) {
-                    loadResultsWithAccordion(currentUser.class);
-                }
-            }
-            if (tab.dataset.tab === 'tabReports') {
-                // Load reports if needed
-            }
-        });
-    });
-
-    // =============================================================
-    // SIDEBAR TOGGLE
-    // =============================================================
-    document.getElementById('sidebarToggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('expanded');
-    });
-
-    // =============================================================
-    // LOGOUT
-    // =============================================================
-    $('logoutBtn').addEventListener('click', () => {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('loginPage').classList.add('active');
-        currentUser = {};
-        reportStudentsList = [];
-        currentSelectedStudent = null;
-        showToast('👋 Logged out.', 'warning');
-    });
-
-    // =============================================================
-    // SWITCH CLASS
-    // =============================================================
-    $('switchClassBtn').addEventListener('click', async () => {
-        const newClass = $('classSelect').value;
-        if (!newClass) return showToast('⚠️ Select class.', 'error');
-        if (newClass === currentUser.class) return showToast('ℹ️ Already there.', 'warning');
-
-        if (currentSelectedStudent) await saveCurrentStudent(currentUser.class);
-
-        currentUser.class = newClass;
-        currentSelectedStudent = null;
-        reportStudentsList = [];
-
-        await loadSubjects(newClass);
-        await loadSchedule(newClass);
-        await loadResultsWithAccordion(newClass);
-        await loadTermSettings(newClass);
-
-        const area = document.getElementById('reportBuilderArea');
-        area.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Click "Load Students" to see results.</div>`;
-        document.getElementById('studentCountBadge').innerText = '0 Students';
-        document.getElementById('subjectCountDisplay').innerText = currentSubjects.length;
-
-        showToast(`🔄 Switched to ${newClass}`, 'success');
-    });
-
-    // =============================================================
-    // LOGIN
-    // =============================================================
-    $('loginBtn').addEventListener('click', async () => {
-        const name = $('loginName').value.trim();
-        const cls = $('loginClassSelect').value;
-        const err = $('loginErr');
-
-        if (!name) return err.innerText = '⚠️ Please enter your name.';
-        if (!cls) return err.innerText = '⚠️ Please select a class.';
-
-        currentUser = { name, class: cls };
-        err.innerText = '';
-
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        $('dashboardPage').classList.add('active');
-        $('sidebarName').innerText = name + ' 👨‍🏫';
-        $('classSelect').value = cls;
-
-        showToast(`👋 Welcome, ${name}!`, 'success');
-
-        await loadSubjects(cls);
-        await loadSchedule(cls);
-        await loadResultsWithAccordion(cls);
-        await loadTermSettings(cls);
-
-        const resultsSnap = await db.collection('results').where('class', '==', cls).get();
-        if (!resultsSnap.empty) {
-            await loadStudentsFromResults(cls);
-        }
-    });
-
-    // =============================================================
-    // INIT
-    // =============================================================
+  // =============================================================
+  // 🔥 FIREBASE CONFIG
+  // =============================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+    authDomain: "scholars-a8087.firebaseapp.com",
+    projectId: "scholars-a8087",
+    storageBucket: "scholars-a8087.firebasestorage.app",
+    messagingSenderId: "406251764422",
+    appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+    measurementId: "G-TEFG74LD7J"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // =============================================================
+  // SCHOOL LOGO (public)
+  // =============================================================
+  const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
+
+  // =============================================================
+  // TOAST
+  // =============================================================
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const icons = { success:'✅', error:'❌', warning:'⚠️' };
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="icon">${icons[type]||'📢'}</span> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 400); }, 3800);
+  }
+
+  const $ = id => document.getElementById(id);
+  const showPage = id => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    $('loginPage').classList.add('active');
-    loadMasterClassList();
+    $(id + 'Page').classList.add('active');
+  };
 
-    console.log('✅ Teacher Dashboard - COMPLETE WITH FIXES & TERM SETTINGS');
-    console.log('📌 Features: Subject accordion, ×2, ×3, Copy, Add/Edit/Delete/Merge/Push');
-    console.log('📊 Results are organized by subject with alphabetical student order');
-    console.log('🔢 ×2 and ×3 buttons multiply ALL scores for a subject');
-    console.log('📋 Copy button copies student: score to clipboard');
-    console.log('🧹 "Remove Orphan Subjects" deletes any subject not in class list from ALL students');
-    console.log('📅 Term Settings: set resumption, closing dates, and total days opened');
-    console.log('✅ SAVE FIX: now reads input values directly, no data loss!');
+  let masterClassList = [];
+
+  // =============================================================
+  // AUTH
+  // =============================================================
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      $('authStatus').innerHTML = '✅ Connected.';
+    } else {
+      $('authStatus').innerHTML = '⏳ Authenticating...';
+      auth.signInAnonymously().catch(e => {
+        $('authStatus').innerHTML = '❌ Connection error. Refresh.';
+      });
+    }
+  });
+
+  function waitForAuth() {
+    return new Promise(resolve => {
+      if (auth.currentUser) { resolve(auth.currentUser); return; }
+      const unsub = auth.onAuthStateChanged(u => { unsub(); resolve(u); });
+    });
+  }
+
+  // =============================================================
+  // LOAD CLASS LIST
+  // =============================================================
+  async function loadMasterClassList() {
+    try {
+      const doc = await db.collection('classList').doc('allClasses').get();
+      masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
+    } catch(e) {
+      masterClassList = ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
+    }
+    const sel = $('classSelect');
+    sel.innerHTML = '<option value="">-- Select Class --</option>';
+    masterClassList.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+    $('authStatus').innerHTML = '✅ Ready. Enter details.';
+  }
+
+  // =============================================================
+  // PHOTO FETCH
+  // =============================================================
+  async function getStudentPhoto(name, cls) {
+    try {
+      const doc = await db.collection('studentPhotos').doc(`${cls}_${name}`).get();
+      return doc.exists ? doc.data().photoUrl || null : null;
+    } catch(e) { return null; }
+  }
+
+  // =============================================================
+  // HELPERS
+  // =============================================================
+  function getRemark(avg) {
+    if (avg >= 75) return 'Distinction';
+    if (avg >= 70) return 'Excellent';
+    if (avg >= 65) return 'Very Good';
+    if (avg >= 60) return 'Good';
+    if (avg >= 55) return 'Above Average';
+    if (avg >= 50) return 'Average';
+    if (avg >= 45) return 'Below Average';
+    if (avg >= 40) return 'Weak Pass';
+    return 'Fail';
+  }
+  function getGradeClass(avg) {
+    if (avg >= 75) return 'grade-distinction';
+    if (avg >= 70) return 'grade-excellent';
+    if (avg >= 65) return 'grade-verygood';
+    if (avg >= 60) return 'grade-good';
+    if (avg >= 55) return 'grade-aboveavg';
+    if (avg >= 50) return 'grade-average';
+    if (avg >= 45) return 'grade-belowavg';
+    if (avg >= 40) return 'grade-weak';
+    return 'grade-fail';
+  }
+  function ordinal(n) {
+    const s = ['th','st','nd','rd'], v = n % 100;
+    return s[(v-20)%10] || s[v] || s[0];
+  }
+  function fmtDate(d) {
+    if (!d) return 'Not set';
+    if (d.toDate) d = d.toDate();
+    if (typeof d === 'string') d = new Date(d);
+    if (isNaN(d.getTime())) return 'Invalid';
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  // =============================================================
+  // CHECK REPORT
+  // =============================================================
+  $('checkReportBtn').addEventListener('click', async () => {
+    const name = $('studentName').value.trim();
+    const cls = $('classSelect').value;
+    const pin = $('studentPin').value.trim();
+    const err = $('reportErr');
+
+    if (!name) { err.innerText = '⚠️ Enter student name.'; return; }
+    if (!cls) { err.innerText = '⚠️ Select class.'; return; }
+    if (!pin) { err.innerText = '⚠️ Enter PIN.'; return; }
+    err.innerText = '';
+
+    const btn = $('checkReportBtn');
+    btn.innerText = '⏳ Searching...';
+    btn.disabled = true;
+
+    try {
+      await waitForAuth();
+
+      // 1) verify PIN
+      const pinDoc = await db.collection('pins').doc(pin).get();
+      if (!pinDoc.exists) {
+        err.innerText = '❌ Invalid PIN.';
+        btn.innerText = '🔍 View Report Card';
+        btn.disabled = false;
+        return;
+      }
+      const pinData = pinDoc.data();
+      if (pinData.used && pinData.usedBy !== name) {
+        err.innerText = '❌ PIN already used by another student.';
+        btn.innerText = '🔍 View Report Card';
+        btn.disabled = false;
+        return;
+      }
+
+      // 2) fetch approved report card
+      const snap = await db.collection('reportCards')
+        .where('class', '==', cls)
+        .where('studentName', '==', name)
+        .where('approved', '==', true)
+        .get();
+
+      if (snap.empty) {
+        err.innerText = '❌ No approved report card found.';
+        btn.innerText = '🔍 View Report Card';
+        btn.disabled = false;
+        return;
+      }
+
+      const doc = snap.docs[0];
+      const data = doc.data();
+
+      // claim PIN if not used
+      if (!pinData.used) {
+        await db.collection('pins').doc(pin).update({
+          used: true, usedBy: name, class: cls, usedAt: new Date()
+        });
+        await db.collection('reportCards').doc(doc.id).update({ pin });
+        showToast(`✅ PIN claimed for ${name}`, 'success');
+      } else {
+        showToast(`ℹ️ Welcome back, ${name}`, 'success');
+      }
+
+      // school info
+      let school = {
+        name: "COVENANT ARROWS' MODEL",
+        motto: 'Raising Future Leaders Through Christ-Centered Learning',
+        location: 'Abiola Way, Abeokuta, Ogun State.'
+      };
+      try {
+        const s = await db.collection('settings').doc('schoolInfo').get();
+        if (s.exists) {
+          const d = s.data();
+          school.name = d.schoolName || school.name;
+          school.motto = d.motto || school.motto;
+          school.location = d.location || school.location;
+        }
+      } catch(e) {}
+
+      const photo = await getStudentPhoto(name, cls);
+      renderReport(data, school, photo);
+
+      showPage('report');
+      err.innerText = '';
+
+    } catch(e) {
+      err.innerText = '⚠️ Network error. Check connection.';
+      console.error(e);
+      showToast('❌ Error loading report', 'error');
+    }
+
+    btn.innerText = '🔍 View Report Card';
+    btn.disabled = false;
+  });
+
+  // =============================================================
+  // RENDER REPORT (A4 OPTIMIZED, NUMERIC RATINGS, SIG IMAGES)
+  // =============================================================
+  function renderReport(data, school, photoUrl) {
+    const container = $('reportContainer');
+    const subs = Object.keys(data.subjects || {});
+    const att = data.attendance || {};
+    const affective = data.affectiveDomain || {};
+    const psychomotor = data.psychomotorDomain || {};
+    const extras = data.extracurriculars || [];
+    const comment = data.classTeacherCommentary || data.commentary || 'No comments.';
+    const principal = data.principalRemarks || '';
+    const promotion = data.promotionStatus || '';
+    const overallPos = data.overallPosition || null;
+    const overallAvg = data.overallAverage || 0;
+    const totalStud = data.totalStudents || 0;
+
+    // signatures (base64 images)
+    const teacherSig = data.teacherSignature || null;
+    const adminSig = data.adminSignature || null;
+
+    // ---- subject rows ----
+    let subjectRows = '';
+    subs.forEach((sub, i) => {
+      const s = data.subjects[sub] || {};
+      const f = s.firstTerm || 0;
+      const sec = s.secondTerm || 0;
+      const t = s.thirdTerm || 0;
+      const avg = s.average || ((f + sec + t) / 3);
+      const remark = s.remark || getRemark(avg);
+      const cls = getGradeClass(avg);
+      subjectRows += `
+        <tr>
+          <td>${i+1}</td>
+          <td>${sub}</td>
+          <td>${f || '--'}</td>
+          <td>${sec || '--'}</td>
+          <td>${t || '--'}</td>
+          <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
+          <td class="${cls}">${remark || '--'}</td>
+        </tr>
+      `;
+    });
+
+    // ---- affective (numeric 1-5) ----
+    let affHtml = '';
+    const affKeys = Object.keys(affective);
+    if (affKeys.length) {
+      affKeys.forEach(k => {
+        const val = Math.min(Math.max(parseInt(affective[k]) || 1, 1), 5);
+        affHtml += `<div class="item"><span>${k}</span><span class="num-rating">${val}</span></div>`;
+      });
+    } else { affHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+
+    // ---- psychomotor (numeric 1-5) ----
+    let psyHtml = '';
+    const psyKeys = Object.keys(psychomotor);
+    if (psyKeys.length) {
+      psyKeys.forEach(k => {
+        const val = Math.min(Math.max(parseInt(psychomotor[k]) || 1, 1), 5);
+        psyHtml += `<div class="item"><span>${k}</span><span class="num-rating">${val}</span></div>`;
+      });
+    } else { psyHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+
+    // ---- extracurricular ----
+    const allClubs = ['JETS Club','Literary & Debating','Press Club','Red Cross','Boys/Girls Scout','Brass Band','Drama Society','Road Safety','Farmers Club','Home Makers','Choral Group'];
+    let extraHtml = allClubs.map(c => {
+      const done = extras.includes(c);
+      return `<span class="badge ${done ? '' : 'missing'}">${done ? '✔' : '○'} ${c}</span>`;
+    }).join(' ');
+
+    // ---- position ----
+    let posHtml = '';
+    if (overallPos !== null && overallPos > 0) {
+      const suffix = ordinal(overallPos);
+      let emoji = '';
+      if (overallPos === 1) emoji = '🥇';
+      else if (overallPos === 2) emoji = '🥈';
+      else if (overallPos === 3) emoji = '🥉';
+      const pct = totalStud > 1 ? Math.round(((totalStud - overallPos) / (totalStud - 1)) * 100) : 100;
+      posHtml = `
+        <div class="position-summary">
+          <div class="pos-item"><div class="pos-value">${emoji} ${overallPos}<small>${suffix}</small></div><div class="pos-label">Position</div></div>
+          <div class="pos-item"><div class="pos-value">${overallAvg.toFixed(1)}%</div><div class="pos-label">Avg</div></div>
+          ${totalStud > 0 ? `<div class="pos-item"><div class="pos-value">${totalStud}</div><div class="pos-label">Total</div></div>
+          <div class="pos-item"><div class="pos-value" style="font-size:18px;">${pct}%</div><div class="pos-label">Top %</div></div>` : ''}
+          ${promotion ? `<div class="pos-item"><div class="pos-value" style="font-size:15px;"><span class="promotion-badge ${promotion.toLowerCase().replace(/\s+/g,'-')}">${promotion}</span></div><div class="pos-label">Status</div></div>` : ''}
+        </div>
+      `;
+    } else {
+      posHtml = `
+        <div class="position-summary" style="background:#f1f5f9; border-color:#94a3b8;">
+          <div class="pos-item"><div class="pos-value" style="font-size:16px; color:#64748b;">📊 Not calculated</div><div class="pos-label">Ask teacher</div></div>
+        </div>
+      `;
+    }
+
+    // ---- photo ----
+    let photoHtml = photoUrl
+      ? `<div class="student-photo-container"><img src="${photoUrl}" alt="${data.studentName}" /></div>`
+      : `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
+
+    // ---- signatures (with images) ----
+    const teacherSigHtml = teacherSig
+      ? `<div class="sig-image-container"><img src="${teacherSig}" alt="Teacher Signature" /></div><div class="sub">${data.teacherName || 'Teacher'}</div>`
+      : `<div class="sig-image-container"><span class="no-sig">No signature</span></div><div class="sub">${data.teacherName || 'Teacher'}</div>`;
+
+    const adminSigHtml = adminSig
+      ? `<div class="sig-image-container"><img src="${adminSig}" alt="Admin Signature" /></div><div class="sub">${data.approvedBy || 'Admin'}</div>`
+      : `<div class="sig-image-container"><span class="no-sig">Not signed</span></div><div class="sub">Admin</div>`;
+
+    const parentSigHtml = `<div class="sig-image-container"><span class="no-sig">______</span></div><div class="sub">Parent/Guardian</div>`;
+
+    // ---- assemble ----
+    container.innerHTML = `
+      <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="watermark" />
+
+      <div class="header-logo-row">
+        <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="Logo" />
+        <div class="header-text">
+          <div class="school-name">${data.schoolName || school.name}</div>
+          <div class="motto">✝️ ${school.motto}</div>
+          <div class="location">📍 ${school.location}</div>
+        </div>
+      </div>
+      <div style="text-align:center; position:relative; z-index:1;">
+        <span class="term-info">${data.term || 'THIRD TERM'} — ${data.session || data.year || new Date().getFullYear()}</span>
+      </div>
+
+      <div class="student-meta">
+        ${photoHtml}
+        <div class="student-details">
+          <div class="name">👤 <span>${data.studentName}</span></div>
+          <div class="class">📚 ${data.class} · ${data.category || 'Day'}</div>
+          <div class="teacher">👨‍🏫 ${data.teacherName || 'N/A'}</div>
+          <div class="issue-date">📅 ${fmtDate(data.dateOfIssue || data.date)}</div>
+        </div>
+      </div>
+
+      <div class="attendance-grid">
+        <span>📅 Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
+        <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
+        <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
+        <span>📊 ${(((att.daysPresent||att.present||0) / (att.daysOpened||att.open||1)) * 100).toFixed(1)}%</span>
+      </div>
+
+      <div class="dates-row">
+        <span>📅 Resumption: <strong>${fmtDate(att.resumptionDate || data.resumptionDate)}</strong></span>
+        <span>📅 Closing: <strong>${fmtDate(att.closingDate || data.closingDate)}</strong></span>
+        <span>📅 Next Term: <strong>${fmtDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
+      </div>
+
+      ${posHtml}
+
+      <div class="info-grid">
+        <div class="box"><h4>⭐ Affective Domain</h4>${affHtml}</div>
+        <div class="box"><h4>🤸 Psychomotor</h4>${psyHtml}</div>
+      </div>
+
+      <div class="info-grid" style="grid-template-columns:1fr;">
+        <div class="box"><h4>⚽ Clubs</h4><div class="extra-badges">${extraHtml}</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th rowspan="2">S/N</th><th rowspan="2">SUBJECT</th><th colspan="3">TERMLY SCORES</th><th rowspan="2">AVG %</th><th rowspan="2">REMARK</th></tr>
+            <tr class="sub-header"><th>1st</th><th>2nd</th><th>3rd</th></tr>
+          </thead>
+          <tbody>
+            ${subjectRows}
+            <tr class="grand-total-row">
+              <td colspan="5"><strong>📊 OVERALL AVERAGE</strong></td>
+              <td><strong>${overallAvg.toFixed(1)}%</strong></td>
+              <td><strong>${getRemark(overallAvg)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="commentary-box">
+        <h4>📝 Teacher's Comment</h4>
+        <p>${comment}</p>
+      </div>
+      ${principal ? `<div class="commentary-box" style="background:#fefce8;"><h4>👨‍💼 Principal's Remarks</h4><p>${principal}</p></div>` : ''}
+
+      <div class="signature-section">
+        <div class="signature-box"><div class="label">Class Teacher</div>${teacherSigHtml}</div>
+        <div class="signature-box"><div class="label">Principal / Admin</div>${adminSigHtml}</div>
+        <div class="signature-box"><div class="label">Parent/Guardian</div>${parentSigHtml}</div>
+      </div>
+
+      <div class="report-footer">
+        🔐 Verified & Approved · PIN: ${data.pin || 'Claimed'} · Covenant Arrows' Model School
+      </div>
+    `;
+  }
+
+  // =============================================================
+  // BACK BUTTON
+  // =============================================================
+  $('backBtn').addEventListener('click', () => {
+    showPage('login');
+    $('reportContainer').innerHTML = '';
+    $('studentName').value = '';
+    $('classSelect').value = '';
+    $('studentPin').value = '';
+    $('reportErr').innerText = '';
+  });
+
+  // =============================================================
+  // INIT
+  // =============================================================
+  showPage('login');
+  loadMasterClassList();
+  console.log('✅ Report Card Viewer · A4 optimized · Numeric ratings · Signature images');
 </script>
+
 </body>
 </html>
