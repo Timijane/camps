@@ -1,1054 +1,1352 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
-  <title>Report Card · Covenant Arrows</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>Report Card · Covenant Arrows' Model</title>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <style>
-    /* ---- RESET & BASE ---- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #eef2f7;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    #app {
-      max-width: 1150px;
-      width: 100%;
-    }
+    <style>
+        /* ===== GLOBAL RESET ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* ---- TOAST ---- */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 360px;
-      width: 100%;
-      pointer-events: none;
-    }
-    .toast {
-      background: white;
-      padding: 14px 22px;
-      border-radius: 14px;
-      box-shadow: 0 15px 30px -8px rgba(0,0,0,0.12);
-      border-left: 6px solid #4f46e5;
-      pointer-events: auto;
-      animation: slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      font-size: 14px;
-      color: #0f172a;
-    }
-    .toast.hide { animation: slideOut 0.3s ease forwards; }
-    .toast .icon { font-size: 20px; }
-    .toast.success { border-color: #10b981; }
-    .toast.error { border-color: #dc2626; }
-    .toast.warning { border-color: #f59e0b; }
-    @keyframes slideIn { 0% { opacity:0; transform:translateX(50px); } 100% { opacity:1; transform:translateX(0); } }
-    @keyframes slideOut { 0% { opacity:1; transform:translateX(0); } 100% { opacity:0; transform:translateX(50px); } }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
 
-    /* ---- LOGIN CARD ---- */
-    .login-card {
-      background: white;
-      padding: 36px 32px;
-      border-radius: 28px;
-      max-width: 540px;
-      margin: 30px auto;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.05);
-      border: 1px solid #e2e8f0;
-    }
-    .login-card h2 { color: #1e1b4b; font-size: 26px; margin-bottom: 6px; }
-    .login-card p { color: #64748b; margin-bottom: 18px; }
-    .login-card .flex { display: flex; flex-wrap: wrap; gap: 10px; }
-    .login-card input, .login-card select {
-      flex: 1; min-width: 140px;
-      padding: 13px 18px;
-      border: 2px solid #e2e8f0;
-      border-radius: 60px;
-      font-size: 14px;
-      background: #f8fafc;
-      font-family: 'Inter', sans-serif;
-      outline: none;
-      transition: 0.2s;
-    }
-    .login-card input:focus, .login-card select:focus { border-color: #4f46e5; background: white; }
-    .login-card button {
-      font-family: 'Inter', sans-serif;
-      font-weight: 800;
-      padding: 14px 32px;
-      background: linear-gradient(to right, #4f46e5, #7c3aed);
-      color: white;
-      border: none;
-      border-radius: 60px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.2s;
-      width: 100%;
-      margin-top: 12px;
-    }
-    .login-card button:hover { transform: scale(1.01); box-shadow: 0 8px 20px rgba(79,70,229,0.25); }
-    .error-text { color: #dc2626; font-weight: 700; margin-top: 10px; }
-    .status-text { font-size: 13px; color: #64748b; margin-top: 6px; }
+        #app { max-width: 1100px; width: 100%; }
 
-    /* ---- PAGE SWITCH ---- */
-    .page { display: none; animation: fadeUp 0.35s ease; }
-    .page.active { display: block; }
-    @keyframes fadeUp { 0% { opacity:0; transform:translateY(12px); } 100% { opacity:1; transform:translateY(0); } }
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+            width: 100%;
+            pointer-events: none;
+        }
 
-    /* ---- REPORT WRAPPER (A4 optimized) ---- */
-    .report-wrapper {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
-      padding: 28px 24px;
-      border: 1px solid #e2e8f0;
-    }
-    .report-card {
-      max-width: 210mm;
-      margin: 0 auto;
-      background: white;
-      padding: 6px 4px;
-      font-family: 'Inter', sans-serif;
-      color: #0f172a;
-      position: relative;
-      overflow: hidden;
-      /* A4 single-page friendly */
-      font-size: 11.5px;
-      line-height: 1.4;
-    }
+        .toast {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.12);
+            border-left: 6px solid #4f46e5;
+            pointer-events: auto;
+            animation: slideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #0f172a;
+        }
+        .toast.hide { animation: slideOut 0.3s ease forwards; }
+        .toast .icon { font-size: 22px; }
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #dc2626; }
+        .toast.warning { border-color: #f59e0b; }
 
-    /* ---- WATERMARK (perfectly faded) ---- */
-    .watermark-img {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-22deg);
-      width: 480px;
-      height: auto;
-      opacity: 0.07;
-      pointer-events: none;
-      z-index: 0;
-      user-select: none;
-    }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(60px); }
+        }
 
-    /* ---- SCHOOL HEADER ---- */
-    .header-logo-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 6px;
-      position: relative;
-      z-index: 1;
-    }
-    .school-logo {
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-      border-radius: 50%;
-      border: 2px solid #1e1b4b;
-      background: white;
-    }
-    .header-text { text-align: center; }
-    .header-text .school-name {
-      font-size: 22px;
-      font-weight: 900;
-      color: #1e1b4b;
-      letter-spacing: 0.5px;
-    }
-    .header-text .motto {
-      font-weight: 600;
-      color: #4f46e5;
-      font-size: 11px;
-      letter-spacing: 0.6px;
-    }
-    .header-text .location {
-      font-size: 10px;
-      color: #475569;
-      font-weight: 500;
-    }
-    .term-info {
-      font-size: 15px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-top: 4px;
-      background: #f1f5f9;
-      display: inline-block;
-      padding: 1px 28px;
-      border-radius: 30px;
-    }
+        /* ===== LOGIN CARD ===== */
+        .login-card {
+            background: white;
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            max-width: 560px;
+            margin: 40px auto;
+            border: 1px solid #e2e8f0;
+        }
+        .login-card h2 {
+            color: #1e1b4b;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        .login-card .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .login-card input,
+        .login-card select {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 15px;
+            outline: none;
+            transition: 0.2s;
+            background: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .login-card input:focus,
+        .login-card select:focus {
+            border-color: #4f46e5;
+            background: white;
+        }
+        .login-card button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 14px 40px;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .login-card button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(79,70,229,0.25);
+        }
+        .error-text { color: #dc2626; font-weight: 700; margin-top: 12px; }
+        .status-text { font-size: 13px; color: #64748b; margin-top: 8px; }
 
-    /* ---- STUDENT META (photo + details) ---- */
-    .student-meta {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin: 6px 0 8px 0;
-      padding: 8px 14px;
-      background: #f8fafc;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      position: relative;
-      z-index: 1;
-    }
-    .student-photo-container {
-      width: 70px;
-      height: 85px;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 2px solid #e2e8f0;
-      background: #f1f5f9;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .student-photo-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .student-photo-placeholder { font-size: 36px; color: #94a3b8; }
-    .student-details { flex: 1; min-width: 160px; }
-    .student-details .name { font-size: 16px; font-weight: 800; color: #0f172a; }
-    .student-details .name span { color: #4f46e5; }
-    .student-details .class { font-weight: 700; font-size: 12px; color: #1e293b; }
-    .student-details .teacher { font-weight: 600; font-size: 11px; color: #475569; }
-    .student-details .issue-date { font-size: 10px; color: #64748b; }
+        /* ========================================================== */
+        /* ===== REPORT CARD (A4 TRADITIONAL STYLING) ===== */
+        /* ========================================================== */
+        .report-wrapper {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            padding: 30px 28px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
 
-    /* ---- ATTENDANCE & DATES ---- */
-    .attendance-grid, .dates-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 18px;
-      padding: 4px 14px;
-      background: #f8fafc;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      font-weight: 600;
-      font-size: 11px;
-      color: #334155;
-      margin-bottom: 6px;
-      position: relative;
-      z-index: 1;
-    }
-    .attendance-grid span, .dates-row span {
-      background: white;
-      padding: 2px 12px;
-      border-radius: 30px;
-      border: 1px solid #e2e8f0;
-    }
-    .dates-row { margin-bottom: 6px; }
+        .report-card {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 6px 2px;
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+            position: relative;
+            overflow: hidden;
+            font-size: 11px;
+            line-height: 1.35;
+        }
 
-    /* ---- POSITION SUMMARY ---- */
-    .position-summary {
-      display: flex;
-      justify-content: center;
-      gap: 12px 24px;
-      flex-wrap: wrap;
-      margin: 6px 0 8px 0;
-      padding: 8px 12px;
-      background: #fefce8;
-      border-radius: 10px;
-      border: 2px solid #f59e0b;
-      position: relative;
-      z-index: 1;
-    }
-    .position-summary .pos-item {
-      text-align: center;
-      padding: 0 14px;
-      border-right: 1px solid #f59e0b;
-    }
-    .position-summary .pos-item:last-child { border-right: none; }
-    .position-summary .pos-value { font-size: 22px; font-weight: 900; color: #1e1b4b; }
-    .position-summary .pos-value small { font-size: 13px; }
-    .position-summary .pos-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
+        /* ===== WATERMARK ===== */
+        .watermark-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-22deg);
+            width: 480px;
+            height: auto;
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
+            user-select: none;
+        }
 
-    .promotion-badge {
-      padding: 2px 12px;
-      border-radius: 30px;
-      font-weight: 800;
-      font-size: 12px;
-      white-space: nowrap;
-      display: inline-block;
-    }
-    .promotion-badge.promoted { background: #d1fae5; color: #065f46; }
-    .promotion-badge.not-promoted { background: #fee2e2; color: #991b1b; }
-    .promotion-badge.probation { background: #fef3c7; color: #92400e; }
+        /* ===== School Header with Logo ===== */
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .school-logo {
+            width: 72px;
+            height: 72px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 3px solid #1e1b4b;
+            background: white;
+        }
+        .header-text { text-align: center; }
+        .header-text .school-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: #1e1b4b;
+            letter-spacing: 1px;
+        }
+        .header-text .motto {
+            font-weight: 600;
+            color: #4f46e5;
+            font-size: 12px;
+            letter-spacing: 0.8px;
+        }
+        .header-text .location {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 500;
+        }
+        .term-info {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 4px;
+            background: #f1f5f9;
+            display: inline-block;
+            padding: 2px 28px;
+            border-radius: 30px;
+            position: relative;
+            z-index: 1;
+        }
 
-    /* ---- INFO GRID (Affective / Psychomotor) ---- */
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin: 6px 0;
-      position: relative;
-      z-index: 1;
-    }
-    .info-grid .box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 6px 12px;
-    }
-    .info-grid .box h4 {
-      font-weight: 700;
-      color: #1e1b4b;
-      font-size: 11px;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 3px;
-      margin-bottom: 4px;
-    }
-    .info-grid .box .item {
-      display: flex;
-      justify-content: space-between;
-      padding: 1px 0;
-      font-size: 10.5px;
-      font-weight: 500;
-    }
-    .info-grid .box .item .num-rating {
-      font-weight: 700;
-      color: #1e1b4b;
-      min-width: 20px;
-      text-align: right;
-    }
+        /* ===== Student Photo ===== */
+        .student-photo-container {
+            width: 80px;
+            height: 100px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            background: #f1f5f9;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .student-photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .student-photo-placeholder { font-size: 40px; color: #94a3b8; }
 
-    /* ---- EXTRACURRICULAR BADGES ---- */
-    .extra-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 3px;
-      margin-top: 3px;
-    }
-    .extra-badges .badge {
-      padding: 1px 10px;
-      border-radius: 30px;
-      font-size: 9.5px;
-      font-weight: 600;
-      background: #dbeafe;
-      color: #1e3a8a;
-    }
-    .extra-badges .badge.missing { background: #f1f5f9; color: #94a3b8; }
+        /* ===== Student Meta ===== */
+        .student-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 6px 0 8px 0;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            z-index: 1;
+        }
+        .student-details { flex: 1; min-width: 180px; }
+        .student-details .name {
+            font-size: 17px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .student-details .name span { color: #4f46e5; }
+        .student-details .class {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 12px;
+        }
+        .student-details .teacher {
+            font-weight: 600;
+            color: #475569;
+            font-size: 11px;
+        }
+        .student-details .issue-date {
+            font-size: 10px;
+            color: #64748b;
+        }
 
-    /* ---- SUBJECT TABLE (compact for A4) ---- */
-    .table-wrap {
-      overflow-x: auto;
-      margin: 6px 0;
-      position: relative;
-      z-index: 1;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 10.5px;
-      text-align: center;
-    }
-    table th {
-      background: #1e1b4b;
-      color: white;
-      font-weight: 700;
-      padding: 4px 2px;
-      border: 1px solid #1e1b4b;
-    }
-    table td {
-      padding: 3px 2px;
-      border: 1px solid #cbd5e1;
-      vertical-align: middle;
-    }
-    table tr:nth-child(even) { background: #fafafa; }
-    table td:first-child, table th:first-child { font-weight: 700; }
-    table td:nth-child(2) { text-align: left; font-weight: 600; padding-left: 6px; }
-    .sub-header th { background: #334155; font-weight: 600; font-size: 9px; text-transform: uppercase; padding: 3px 2px; }
-    .grand-total-row td {
-      background: #f1f5f9;
-      font-weight: 800;
-      font-size: 11px;
-      border-top: 3px solid #1e1b4b;
-      color: #0f172a;
-    }
+        /* ===== Attendance ===== */
+        .attendance-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+            padding: 4px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 11px;
+            color: #334155;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .attendance-grid span {
+            background: white;
+            padding: 2px 12px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+        }
 
-    /* ---- GRADE COLORS ---- */
-    .grade-distinction { color: #059669; font-weight: 800; }
-    .grade-excellent { color: #059669; font-weight: 800; }
-    .grade-verygood { color: #2563eb; font-weight: 800; }
-    .grade-good { color: #2563eb; font-weight: 700; }
-    .grade-aboveavg { color: #7c3aed; font-weight: 700; }
-    .grade-average { color: #d97706; font-weight: 700; }
-    .grade-belowavg { color: #ea580c; font-weight: 700; }
-    .grade-weak { color: #dc2626; font-weight: 700; }
-    .grade-fail { color: #dc2626; font-weight: 800; }
+        /* ===== Dates Row ===== */
+        .dates-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 4px 14px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            position: relative;
+            z-index: 1;
+        }
+        .dates-row span {
+            background: white;
+            padding: 2px 12px;
+            border-radius: 30px;
+        }
+        .dates-row strong { color: #1e1b4b; }
 
-    /* ---- COMMENTARY ---- */
-    .commentary-box {
-      margin: 6px 0;
-      padding: 6px 14px;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      background: #fafafa;
-      position: relative;
-      z-index: 1;
-    }
-    .commentary-box h4 { font-weight: 700; color: #1e1b4b; font-size: 11px; margin-bottom: 2px; }
-    .commentary-box p { font-style: italic; color: #1e293b; font-size: 11px; line-height: 1.5; }
+        /* ===== Position Summary ===== */
+        .position-summary {
+            display: flex;
+            justify-content: center;
+            gap: 12px 24px;
+            flex-wrap: wrap;
+            margin: 6px 0 8px 0;
+            padding: 8px 12px;
+            background: #fefce8;
+            border-radius: 10px;
+            border: 2px solid #f59e0b;
+            position: relative;
+            z-index: 1;
+        }
+        .position-summary .pos-item {
+            text-align: center;
+            padding: 0 14px;
+            border-right: 1px solid #f59e0b;
+        }
+        .position-summary .pos-item:last-child { border-right: none; }
+        .position-summary .pos-value {
+            font-size: 24px;
+            font-weight: 900;
+            color: #1e1b4b;
+        }
+        .position-summary .pos-value small { font-size: 14px; }
+        .position-summary .pos-label {
+            font-size: 9px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
 
-    /* ---- SIGNATURES (with images) ---- */
-    .signature-section {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 2px dashed #cbd5e1;
-      position: relative;
-      z-index: 1;
-    }
-    .signature-box {
-      flex: 1;
-      min-width: 110px;
-      text-align: center;
-    }
-    .signature-box .label {
-      font-weight: 700;
-      color: #475569;
-      font-size: 10.5px;
-      margin-bottom: 2px;
-    }
-    .signature-box .sig-image-container {
-      margin: 4px auto;
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .signature-box .sig-image-container img {
-      max-height: 48px;
-      max-width: 140px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 2px;
-      background: white;
-      object-fit: contain;
-    }
-    .signature-box .sig-image-container .no-sig {
-      color: #94a3b8;
-      font-size: 10px;
-      font-style: italic;
-    }
-    .signature-box .line {
-      border-bottom: 2px solid #1e293b;
-      width: 100%;
-      margin-top: 2px;
-      margin-bottom: 2px;
-    }
-    .signature-box .sub {
-      font-size: 9px;
-      color: #64748b;
-      margin-top: 1px;
-    }
+        /* ===== Promotion Badge ===== */
+        .promotion-badge {
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 12px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .promotion-badge.promoted { background: #d1fae5; color: #065f46; }
+        .promotion-badge.not-promoted { background: #fee2e2; color: #991b1b; }
+        .promotion-badge.probation { background: #fef3c7; color: #92400e; }
 
-    /* ---- FOOTER ---- */
-    .report-footer {
-      text-align: center;
-      font-size: 8.5px;
-      color: #94a3b8;
-      margin-top: 10px;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 6px;
-      position: relative;
-      z-index: 1;
-    }
+        /* ===== Grade Colors ===== */
+        .grade-distinction { color: #059669; font-weight: 800; }
+        .grade-excellent { color: #059669; font-weight: 800; }
+        .grade-verygood { color: #2563eb; font-weight: 800; }
+        .grade-good { color: #2563eb; font-weight: 700; }
+        .grade-aboveavg { color: #7c3aed; font-weight: 700; }
+        .grade-average { color: #d97706; font-weight: 700; }
+        .grade-belowavg { color: #ea580c; font-weight: 700; }
+        .grade-weak { color: #dc2626; font-weight: 700; }
+        .grade-fail { color: #dc2626; font-weight: 800; }
 
-    /* ---- PRINT STYLES (A4 single page) ---- */
-    @media print {
-      body { background: white; padding: 0; margin: 0; }
-      #app { max-width: 100%; padding: 0; }
-      .no-print { display: none !important; }
-      .report-wrapper { box-shadow: none; border: none; border-radius: 0; padding: 6px 10px; margin: 0; }
-      .report-card { max-width: 100%; padding: 0; overflow: visible; font-size: 10.5px; }
+        /* ===== Numeric Rating (1-5) ===== */
+        .num-rating {
+            font-weight: 700;
+            color: #1e1b4b;
+            min-width: 20px;
+            text-align: right;
+        }
 
-      .watermark-img {
-        opacity: 0.06 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
+        /* ===== Qualities & Extracurriculars Grid ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 6px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .info-grid .box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 6px 12px;
+        }
+        .info-grid .box h4 {
+            font-weight: 700;
+            color: #1e1b4b;
+            font-size: 11px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+        }
+        .info-grid .box .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1px 0;
+            font-size: 10.5px;
+            font-weight: 500;
+        }
 
-      table th {
-        background: #1e1b4b !important;
-        color: white !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .grand-total-row td {
-        background: #f1f5f9 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .student-meta, .dates-row, .info-grid .box, .commentary-box, .position-summary,
-      .attendance-grid {
-        background: #f8fafc !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .position-summary { background: #fefce8 !important; border-color: #f59e0b !important; }
-      .school-logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .student-photo-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .signature-box .sig-image-container img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .extra-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 3px;
+        }
+        .extra-badges .badge {
+            padding: 1px 10px;
+            border-radius: 30px;
+            font-size: 9.5px;
+            font-weight: 600;
+            background: #dbeafe;
+            color: #1e3a8a;
+        }
+        .extra-badges .badge.missing { background: #f1f5f9; color: #94a3b8; }
 
-      .header-text .school-name { font-size: 20px; }
-      .term-info { font-size: 13px; padding: 1px 20px; }
-      table { font-size: 9.5px; }
-      table td { padding: 2px 2px; }
-      .info-grid .box .item { font-size: 9.5px; }
-      .student-details .name { font-size: 14px; }
-      .position-summary .pos-value { font-size: 18px; }
+        /* ===== Main Subject Table ===== */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 6px 0;
+            position: relative;
+            z-index: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            text-align: center;
+        }
+        table th {
+            background: #1e1b4b;
+            color: white;
+            font-weight: 700;
+            padding: 4px 2px;
+            border: 1px solid #1e1b4b;
+        }
+        table td {
+            padding: 3px 2px;
+            border: 1px solid #cbd5e1;
+            vertical-align: middle;
+        }
+        table tr:nth-child(even) { background: #fafafa; }
+        table td:first-child,
+        table th:first-child { font-weight: 700; }
+        table td:nth-child(2) {
+            text-align: left;
+            font-weight: 600;
+            padding-left: 6px;
+        }
+        .sub-header th {
+            background: #334155;
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+            padding: 3px 2px;
+        }
+        .grand-total-row td {
+            background: #f1f5f9;
+            font-weight: 800;
+            font-size: 11px;
+            border-top: 3px solid #1e1b4b;
+            color: #0f172a;
+        }
 
-      /* Force single page */
-      .report-card { page-break-after: avoid; page-break-inside: avoid; }
-      .report-wrapper { page-break-after: avoid; }
-    }
+        /* ===== Commentary ===== */
+        .commentary-box {
+            margin: 6px 0;
+            padding: 6px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fafafa;
+            position: relative;
+            z-index: 1;
+        }
+        .commentary-box h4 {
+            font-weight: 700;
+            color: #1e1b4b;
+            font-size: 11px;
+            margin-bottom: 2px;
+        }
+        .commentary-box p {
+            font-style: italic;
+            color: #1e293b;
+            font-size: 11px;
+            line-height: 1.5;
+        }
 
-    /* ---- BUTTONS ---- */
-    .flex-center {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
-    .btn-print, .btn-back {
-      font-family: 'Inter', sans-serif;
-      font-weight: 800;
-      padding: 12px 34px;
-      border-radius: 60px;
-      font-size: 15px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: none;
-    }
-    .btn-print { background: #0f172a; color: white; }
-    .btn-print:hover { background: #1e293b; transform: scale(1.01); }
-    .btn-back { background: white; color: #1e293b; border: 2px solid #e2e8f0; }
-    .btn-back:hover { border-color: #4f46e5; background: #f8fafc; }
+        /* ========================================================== */
+        /* ===== SIGNATURES - WITH IMAGE SUPPORT ===== */
+        /* ========================================================== */
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px dashed #cbd5e1;
+            position: relative;
+            z-index: 1;
+        }
+        .signature-box {
+            flex: 1;
+            min-width: 110px;
+            text-align: center;
+        }
+        .signature-box .label {
+            font-weight: 700;
+            color: #475569;
+            font-size: 10.5px;
+            margin-bottom: 2px;
+        }
+        .signature-box .sig-image-container {
+            margin: 4px auto;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .signature-box .sig-image-container img {
+            max-height: 50px;
+            max-width: 150px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px;
+            background: white;
+            object-fit: contain;
+        }
+        .signature-box .sig-image-container .no-sig {
+            color: #94a3b8;
+            font-size: 10px;
+            font-style: italic;
+        }
+        .signature-box .line {
+            border-bottom: 2px solid #1e293b;
+            width: 100%;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+        .signature-box .sub {
+            font-size: 9px;
+            color: #64748b;
+            margin-top: 1px;
+        }
 
-    /* ---- RESPONSIVE ---- */
-    @media (max-width: 700px) {
-      body { padding: 8px; }
-      .report-wrapper { padding: 12px; }
-      .login-card { padding: 20px 16px; }
-      .header-text .school-name { font-size: 18px; }
-      .student-meta { flex-direction: column; align-items: center; text-align: center; }
-      .student-details { text-align: center; }
-      .info-grid { grid-template-columns: 1fr; }
-      .position-summary .pos-item { padding: 0 8px; }
-      .position-summary .pos-value { font-size: 18px; }
-      .signature-section { flex-direction: column; align-items: center; }
-      .signature-box { width: 100%; }
-    }
-  </style>
+        /* ===== Footer ===== */
+        .report-footer {
+            text-align: center;
+            font-size: 8.5px;
+            color: #94a3b8;
+            margin-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ========================================================== */
+        /* ===== PRINT STYLES - A4 SINGLE PAGE ===== */
+        /* ========================================================== */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            #app { max-width: 100%; padding: 0; }
+            .no-print { display: none !important; }
+            .report-wrapper {
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+                padding: 6px 10px;
+                margin: 0;
+            }
+            .report-card {
+                max-width: 100%;
+                padding: 0;
+                overflow: visible;
+                font-size: 10px;
+            }
+
+            .watermark-img {
+                opacity: 0.06 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            table th {
+                background: #1e1b4b !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .grand-total-row td {
+                background: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .student-meta, .dates-row, .info-grid .box,
+            .commentary-box, .position-summary, .attendance-grid {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .position-summary {
+                background: #fefce8 !important;
+                border-color: #f59e0b !important;
+            }
+            .school-logo {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .student-photo-container img {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .signature-box .sig-image-container img {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .header-text .school-name { font-size: 20px; }
+            .term-info { font-size: 13px; padding: 1px 20px; }
+            table { font-size: 9.5px; }
+            table td { padding: 2px 2px; }
+            .info-grid .box .item { font-size: 9.5px; }
+            .student-details .name { font-size: 15px; }
+            .position-summary .pos-value { font-size: 18px; }
+
+            /* Force single A4 page */
+            .report-card { page-break-after: avoid; page-break-inside: avoid; }
+            .report-wrapper { page-break-after: avoid; }
+        }
+
+        /* ========================================================== */
+        /* ===== UTILITY CLASSES ===== */
+        /* ========================================================== */
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+        .page.active { display: block; }
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn-print {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 12px 36px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-print:hover { background: #1e293b; transform: scale(1.01); }
+
+        .btn-back {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            padding: 12px 36px;
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-back:hover { border-color: #4f46e5; background: #f8fafc; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .report-wrapper { padding: 14px; }
+            .login-card { padding: 24px 20px; }
+            .header-text .school-name { font-size: 18px; }
+            .student-meta { flex-direction: column; align-items: center; text-align: center; }
+            .student-details { text-align: center; }
+            .info-grid { grid-template-columns: 1fr; }
+            .position-summary .pos-item { padding: 0 8px; }
+            .position-summary .pos-value { font-size: 18px; }
+            .signature-section { flex-direction: column; align-items: center; }
+            .signature-box { width: 100%; }
+        }
+    </style>
 </head>
 <body>
 
-<div id="app">
-  <div id="toastContainer" class="toast-container"></div>
+    <div id="app">
+        <!-- TOAST CONTAINER -->
+        <div id="toastContainer" class="toast-container"></div>
 
-  <!-- ===== LOGIN PAGE ===== -->
-  <div id="loginPage" class="page active">
-    <div class="login-card">
-      <h2>📋 Report Card</h2>
-      <p>Enter student name, class, and 8‑digit PIN provided by school.</p>
-      <div class="flex">
-        <input id="studentName" placeholder="👤 Full Name" style="flex:2;" />
-        <select id="classSelect" style="flex:2;">
-          <option value="">-- Class --</option>
-        </select>
-        <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" style="flex:1;" />
-      </div>
-      <button id="checkReportBtn">🔍 View Report Card</button>
-      <p id="reportErr" class="error-text"></p>
-      <p id="authStatus" class="status-text">⏳ Connecting...</p>
+        <!-- ========================================================== -->
+        <!-- PAGE 1: LOGIN                                              -->
+        <!-- ========================================================== -->
+        <div id="loginPage" class="page active">
+            <div class="login-card">
+                <h2>📋 Check Report Card</h2>
+                <p>Enter the student's name, select their class, and enter the 8-digit PIN provided by the school.</p>
+                <div class="flex">
+                    <input id="studentName" placeholder="👤 Student Full Name" style="flex:2;" />
+                    <select id="classSelect" style="flex:2;">
+                        <option value="">-- Select Class --</option>
+                    </select>
+                    <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" style="flex:1;" />
+                </div>
+                <button id="checkReportBtn" style="width:100%; margin-top:12px;">🔍 View Report Card</button>
+                <p id="reportErr" class="error-text"></p>
+                <p id="authStatus" class="status-text">⏳ Connecting to server...</p>
+            </div>
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- PAGE 2: REPORT CARD DISPLAY                                -->
+        <!-- ========================================================== -->
+        <div id="reportPage" class="page">
+            <div class="report-wrapper">
+                <!-- Print & Back Buttons (hidden when printing) -->
+                <div class="flex-center no-print" style="margin-bottom:16px;">
+                    <button class="btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+                    <button class="btn-back" id="backBtn">⬅ Back to Search</button>
+                </div>
+
+                <!-- ===== THE ACTUAL REPORT CARD ===== -->
+                <div class="report-card" id="reportContainer">
+                    <!-- Dynamically filled by JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- ===== REPORT PAGE ===== -->
-  <div id="reportPage" class="page">
-    <div class="report-wrapper">
-      <div class="flex-center no-print" style="margin-bottom:14px;">
-        <button class="btn-print" onclick="window.print()">🖨️ Print / PDF</button>
-        <button class="btn-back" id="backBtn">⬅ Back</button>
-      </div>
-      <div class="report-card" id="reportContainer">
-        <!-- dynamically filled -->
-      </div>
-    </div>
-  </div>
-</div>
+    <script>
+        // =============================================================
+        // 🔥 FIREBASE CONFIG
+        // =============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
+            authDomain: "scholars-a8087.firebaseapp.com",
+            projectId: "scholars-a8087",
+            storageBucket: "scholars-a8087.firebasestorage.app",
+            messagingSenderId: "406251764422",
+            appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
+            measurementId: "G-TEFG74LD7J"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-<script>
-  // =============================================================
-  // 🔥 FIREBASE CONFIG
-  // =============================================================
-  const firebaseConfig = {
-    apiKey: "AIzaSyDOZ4lIPQ8lIrWulegKaLfDowO0FDEgbzc",
-    authDomain: "scholars-a8087.firebaseapp.com",
-    projectId: "scholars-a8087",
-    storageBucket: "scholars-a8087.firebasestorage.app",
-    messagingSenderId: "406251764422",
-    appId: "1:406251764422:web:28422145b6cb4a6eabf5c7",
-    measurementId: "G-TEFG74LD7J"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+        // =============================================================
+        // SCHOOL LOGO URL
+        // =============================================================
+        const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
 
-  // =============================================================
-  // SCHOOL LOGO (public)
-  // =============================================================
-  const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
-
-  // =============================================================
-  // TOAST
-  // =============================================================
-  function showToast(msg, type = 'success') {
-    const c = document.getElementById('toastContainer');
-    const icons = { success:'✅', error:'❌', warning:'⚠️' };
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `<span class="icon">${icons[type]||'📢'}</span> ${msg}`;
-    c.appendChild(t);
-    setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 400); }, 3800);
-  }
-
-  const $ = id => document.getElementById(id);
-  const showPage = id => {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    $(id + 'Page').classList.add('active');
-  };
-
-  let masterClassList = [];
-
-  // =============================================================
-  // AUTH
-  // =============================================================
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      $('authStatus').innerHTML = '✅ Connected.';
-    } else {
-      $('authStatus').innerHTML = '⏳ Authenticating...';
-      auth.signInAnonymously().catch(e => {
-        $('authStatus').innerHTML = '❌ Connection error. Refresh.';
-      });
-    }
-  });
-
-  function waitForAuth() {
-    return new Promise(resolve => {
-      if (auth.currentUser) { resolve(auth.currentUser); return; }
-      const unsub = auth.onAuthStateChanged(u => { unsub(); resolve(u); });
-    });
-  }
-
-  // =============================================================
-  // LOAD CLASS LIST
-  // =============================================================
-  async function loadMasterClassList() {
-    try {
-      const doc = await db.collection('classList').doc('allClasses').get();
-      masterClassList = doc.exists ? doc.data().classes || [] : ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
-    } catch(e) {
-      masterClassList = ['Nursery 1','Nursery 2','Basic 1','Basic 2','Basic 3','Basic 4','Basic 5','Basic 6'];
-    }
-    const sel = $('classSelect');
-    sel.innerHTML = '<option value="">-- Select Class --</option>';
-    masterClassList.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
-    $('authStatus').innerHTML = '✅ Ready. Enter details.';
-  }
-
-  // =============================================================
-  // PHOTO FETCH
-  // =============================================================
-  async function getStudentPhoto(name, cls) {
-    try {
-      const doc = await db.collection('studentPhotos').doc(`${cls}_${name}`).get();
-      return doc.exists ? doc.data().photoUrl || null : null;
-    } catch(e) { return null; }
-  }
-
-  // =============================================================
-  // HELPERS
-  // =============================================================
-  function getRemark(avg) {
-    if (avg >= 75) return 'Distinction';
-    if (avg >= 70) return 'Excellent';
-    if (avg >= 65) return 'Very Good';
-    if (avg >= 60) return 'Good';
-    if (avg >= 55) return 'Above Average';
-    if (avg >= 50) return 'Average';
-    if (avg >= 45) return 'Below Average';
-    if (avg >= 40) return 'Weak Pass';
-    return 'Fail';
-  }
-  function getGradeClass(avg) {
-    if (avg >= 75) return 'grade-distinction';
-    if (avg >= 70) return 'grade-excellent';
-    if (avg >= 65) return 'grade-verygood';
-    if (avg >= 60) return 'grade-good';
-    if (avg >= 55) return 'grade-aboveavg';
-    if (avg >= 50) return 'grade-average';
-    if (avg >= 45) return 'grade-belowavg';
-    if (avg >= 40) return 'grade-weak';
-    return 'grade-fail';
-  }
-  function ordinal(n) {
-    const s = ['th','st','nd','rd'], v = n % 100;
-    return s[(v-20)%10] || s[v] || s[0];
-  }
-  function fmtDate(d) {
-    if (!d) return 'Not set';
-    if (d.toDate) d = d.toDate();
-    if (typeof d === 'string') d = new Date(d);
-    if (isNaN(d.getTime())) return 'Invalid';
-    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-  }
-
-  // =============================================================
-  // CHECK REPORT
-  // =============================================================
-  $('checkReportBtn').addEventListener('click', async () => {
-    const name = $('studentName').value.trim();
-    const cls = $('classSelect').value;
-    const pin = $('studentPin').value.trim();
-    const err = $('reportErr');
-
-    if (!name) { err.innerText = '⚠️ Enter student name.'; return; }
-    if (!cls) { err.innerText = '⚠️ Select class.'; return; }
-    if (!pin) { err.innerText = '⚠️ Enter PIN.'; return; }
-    err.innerText = '';
-
-    const btn = $('checkReportBtn');
-    btn.innerText = '⏳ Searching...';
-    btn.disabled = true;
-
-    try {
-      await waitForAuth();
-
-      // 1) verify PIN
-      const pinDoc = await db.collection('pins').doc(pin).get();
-      if (!pinDoc.exists) {
-        err.innerText = '❌ Invalid PIN.';
-        btn.innerText = '🔍 View Report Card';
-        btn.disabled = false;
-        return;
-      }
-      const pinData = pinDoc.data();
-      if (pinData.used && pinData.usedBy !== name) {
-        err.innerText = '❌ PIN already used by another student.';
-        btn.innerText = '🔍 View Report Card';
-        btn.disabled = false;
-        return;
-      }
-
-      // 2) fetch approved report card
-      const snap = await db.collection('reportCards')
-        .where('class', '==', cls)
-        .where('studentName', '==', name)
-        .where('approved', '==', true)
-        .get();
-
-      if (snap.empty) {
-        err.innerText = '❌ No approved report card found.';
-        btn.innerText = '🔍 View Report Card';
-        btn.disabled = false;
-        return;
-      }
-
-      const doc = snap.docs[0];
-      const data = doc.data();
-
-      // claim PIN if not used
-      if (!pinData.used) {
-        await db.collection('pins').doc(pin).update({
-          used: true, usedBy: name, class: cls, usedAt: new Date()
-        });
-        await db.collection('reportCards').doc(doc.id).update({ pin });
-        showToast(`✅ PIN claimed for ${name}`, 'success');
-      } else {
-        showToast(`ℹ️ Welcome back, ${name}`, 'success');
-      }
-
-      // school info
-      let school = {
-        name: "COVENANT ARROWS' MODEL",
-        motto: 'Raising Future Leaders Through Christ-Centered Learning',
-        location: 'Abiola Way, Abeokuta, Ogun State.'
-      };
-      try {
-        const s = await db.collection('settings').doc('schoolInfo').get();
-        if (s.exists) {
-          const d = s.data();
-          school.name = d.schoolName || school.name;
-          school.motto = d.motto || school.motto;
-          school.location = d.location || school.location;
+        // =============================================================
+        // TOAST SYSTEM
+        // =============================================================
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: '✅', error: '❌', warning: '⚠️' };
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 400); }, 4000);
         }
-      } catch(e) {}
 
-      const photo = await getStudentPhoto(name, cls);
-      renderReport(data, school, photo);
+        // =============================================================
+        // DOM REFS & STATE
+        // =============================================================
+        const $ = (id) => document.getElementById(id);
+        const showPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            $(id + 'Page').classList.add('active');
+        };
+        let masterClassList = [];
 
-      showPage('report');
-      err.innerText = '';
+        // =============================================================
+        // 1. AUTHENTICATION
+        // =============================================================
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                $('authStatus').innerHTML = '✅ Connected to server.';
+                console.log('✅ Report viewer authenticated.');
+            } else {
+                $('authStatus').innerHTML = '⏳ Authenticating...';
+                auth.signInAnonymously().catch(e => {
+                    $('authStatus').innerHTML = '❌ Connection error. Please refresh.';
+                    console.error('Auth error:', e);
+                });
+            }
+        });
 
-    } catch(e) {
-      err.innerText = '⚠️ Network error. Check connection.';
-      console.error(e);
-      showToast('❌ Error loading report', 'error');
-    }
+        function waitForAuth() {
+            return new Promise((resolve) => {
+                if (auth.currentUser) {
+                    resolve(auth.currentUser);
+                    return;
+                }
+                const unsubscribe = auth.onAuthStateChanged(user => {
+                    unsubscribe();
+                    resolve(user);
+                });
+            });
+        }
 
-    btn.innerText = '🔍 View Report Card';
-    btn.disabled = false;
-  });
+        // =============================================================
+        // Cloudinary photo fetching function
+        // =============================================================
+        async function getStudentPhoto(studentName, className) {
+            try {
+                const doc = await db.collection('studentPhotos').doc(`${className}_${studentName}`).get();
+                if (doc.exists && doc.data().photoUrl) return doc.data().photoUrl;
+                return null;
+            } catch (e) { return null; }
+        }
 
-  // =============================================================
-  // RENDER REPORT (A4 OPTIMIZED, NUMERIC RATINGS, SIG IMAGES)
-  // =============================================================
-  function renderReport(data, school, photoUrl) {
-    const container = $('reportContainer');
-    const subs = Object.keys(data.subjects || {});
-    const att = data.attendance || {};
-    const affective = data.affectiveDomain || {};
-    const psychomotor = data.psychomotorDomain || {};
-    const extras = data.extracurriculars || [];
-    const comment = data.classTeacherCommentary || data.commentary || 'No comments.';
-    const principal = data.principalRemarks || '';
-    const promotion = data.promotionStatus || '';
-    const overallPos = data.overallPosition || null;
-    const overallAvg = data.overallAverage || 0;
-    const totalStud = data.totalStudents || 0;
+        // =============================================================
+        // 2. LOAD MASTER CLASS LIST & POPULATE DROPDOWN
+        // =============================================================
+        async function loadMasterClassList() {
+            try {
+                const doc = await db.collection('classList').doc('allClasses').get();
+                if (doc.exists) {
+                    masterClassList = doc.data().classes || [];
+                } else {
+                    masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
+                        'Basic 6'
+                    ];
+                }
+                populateClassDropdown();
+            } catch (e) {
+                console.error("Error loading master class list:", e);
+                masterClassList = ['Nursery 1', 'Nursery 2', 'Basic 1', 'Basic 2', 'Basic 3', 'Basic 4', 'Basic 5',
+                    'Basic 6'
+                ];
+                populateClassDropdown();
+            }
+        }
 
-    // signatures (base64 images)
-    const teacherSig = data.teacherSignature || null;
-    const adminSig = data.adminSignature || null;
+        function populateClassDropdown() {
+            const select = $('classSelect');
+            select.innerHTML = '<option value="">-- Select Class --</option>';
+            masterClassList.forEach(cls => {
+                select.innerHTML += `<option value="${cls}">${cls}</option>`;
+            });
+            $('authStatus').innerHTML = '✅ Ready. Enter details to view report.';
+        }
 
-    // ---- subject rows ----
-    let subjectRows = '';
-    subs.forEach((sub, i) => {
-      const s = data.subjects[sub] || {};
-      const f = s.firstTerm || 0;
-      const sec = s.secondTerm || 0;
-      const t = s.thirdTerm || 0;
-      const avg = s.average || ((f + sec + t) / 3);
-      const remark = s.remark || getRemark(avg);
-      const cls = getGradeClass(avg);
-      subjectRows += `
-        <tr>
-          <td>${i+1}</td>
-          <td>${sub}</td>
-          <td>${f || '--'}</td>
-          <td>${sec || '--'}</td>
-          <td>${t || '--'}</td>
-          <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
-          <td class="${cls}">${remark || '--'}</td>
-        </tr>
-      `;
-    });
+        // =============================================================
+        // Helper functions
+        // =============================================================
+        function getRemark(avg) {
+            if (avg >= 75) return 'Distinction';
+            if (avg >= 70) return 'Excellent';
+            if (avg >= 65) return 'Very Good';
+            if (avg >= 60) return 'Good';
+            if (avg >= 55) return 'Above Average';
+            if (avg >= 50) return 'Average';
+            if (avg >= 45) return 'Below Average';
+            if (avg >= 40) return 'Weak Pass';
+            return 'Fail';
+        }
 
-    // ---- affective (numeric 1-5) ----
-    let affHtml = '';
-    const affKeys = Object.keys(affective);
-    if (affKeys.length) {
-      affKeys.forEach(k => {
-        const val = Math.min(Math.max(parseInt(affective[k]) || 1, 1), 5);
-        affHtml += `<div class="item"><span>${k}</span><span class="num-rating">${val}</span></div>`;
-      });
-    } else { affHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+        function getGradeClass(avg) {
+            if (avg >= 75) return 'grade-distinction';
+            if (avg >= 70) return 'grade-excellent';
+            if (avg >= 65) return 'grade-verygood';
+            if (avg >= 60) return 'grade-good';
+            if (avg >= 55) return 'grade-aboveavg';
+            if (avg >= 50) return 'grade-average';
+            if (avg >= 45) return 'grade-belowavg';
+            if (avg >= 40) return 'grade-weak';
+            return 'grade-fail';
+        }
 
-    // ---- psychomotor (numeric 1-5) ----
-    let psyHtml = '';
-    const psyKeys = Object.keys(psychomotor);
-    if (psyKeys.length) {
-      psyKeys.forEach(k => {
-        const val = Math.min(Math.max(parseInt(psychomotor[k]) || 1, 1), 5);
-        psyHtml += `<div class="item"><span>${k}</span><span class="num-rating">${val}</span></div>`;
-      });
-    } else { psyHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+        function getOrdinalSuffix(n) {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return s[(v - 20) % 10] || s[v] || s[0];
+        }
 
-    // ---- extracurricular ----
-    const allClubs = ['JETS Club','Literary & Debating','Press Club','Red Cross','Boys/Girls Scout','Brass Band','Drama Society','Road Safety','Farmers Club','Home Makers','Choral Group'];
-    let extraHtml = allClubs.map(c => {
-      const done = extras.includes(c);
-      return `<span class="badge ${done ? '' : 'missing'}">${done ? '✔' : '○'} ${c}</span>`;
-    }).join(' ');
+        function formatDate(d) {
+            if (!d) return 'Not set';
+            if (d.toDate) d = d.toDate();
+            if (typeof d === 'string') d = new Date(d);
+            if (isNaN(d.getTime())) return 'Invalid date';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
 
-    // ---- position ----
-    let posHtml = '';
-    if (overallPos !== null && overallPos > 0) {
-      const suffix = ordinal(overallPos);
-      let emoji = '';
-      if (overallPos === 1) emoji = '🥇';
-      else if (overallPos === 2) emoji = '🥈';
-      else if (overallPos === 3) emoji = '🥉';
-      const pct = totalStud > 1 ? Math.round(((totalStud - overallPos) / (totalStud - 1)) * 100) : 100;
-      posHtml = `
-        <div class="position-summary">
-          <div class="pos-item"><div class="pos-value">${emoji} ${overallPos}<small>${suffix}</small></div><div class="pos-label">Position</div></div>
-          <div class="pos-item"><div class="pos-value">${overallAvg.toFixed(1)}%</div><div class="pos-label">Avg</div></div>
-          ${totalStud > 0 ? `<div class="pos-item"><div class="pos-value">${totalStud}</div><div class="pos-label">Total</div></div>
-          <div class="pos-item"><div class="pos-value" style="font-size:18px;">${pct}%</div><div class="pos-label">Top %</div></div>` : ''}
-          ${promotion ? `<div class="pos-item"><div class="pos-value" style="font-size:15px;"><span class="promotion-badge ${promotion.toLowerCase().replace(/\s+/g,'-')}">${promotion}</span></div><div class="pos-label">Status</div></div>` : ''}
-        </div>
-      `;
-    } else {
-      posHtml = `
-        <div class="position-summary" style="background:#f1f5f9; border-color:#94a3b8;">
-          <div class="pos-item"><div class="pos-value" style="font-size:16px; color:#64748b;">📊 Not calculated</div><div class="pos-label">Ask teacher</div></div>
-        </div>
-      `;
-    }
+        // =============================================================
+        // 3. CHECK REPORT LOGIC
+        // =============================================================
+        $('checkReportBtn').addEventListener('click', async () => {
+            const name = $('studentName').value.trim();
+            const cls = $('classSelect').value;
+            const pin = $('studentPin').value.trim();
+            const err = $('reportErr');
 
-    // ---- photo ----
-    let photoHtml = photoUrl
-      ? `<div class="student-photo-container"><img src="${photoUrl}" alt="${data.studentName}" /></div>`
-      : `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
+            if (!name) {
+                err.innerText = '⚠️ Please enter the student\'s name.';
+                return;
+            }
+            if (!cls) {
+                err.innerText = '⚠️ Please select the student\'s class.';
+                return;
+            }
+            if (!pin) {
+                err.innerText = '⚠️ Please enter the PIN.';
+                return;
+            }
 
-    // ---- signatures (with images) ----
-    const teacherSigHtml = teacherSig
-      ? `<div class="sig-image-container"><img src="${teacherSig}" alt="Teacher Signature" /></div><div class="sub">${data.teacherName || 'Teacher'}</div>`
-      : `<div class="sig-image-container"><span class="no-sig">No signature</span></div><div class="sub">${data.teacherName || 'Teacher'}</div>`;
+            err.innerText = '';
+            $('checkReportBtn').innerText = '⏳ Searching...';
+            $('checkReportBtn').disabled = true;
 
-    const adminSigHtml = adminSig
-      ? `<div class="sig-image-container"><img src="${adminSig}" alt="Admin Signature" /></div><div class="sub">${data.approvedBy || 'Admin'}</div>`
-      : `<div class="sig-image-container"><span class="no-sig">Not signed</span></div><div class="sub">Admin</div>`;
+            try {
+                const user = await waitForAuth();
+                if (!user) {
+                    err.innerText = '⚠️ Network error. Please refresh.';
+                    $('checkReportBtn').innerText = '🔍 View Report Card';
+                    $('checkReportBtn').disabled = false;
+                    return;
+                }
 
-    const parentSigHtml = `<div class="sig-image-container"><span class="no-sig">______</span></div><div class="sub">Parent/Guardian</div>`;
+                const pinDoc = await db.collection('pins').doc(pin).get();
+                if (!pinDoc.exists) {
+                    err.innerText = '❌ Invalid PIN. Please check and try again.';
+                    $('checkReportBtn').innerText = '🔍 View Report Card';
+                    $('checkReportBtn').disabled = false;
+                    return;
+                }
 
-    // ---- assemble ----
-    container.innerHTML = `
-      <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="watermark" />
+                const pinData = pinDoc.data();
 
-      <div class="header-logo-row">
-        <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="Logo" />
-        <div class="header-text">
-          <div class="school-name">${data.schoolName || school.name}</div>
-          <div class="motto">✝️ ${school.motto}</div>
-          <div class="location">📍 ${school.location}</div>
-        </div>
-      </div>
-      <div style="text-align:center; position:relative; z-index:1;">
-        <span class="term-info">${data.term || 'THIRD TERM'} — ${data.session || data.year || new Date().getFullYear()}</span>
-      </div>
+                if (pinData.used && pinData.usedBy !== name) {
+                    err.innerText = '❌ This PIN has already been used by another student.';
+                    $('checkReportBtn').innerText = '🔍 View Report Card';
+                    $('checkReportBtn').disabled = false;
+                    return;
+                }
 
-      <div class="student-meta">
-        ${photoHtml}
-        <div class="student-details">
-          <div class="name">👤 <span>${data.studentName}</span></div>
-          <div class="class">📚 ${data.class} · ${data.category || 'Day'}</div>
-          <div class="teacher">👨‍🏫 ${data.teacherName || 'N/A'}</div>
-          <div class="issue-date">📅 ${fmtDate(data.dateOfIssue || data.date)}</div>
-        </div>
-      </div>
+                const snap = await db.collection('reportCards')
+                    .where('class', '==', cls)
+                    .where('studentName', '==', name)
+                    .where('approved', '==', true)
+                    .get();
 
-      <div class="attendance-grid">
-        <span>📅 Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
-        <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
-        <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
-        <span>📊 ${(((att.daysPresent||att.present||0) / (att.daysOpened||att.open||1)) * 100).toFixed(1)}%</span>
-      </div>
+                if (snap.empty) {
+                    err.innerText = '❌ No approved report card found for this student.';
+                    $('checkReportBtn').innerText = '🔍 View Report Card';
+                    $('checkReportBtn').disabled = false;
+                    return;
+                }
 
-      <div class="dates-row">
-        <span>📅 Resumption: <strong>${fmtDate(att.resumptionDate || data.resumptionDate)}</strong></span>
-        <span>📅 Closing: <strong>${fmtDate(att.closingDate || data.closingDate)}</strong></span>
-        <span>📅 Next Term: <strong>${fmtDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
-      </div>
+                const doc = snap.docs[0];
+                const data = doc.data();
 
-      ${posHtml}
+                if (!pinData.used) {
+                    await db.collection('pins').doc(pin).update({
+                        used: true,
+                        usedBy: name,
+                        class: cls,
+                        usedAt: new Date()
+                    });
+                    await db.collection('reportCards').doc(doc.id).update({ pin: pin });
+                    showToast(`✅ PIN claimed successfully for ${name}!`, 'success');
+                } else {
+                    showToast(`ℹ️ Welcome back, ${name}!`, 'success');
+                }
 
-      <div class="info-grid">
-        <div class="box"><h4>⭐ Affective Domain</h4>${affHtml}</div>
-        <div class="box"><h4>🤸 Psychomotor</h4>${psyHtml}</div>
-      </div>
+                // Fetch School Settings
+                let schoolName = 'COVENANT ARROWS\' MODEL';
+                let schoolMotto = 'Raising Future Leaders Through Christ-Centered Learning';
+                let schoolLocation = 'Abiola Way, Abeokuta, Ogun State.';
+                try {
+                    const settingsSnap = await db.collection('settings').doc('schoolInfo').get();
+                    if (settingsSnap.exists) {
+                        const s = settingsSnap.data();
+                        schoolName = s.schoolName || schoolName;
+                        schoolMotto = s.motto || schoolMotto;
+                        schoolLocation = s.location || schoolLocation;
+                    }
+                } catch (e) { /* ignore */ }
 
-      <div class="info-grid" style="grid-template-columns:1fr;">
-        <div class="box"><h4>⚽ Clubs</h4><div class="extra-badges">${extraHtml}</div></div>
-      </div>
+                const photoUrl = await getStudentPhoto(name, cls);
+                renderReportCard(data, { name: schoolName, motto: schoolMotto, location: schoolLocation }, photoUrl);
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th rowspan="2">S/N</th><th rowspan="2">SUBJECT</th><th colspan="3">TERMLY SCORES</th><th rowspan="2">AVG %</th><th rowspan="2">REMARK</th></tr>
-            <tr class="sub-header"><th>1st</th><th>2nd</th><th>3rd</th></tr>
-          </thead>
-          <tbody>
-            ${subjectRows}
-            <tr class="grand-total-row">
-              <td colspan="5"><strong>📊 OVERALL AVERAGE</strong></td>
-              <td><strong>${overallAvg.toFixed(1)}%</strong></td>
-              <td><strong>${getRemark(overallAvg)}</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                showPage('report');
+                err.innerText = '';
 
-      <div class="commentary-box">
-        <h4>📝 Teacher's Comment</h4>
-        <p>${comment}</p>
-      </div>
-      ${principal ? `<div class="commentary-box" style="background:#fefce8;"><h4>👨‍💼 Principal's Remarks</h4><p>${principal}</p></div>` : ''}
+            } catch (e) {
+                err.innerText = '⚠️ Network error. Please check your connection.';
+                console.error(e);
+                showToast('❌ Error loading report.', 'error');
+            }
 
-      <div class="signature-section">
-        <div class="signature-box"><div class="label">Class Teacher</div>${teacherSigHtml}</div>
-        <div class="signature-box"><div class="label">Principal / Admin</div>${adminSigHtml}</div>
-        <div class="signature-box"><div class="label">Parent/Guardian</div>${parentSigHtml}</div>
-      </div>
+            $('checkReportBtn').innerText = '🔍 View Report Card';
+            $('checkReportBtn').disabled = false;
+        });
 
-      <div class="report-footer">
-        🔐 Verified & Approved · PIN: ${data.pin || 'Claimed'} · Covenant Arrows' Model School
-      </div>
-    `;
-  }
+        // =============================================================
+        // RENDER REPORT CARD - FULL VERSION WITH SIGNATURE IMAGES
+        // =============================================================
+        function renderReportCard(data, school, studentPhotoUrl) {
+            const container = $('reportContainer');
+            const subjects = Object.keys(data.subjects || {});
+            const att = data.attendance || {};
+            const affective = data.affectiveDomain || {};
+            const psychomotor = data.psychomotorDomain || {};
+            const extracurriculars = data.extracurriculars || [];
+            const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
+            const principalRemarks = data.principalRemarks || '';
+            const promotionStatus = data.promotionStatus || '';
 
-  // =============================================================
-  // BACK BUTTON
-  // =============================================================
-  $('backBtn').addEventListener('click', () => {
-    showPage('login');
-    $('reportContainer').innerHTML = '';
-    $('studentName').value = '';
-    $('classSelect').value = '';
-    $('studentPin').value = '';
-    $('reportErr').innerText = '';
-  });
+            const overallPosition = data.overallPosition || null;
+            const overallAverage = data.overallAverage || 0;
+            const totalStudents = data.totalStudents || 0;
 
-  // =============================================================
-  // INIT
-  // =============================================================
-  showPage('login');
-  loadMasterClassList();
-  console.log('✅ Report Card Viewer · A4 optimized · Numeric ratings · Signature images');
-</script>
+            // ===== SIGNATURE DATA =====
+            const teacherSig = data.teacherSignature || null;
+            const adminSig = data.adminSignature || null;
 
+            let subjectRows = '';
+            subjects.forEach((sub, index) => {
+                const s = data.subjects[sub] || {};
+                const first = s.firstTerm || 0;
+                const second = s.secondTerm || 0;
+                const third = s.thirdTerm || 0;
+                const avg = s.average || ((first + second + third) / 3);
+                const remark = s.remark || getRemark(avg);
+                const gradeClass = getGradeClass(avg);
+
+                subjectRows += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${sub}</td>
+                        <td>${first || '--'}</td>
+                        <td>${second || '--'}</td>
+                        <td>${third || '--'}</td>
+                        <td style="font-weight:700;">${avg > 0 ? avg.toFixed(1) + '%' : '--'}</td>
+                        <td class="${gradeClass}">${remark || '--'}</td>
+                    </tr>
+                `;
+            });
+
+            let affectiveHtml = '';
+            const affectiveKeys = Object.keys(affective);
+            if (affectiveKeys.length > 0) {
+                affectiveKeys.forEach(q => {
+                    const val = Math.min(Math.max(parseInt(affective[q]) || 1, 1), 5);
+                    affectiveHtml += `<div class="item"><span>${q}</span><span class="num-rating">${val}</span></div>`;
+                });
+            } else { affectiveHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+
+            let psychomotorHtml = '';
+            const psychomotorKeys = Object.keys(psychomotor);
+            if (psychomotorKeys.length > 0) {
+                psychomotorKeys.forEach(q => {
+                    const val = Math.min(Math.max(parseInt(psychomotor[q]) || 1, 1), 5);
+                    psychomotorHtml += `<div class="item"><span>${q}</span><span class="num-rating">${val}</span></div>`;
+                });
+            } else { psychomotorHtml = '<p style="font-size:10px; color:#94a3b8;">Not recorded.</p>'; }
+
+            const allExtrasList = ['JETS Club', 'Literary & Debating', 'Press Club', 'Red Cross', 'Boys/Girls Scout',
+                'Brass Band', 'Drama Society', 'Road Safety', 'Farmers Club', 'Home Makers', 'Choral Group'
+            ];
+            let extrasHtml = allExtrasList.map(e => {
+                const done = extracurriculars.includes(e);
+                return `<span class="badge ${done ? '' : 'missing'}">${done ? '✔' : '○'} ${e}</span>`;
+            }).join(' ');
+
+            let positionHtml = '';
+            if (overallPosition !== null && overallPosition > 0) {
+                const suffix = getOrdinalSuffix(overallPosition);
+                let posEmoji = '';
+                if (overallPosition === 1) posEmoji = '🥇';
+                else if (overallPosition === 2) posEmoji = '🥈';
+                else if (overallPosition === 3) posEmoji = '🥉';
+
+                let percentDisplay = 100;
+                if (totalStudents > 1) {
+                    const percentage = ((totalStudents - overallPosition) / (totalStudents - 1)) * 100;
+                    percentDisplay = Math.round(percentage);
+                }
+
+                positionHtml = `
+                    <div class="position-summary">
+                        <div class="pos-item">
+                            <div class="pos-value">${posEmoji} ${overallPosition}<small>${suffix}</small></div>
+                            <div class="pos-label">Overall Position</div>
+                        </div>
+                        <div class="pos-item">
+                            <div class="pos-value">${overallAverage.toFixed(1)}%</div>
+                            <div class="pos-label">Overall Average</div>
+                        </div>
+                        ${totalStudents > 0 ? `
+                        <div class="pos-item">
+                            <div class="pos-value">${totalStudents}</div>
+                            <div class="pos-label">Total Students</div>
+                        </div>
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:18px;">${percentDisplay}%</div>
+                            <div class="pos-label">Top ${percentDisplay}%</div>
+                        </div>` : ''}
+                        ${promotionStatus ? `
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:15px;">
+                                <span class="promotion-badge ${promotionStatus.toLowerCase().replace(/\s+/g, '-')}">${promotionStatus}</span>
+                            </div>
+                            <div class="pos-label">Promotion Status</div>
+                        </div>` : ''}
+                    </div>
+                `;
+            } else {
+                positionHtml = `
+                    <div class="position-summary" style="background:#f1f5f9; border-color:#94a3b8;">
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:16px; color:#64748b;">📊 Position not calculated yet</div>
+                            <div class="pos-label">Please ask your teacher to calculate positions</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let photoHtml = '';
+            if (studentPhotoUrl) {
+                photoHtml = `<div class="student-photo-container"><img src="${studentPhotoUrl}" alt="${data.studentName}" /></div>`;
+            } else {
+                photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
+            }
+
+            // ===== SIGNATURE HTML WITH IMAGE SUPPORT =====
+            let teacherSigHtml = '';
+            if (teacherSig) {
+                teacherSigHtml = `
+                    <div class="sig-image-container">
+                        <img src="${teacherSig}" alt="Teacher Signature" />
+                    </div>
+                    <div class="sub">${data.teacherName || 'Teacher'}</div>
+                `;
+            } else {
+                teacherSigHtml = `
+                    <div class="sig-image-container">
+                        <span class="no-sig">No signature</span>
+                    </div>
+                    <div class="sub">${data.teacherName || 'Teacher'}</div>
+                `;
+            }
+
+            let adminSigHtml = '';
+            if (adminSig) {
+                adminSigHtml = `
+                    <div class="sig-image-container">
+                        <img src="${adminSig}" alt="Admin Signature" />
+                    </div>
+                    <div class="sub">${data.approvedBy || 'Admin'}</div>
+                `;
+            } else {
+                adminSigHtml = `
+                    <div class="sig-image-container">
+                        <span class="no-sig">Not signed</span>
+                    </div>
+                    <div class="sub">Admin</div>
+                `;
+            }
+
+            const parentSigHtml = `
+                <div class="sig-image-container">
+                    <span class="no-sig">______</span>
+                </div>
+                <div class="sub">Parent/Guardian</div>
+            `;
+
+            const html = `
+                <img class="watermark-img" src="${SCHOOL_LOGO_URL}" alt="Watermark" />
+
+                <div class="report-header">
+                    <div class="header-logo-row">
+                        <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="School Logo" />
+                        <div class="header-text">
+                            <div class="school-name">${data.schoolName || school.name}</div>
+                            <div class="motto">✝️ ${school.motto}</div>
+                            <div class="location">📍 ${school.location}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; position:relative; z-index:1;">
+                        <span class="term-info">${data.term || 'THIRD TERM'} — ${data.session || data.year || new Date().getFullYear()}</span>
+                    </div>
+                </div>
+
+                <div class="student-meta">
+                    ${photoHtml}
+                    <div class="student-details">
+                        <div class="name">👤 <span>${data.studentName}</span></div>
+                        <div class="class">📚 Class: <strong>${data.class}</strong> | Category: <strong>${data.category || 'Day'}</strong></div>
+                        <div class="teacher">👨‍🏫 Teacher: <strong>${data.teacherName || 'N/A'}</strong></div>
+                        <div class="issue-date">📅 Date of Issue: ${formatDate(data.dateOfIssue || data.date)}</div>
+                    </div>
+                </div>
+
+                <div class="attendance-grid">
+                    <span>📅 Days Opened: <strong>${att.daysOpened || att.open || 0}</strong></span>
+                    <span>✅ Present: <strong>${att.daysPresent || att.present || 0}</strong></span>
+                    <span>❌ Absent: <strong>${att.daysAbsent || att.absent || 0}</strong></span>
+                    <span>📊 Attendance: <strong>${((att.daysPresent || att.present || 0) / (att.daysOpened || att.open || 1) * 100).toFixed(1)}%</strong></span>
+                </div>
+
+                <div class="dates-row">
+                    <span>📅 Resumption: <strong>${formatDate(att.resumptionDate || data.resumptionDate)}</strong></span>
+                    <span>📅 Closing: <strong>${formatDate(att.closingDate || data.closingDate)}</strong></span>
+                    <span>📅 Next Term: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
+                </div>
+
+                ${positionHtml}
+
+                <div class="info-grid">
+                    <div class="box">
+                        <h4>⭐ Affective Domain (Character)</h4>
+                        ${affectiveHtml}
+                    </div>
+                    <div class="box">
+                        <h4>🤸 Psychomotor Domain (Skills)</h4>
+                        ${psychomotorHtml}
+                    </div>
+                </div>
+
+                <div class="info-grid" style="grid-template-columns:1fr;">
+                    <div class="box">
+                        <h4>⚽ Clubs & Societies</h4>
+                        <div class="extra-badges">${extrasHtml}</div>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th rowspan="2">S/N</th>
+                                <th rowspan="2">SUBJECT</th>
+                                <th colspan="3">TERMLY SCORES</th>
+                                <th rowspan="2">AVERAGE %</th>
+                                <th rowspan="2">REMARK</th>
+                            </tr>
+                            <tr class="sub-header">
+                                <th>1ST TERM</th>
+                                <th>2ND TERM</th>
+                                <th>3RD TERM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${subjectRows}
+                            <tr class="grand-total-row">
+                                <td colspan="5"><strong>📊 OVERALL AVERAGE</strong></td>
+                                <td><strong>${overallAverage.toFixed(1)}%</strong></td>
+                                <td><strong>${getRemark(overallAverage)}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="commentary-box">
+                    <h4>📝 Class Teacher's Commentary</h4>
+                    <p>${commentary}</p>
+                </div>
+
+                ${principalRemarks ? `
+                <div class="commentary-box" style="background:#fefce8;">
+                    <h4>👨‍💼 Principal's Remarks</h4>
+                    <p>${principalRemarks}</p>
+                </div>` : ''}
+
+                <!-- ===== SIGNATURES WITH IMAGES ===== -->
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <div class="label">Class Teacher</div>
+                        ${teacherSigHtml}
+                    </div>
+                    <div class="signature-box">
+                        <div class="label">Principal / Admin</div>
+                        ${adminSigHtml}
+                    </div>
+                    <div class="signature-box">
+                        <div class="label">Parent/Guardian</div>
+                        ${parentSigHtml}
+                    </div>
+                </div>
+
+                <div class="report-footer">
+                    🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // =============================================================
+        // 5. BACK BUTTON
+        // =============================================================
+        $('backBtn').addEventListener('click', () => {
+            showPage('login');
+            $('reportContainer').innerHTML = '';
+            $('studentName').value = '';
+            $('classSelect').value = '';
+            $('studentPin').value = '';
+            $('reportErr').innerText = '';
+        });
+
+        // =============================================================
+        // 6. INIT
+        // =============================================================
+        showPage('login');
+        loadMasterClassList();
+        console.log('✅ Report Card Viewer - FULL VERSION with A4, numeric ratings, signature images');
+    </script>
 </body>
 </html>
