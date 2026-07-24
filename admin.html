@@ -664,6 +664,121 @@
             .report-card-preview { max-width: 100%; padding: 0; }
         }
 
+        /* ===== PIN MANAGEMENT TABS ===== */
+        .pin-management-section {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .pin-management-section h3 {
+            font-weight: 800;
+            color: #1e1b4b;
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+        .pin-management-section .sub {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .pin-tab-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .pin-tab-btn {
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .pin-tab-btn.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+        .pin-tab-btn:hover { background: #f1f5f9; }
+        .pin-tab-btn.active:hover { background: #4338ca; }
+
+        .pin-tab-panel { display: none; }
+        .pin-tab-panel.active { display: block; }
+
+        .flex-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .flex-input input, .flex-input select {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 60px;
+            font-size: 14px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            background: white;
+        }
+        .flex-input input:focus, .flex-input select:focus { border-color: #4f46e5; }
+
+        .pin-display-box {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            border: 2px dashed #4f46e5;
+            margin-top: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .pin-display-box .pin-value {
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #1e1b4b;
+            display: inline-block;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin: 3px;
+            border: 1px solid #e2e8f0;
+        }
+        .pin-display-box .pin-value.pin-unused { border-color: #f59e0b; background: #fefce8; }
+        .pin-display-box .pin-value.pin-used { border-color: #10b981; background: #d1fae5; }
+        .pin-display-box .pin-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .table-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .table-scroll table { font-size: 12px; }
+        .table-scroll th { position: sticky; top: 0; background: #f1f5f9; z-index: 2; }
+
+        .pin-used-status { font-weight: 700; }
+        .pin-used-status.used { color: #059669; }
+        .pin-used-status.unused { color: #d97706; }
+
         /* Responsive */
         @media (max-width: 768px) {
             .app-container { padding: 12px; }
@@ -679,6 +794,9 @@
             .student-details { text-align: center; }
             .position-summary .pos-item { padding: 0 10px; }
             .position-summary .pos-value { font-size: 20px; }
+            .pin-management-section { padding: 16px; }
+            .pin-tab-row { flex-direction: column; }
+            .pin-tab-btn { text-align: center; }
         }
     </style>
 </head>
@@ -734,6 +852,65 @@
         <button class="btn btn-danger" id="rejectAllBtn">❌ Reject All</button>
         <button class="btn btn-outline" id="refreshBtn">🔄 Refresh</button>
         <button class="btn btn-purple" id="adminSigBtn">✍️ Admin Signature</button>
+    </div>
+
+    <!-- ===== PIN MANAGEMENT SECTION ===== -->
+    <div class="pin-management-section">
+        <h3>🔐 PIN Management System</h3>
+        <p class="sub">Generate, track, and manage PINs for parent/student access to report cards.</p>
+
+        <div class="pin-tab-row">
+            <button class="pin-tab-btn active" data-pin-tab="pinGenerate">🔄 Generate PINs</button>
+            <button class="pin-tab-btn" data-pin-tab="pinHistory">📜 Usage History</button>
+            <button class="pin-tab-btn" data-pin-tab="pinAll">📋 All PINs</button>
+            <button class="pin-tab-btn" data-pin-tab="pinAssign">📌 Assign to Student</button>
+        </div>
+
+        <!-- Tab: Generate PINs -->
+        <div id="pinGenerate" class="pin-tab-panel active">
+            <div class="sub">Generate 1 to 60 unique PINs at once for parents to purchase.</div>
+            <div class="flex-input">
+                <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; text-align:center;" />
+                <button class="btn btn-primary" id="genBulkPinBtn" style="padding:12px 24px;">🔄 Generate PINs</button>
+                <button class="btn btn-outline" id="copyPinsBtn">📋 Copy All</button>
+            </div>
+            <div class="pin-display-box" id="bulkPinResult">
+                <span class="pin-label">✨ Generated PINs</span>
+                <div id="pinListContainer"><span style="color:#94a3b8;">No PINs generated yet.</span></div>
+            </div>
+        </div>
+
+        <!-- Tab: Usage History -->
+        <div id="pinHistory" class="pin-tab-panel">
+            <div class="sub">Track which student used which PIN and when.</div>
+            <button class="btn btn-primary btn-sm" id="refreshHistoryBtn" style="margin-bottom:10px; padding:8px 20px;">🔄 Refresh</button>
+            <div class="table-scroll" id="pinHistoryContainer">
+                <p style="color:#94a3b8; font-size:14px;">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Tab: All PINs -->
+        <div id="pinAll" class="pin-tab-panel">
+            <div class="sub">View all generated PINs and their current status.</div>
+            <button class="btn btn-primary btn-sm" id="refreshAllPinsBtn" style="margin-bottom:10px; padding:8px 20px;">🔄 Refresh</button>
+            <div class="table-scroll" id="allPinsContainer">
+                <p style="color:#94a3b8; font-size:14px;">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Tab: Assign to Student -->
+        <div id="pinAssign" class="pin-tab-panel">
+            <div class="sub">Manually assign a PIN to a student's report card.</div>
+            <div class="flex-input">
+                <input id="assignPinInput" placeholder="🔑 Enter PIN (e.g. A#3kL9!@)" style="flex:1;" />
+                <input id="assignStudentName" placeholder="👤 Student Full Name" style="flex:1;" />
+                <select id="assignClassSelect" style="flex:1;">
+                    <option value="">-- Select Class --</option>
+                </select>
+                <button class="btn btn-success" id="assignPinBtn">📌 Assign PIN</button>
+            </div>
+            <div id="assignResult" style="margin-top:10px; font-weight:600;"></div>
+        </div>
     </div>
 
     <!-- Report Cards Grid -->
@@ -931,6 +1108,11 @@
             classFilter.innerHTML = '<option value="">📚 All Classes</option>' +
                 classList.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
 
+            // Also populate assign class dropdown
+            const assignSelect = $('assignClassSelect');
+            assignSelect.innerHTML = '<option value="">-- Select Class --</option>';
+            classList.forEach(c => assignSelect.innerHTML += `<option value="${c}">${c}</option>`);
+
             applyFilters();
             updateStats();
 
@@ -1028,6 +1210,9 @@
             const adminComment = rc.adminComment || '';
             const isCommentOpen = openCommentId === rc.id;
 
+            // Show PIN if assigned
+            const pinDisplay = rc.pin ? `<div style="font-size:11px; font-weight:600; color:#4f46e5; margin-top:2px;">🔑 PIN: <span style="font-family:monospace; letter-spacing:1px;">${rc.pin}</span></div>` : '';
+
             return `
             <div class="report-card-item" data-id="${rc.id}">
                 <div class="card-header">
@@ -1037,6 +1222,7 @@
                             <div class="student-name">${rc.studentName || 'Unknown'}</div>
                             <div class="student-class">${rc.class || 'N/A'} · ${teacherName}</div>
                             <div style="font-size:10px; color:#94a3b8;">Submitted: ${pushedAt}</div>
+                            ${pinDisplay}
                         </div>
                     </div>
                     <div>
@@ -1090,6 +1276,7 @@
                     `}
                     <button class="btn btn-edit-photo" onclick="editStudentPhoto('${rc.id}')">📷 Photo</button>
                     <button class="btn btn-preview" onclick="viewFullReport('${rc.id}')">👁️ Preview</button>
+                    ${!rc.pin ? `<button class="btn btn-warning" onclick="assignPinToStudent('${rc.id}')" style="font-size:11px; padding:6px 12px;">🔑 Assign PIN</button>` : ''}
                 </div>
             </div>`;
         }).join('');
@@ -1350,7 +1537,6 @@
 
         title.textContent = `📋 ${rc.studentName || 'Student'} - Report Card Preview (Student View)`;
 
-        // Use the EXACT same render function as student side
         const reportHtml = generateFullReportCard(rc);
 
         content.innerHTML = `
@@ -1388,7 +1574,6 @@
     // GENERATE FULL REPORT CARD - EXACT STUDENT VIEW
     // =============================================================
     function generateFullReportCard(data) {
-        // Use active subjects only (filter out zeros)
         const activeSubjects = getActiveSubjects(data.subjects);
         const subjects = Object.keys(activeSubjects);
         const att = data.attendance || {};
@@ -1508,7 +1693,6 @@
             `<img src="${photoUrl}" alt="${data.studentName}" />` : 
             `<span class="student-photo-placeholder">👤</span>`;
 
-        // Signatures
         const teacherSig = data.teacherSignature || null;
         const adminSig = data.adminSignature || adminSigData || null;
 
@@ -1883,6 +2067,239 @@
     }
 
     // =============================================================
+    // PIN MANAGEMENT FUNCTIONS
+    // =============================================================
+
+    // TAB SWITCHING
+    document.querySelectorAll('.pin-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.pin-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const section = btn.closest('.pin-management-section');
+            section.querySelectorAll('.pin-tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(btn.dataset.pinTab).classList.add('active');
+            if (btn.dataset.pinTab === 'pinHistory') loadPinHistory();
+            if (btn.dataset.pinTab === 'pinAll') loadAllPins();
+        });
+    });
+
+    // GENERATE PINs
+    $('genBulkPinBtn').addEventListener('click', async () => {
+        const count = parseInt($('pinCount').value) || 20;
+        if (count < 1 || count > 60) {
+            return showToast('⚠️ Please enter a number between 1 and 60.', 'warning');
+        }
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
+        const generatedPins = [];
+        const batch = db.batch();
+        let attempts = 0;
+        const maxAttempts = count * 10;
+
+        while (generatedPins.length < count && attempts < maxAttempts) {
+            attempts++;
+            let pin = '';
+            for (let i = 0; i < 8; i++) pin += chars[Math.floor(Math.random() * chars.length)];
+
+            const check = await db.collection('pins').doc(pin).get();
+            if (!check.exists && !generatedPins.includes(pin)) {
+                generatedPins.push(pin);
+                const ref = db.collection('pins').doc(pin);
+                batch.set(ref, { 
+                    used: false, 
+                    usedBy: null, 
+                    usedAt: null, 
+                    class: null, 
+                    createdAt: new Date() 
+                });
+            }
+        }
+
+        if (generatedPins.length < count) {
+            showToast(`⚠️ Only generated ${generatedPins.length} unique PINs.`, 'warning');
+        }
+
+        try {
+            await batch.commit();
+            $('pinListContainer').innerHTML = generatedPins.map(p => `<span class="pin-value pin-unused">${p}</span>`).join(' ');
+            showToast(`✅ ${generatedPins.length} PINs generated!`, 'success');
+        } catch (e) {
+            showToast('❌ Error saving PINs: ' + e.message, 'error');
+        }
+    });
+
+    // COPY PINs
+    $('copyPinsBtn').addEventListener('click', () => {
+        const pinSpans = document.querySelectorAll('#pinListContainer .pin-value');
+        if (!pinSpans.length) return showToast('⚠️ No PINs to copy.', 'warning');
+        const pins = Array.from(pinSpans).map(el => el.innerText).join('\n');
+        navigator.clipboard.writeText(pins).then(() => {
+            showToast('📋 PINs copied to clipboard!', 'success');
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = pins;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('📋 PINs copied!', 'success');
+        });
+    });
+
+    // PIN USAGE HISTORY
+    async function loadPinHistory() {
+        const container = $('pinHistoryContainer');
+        try {
+            const snap = await db.collection('pins')
+                .where('used', '==', true)
+                .orderBy('usedAt', 'desc')
+                .get();
+
+            if (snap.empty) {
+                container.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No PINs have been used yet.</p>';
+                return;
+            }
+
+            let html = `<table><tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>`;
+            snap.forEach(doc => {
+                const data = doc.data();
+                const date = data.usedAt?.toDate?.()?.toLocaleString() || 'N/A';
+                html += `<tr><td><strong>${doc.id}</strong></td><td>${data.usedBy || 'N/A'}</td><td>${data.class || 'N/A'}</td><td>${date}</td></tr>`;
+            });
+            container.innerHTML = html + '</table>';
+        } catch (e) {
+            container.innerHTML = '<p style="color:#dc2626;">❌ Error loading history.</p>';
+        }
+    }
+
+    $('refreshHistoryBtn').addEventListener('click', () => { loadPinHistory(); showToast('🔄 Refreshed.', 'success'); });
+
+    // ALL PINs
+    async function loadAllPins() {
+        const container = $('allPinsContainer');
+        try {
+            const snap = await db.collection('pins').orderBy('createdAt','desc').limit(150).get();
+            if (snap.empty) { container.innerHTML = '<p style="color:#94a3b8;">No PINs generated yet.</p>'; return; }
+            let html = '<table><tr><th>PIN</th><th>Status</th><th>Used By</th><th>Class</th><th>Created</th></tr>';
+            snap.forEach(doc => {
+                const data = doc.data();
+                const status = data.used ? '✅ Used' : '🆕 Available';
+                const statusClass = data.used ? 'pin-used-status used' : 'pin-used-status unused';
+                const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+                html += `<tr><td><strong>${doc.id}</strong></td><td class="${statusClass}">${status}</td><td>${data.usedBy||'--'}</td><td>${data.class||'--'}</td><td>${created}</td></tr>`;
+            });
+            container.innerHTML = html + '</table>';
+        } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error loading PINs.</p>'; }
+    }
+
+    $('refreshAllPinsBtn').addEventListener('click', () => { loadAllPins(); showToast('🔄 Refreshed.', 'success'); });
+
+    // ASSIGN PIN TO STUDENT
+    async function assignPinToStudent(reportCardId) {
+        if (!reportCardId) {
+            showToast('⚠️ No report card selected.', 'warning');
+            return;
+        }
+
+        const rc = allReportCards.find(r => r.id === reportCardId);
+        if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
+
+        // Prompt for PIN
+        const pin = prompt(`🔑 Enter PIN to assign to ${rc.studentName} (${rc.class}):`);
+        if (!pin || pin.trim().length < 8) {
+            showToast('⚠️ Please enter a valid 8-character PIN.', 'warning');
+            return;
+        }
+
+        try {
+            const pinDoc = await db.collection('pins').doc(pin.trim()).get();
+            if (!pinDoc.exists) {
+                showToast('❌ PIN not found. Please generate it first.', 'error');
+                return;
+            }
+            const pinData = pinDoc.data();
+            if (pinData.used) {
+                showToast('❌ This PIN has already been used by ' + (pinData.usedBy || 'another student'), 'error');
+                return;
+            }
+
+            // Assign PIN to report card
+            await db.collection('reportCards').doc(reportCardId).update({
+                pin: pin.trim(),
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+
+            // Mark PIN as assigned (not used yet)
+            await db.collection('pins').doc(pin.trim()).update({
+                class: rc.class,
+                assignedTo: rc.studentName,
+                assignedAt: new Date()
+            });
+
+            showToast(`✅ PIN "${pin}" assigned to ${rc.studentName}!`, 'success');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to assign PIN: ' + e.message, 'error');
+        }
+    }
+
+    // MANUAL ASSIGN FROM TAB
+    $('assignPinBtn').addEventListener('click', async () => {
+        const pin = $('assignPinInput').value.trim();
+        const studentName = $('assignStudentName').value.trim();
+        const className = $('assignClassSelect').value;
+
+        if (!pin) { showToast('⚠️ Please enter a PIN.', 'warning'); return; }
+        if (!studentName) { showToast('⚠️ Please enter student name.', 'warning'); return; }
+        if (!className) { showToast('⚠️ Please select a class.', 'warning'); return; }
+
+        try {
+            // Verify PIN exists and is unused
+            const pinDoc = await db.collection('pins').doc(pin).get();
+            if (!pinDoc.exists) {
+                showToast('❌ PIN not found. Please generate it first.', 'error');
+                return;
+            }
+            const pinData = pinDoc.data();
+            if (pinData.used) {
+                showToast('❌ This PIN has already been used.', 'error');
+                return;
+            }
+
+            // Find the report card
+            const snap = await db.collection('reportCards')
+                .where('class', '==', className)
+                .where('studentName', '==', studentName)
+                .get();
+
+            if (snap.empty) {
+                showToast('❌ No report card found for this student in this class.', 'error');
+                return;
+            }
+
+            const doc = snap.docs[0];
+            await db.collection('reportCards').doc(doc.id).update({
+                pin: pin,
+                _version: firebase.firestore.FieldValue.increment(1)
+            });
+
+            await db.collection('pins').doc(pin).update({
+                class: className,
+                assignedTo: studentName,
+                assignedAt: new Date()
+            });
+
+            showToast(`✅ PIN "${pin}" assigned to ${studentName}!`, 'success');
+            $('assignPinInput').value = '';
+            $('assignStudentName').value = '';
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to assign PIN: ' + e.message, 'error');
+        }
+    });
+
+    // =============================================================
     // FILTER EVENTS
     // =============================================================
     $('classFilter').addEventListener('change', applyFilters);
@@ -1937,6 +2354,8 @@
         }
 
         await loadReportCards();
+        await loadPinHistory();
+        await loadAllPins();
 
         if (allReportCards.length === 0) {
             showToast('📋 No report cards submitted yet.', 'info');
@@ -1971,14 +2390,14 @@
     window.saveAdminComment = saveAdminComment;
     window.clearAdminComment = clearAdminComment;
     window.loadReportCards = loadReportCards;
+    window.assignPinToStudent = assignPinToStudent;
 
-    console.log('✅ Admin Dashboard loaded - Student view preview ready!');
-    console.log('📌 Features:');
-    console.log('  - Preview shows EXACT student view');
-    console.log('  - A4 optimized for printing');
-    console.log('  - Admin comments per student');
-    console.log('  - Deleted subjects filtered out');
-    console.log('  - Teacher & Admin signatures displayed');
+    console.log('✅ Admin Dashboard with PIN Management loaded!');
+    console.log('📌 PIN Features:');
+    console.log('  - Generate 1-60 unique PINs');
+    console.log('  - Track PIN usage history');
+    console.log('  - View all PINs with status');
+    console.log('  - Manually assign PINs to students');
 </script>
 
 </body>
