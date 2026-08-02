@@ -13,6 +13,7 @@
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
     <style>
+        /* [Keep all existing styles the same] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f1f5f9; min-height: 100vh; }
         
@@ -128,8 +129,13 @@
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             transition: 0.2s;
+            position: relative;
         }
         .report-card-item:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+        .report-card-item.processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
         .report-card-item .card-header {
             padding: 16px 20px;
             border-bottom: 1px solid #e2e8f0;
@@ -153,6 +159,12 @@
             border: 2px solid #e2e8f0;
             background: #f1f5f9;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .report-card-item .card-header .student-info .photo-thumb:hover {
+            border-color: #4f46e5;
+            transform: scale(1.1);
         }
         .report-card-item .card-header .student-info .photo-thumb img {
             width: 100%;
@@ -246,6 +258,19 @@
         .btn-preview:hover { background: #7c3aed; }
         .btn-comment { background: #f59e0b; color: #1e1b4b; }
         .btn-comment:hover { background: #d97706; }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Preview condensed */
         .preview-condensed {
@@ -852,6 +877,8 @@
         <button class="btn btn-danger" id="rejectAllBtn">❌ Reject All</button>
         <button class="btn btn-outline" id="refreshBtn">🔄 Refresh</button>
         <button class="btn btn-purple" id="adminSigBtn">✍️ Admin Signature</button>
+        <button class="btn btn-warning" id="globalDatesBtn">📅 Global Dates</button>
+        <button class="btn btn-primary" id="globalPhotoBtn">📸 Bulk Photos</button>
     </div>
 
     <!-- ===== PIN MANAGEMENT SECTION ===== -->
@@ -973,6 +1000,7 @@
     let filteredReportCards = [];
     let adminSigData = null;
     let openCommentId = null;
+    let isProcessing = false;
 
     // =============================================================
     // TOAST
@@ -1030,43 +1058,42 @@
         return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
     // =============================================================
-    // GET STUDENT PHOTO
+    // GET STUDENT PHOTO - IMPROVED WITH BATCH LOADING
     // =============================================================
-    async function getStudentPhoto(studentName, className) {
-        try {
-            const doc = await db.collection('studentPhotos').doc(`${className}_${studentName}`).get();
-            if (doc.exists && doc.data().photoUrl) {
-                return doc.data().photoUrl;
-            }
-            return null;
-        } catch (e) {
-            console.warn('Photo fetch error:', e);
-            return null;
+    async function getStudentPhotos(students) {
+        if (!students || students.length === 0) return {};
+        
+        const photoMap = {};
+        const batchSize = 10;
+        
+        for (let i = 0; i < students.length; i += batchSize) {
+            const batch = students.slice(i, i + batchSize);
+            const promises = batch.map(async (student) => {
+                const key = `${student.class}_${student.name}`;
+                try {
+                    const doc = await db.collection('studentPhotos').doc(key).get();
+                    if (doc.exists && doc.data().photoUrl) {
+                        photoMap[key] = doc.data().photoUrl;
+                    }
+                } catch (e) {
+                    console.warn('Photo fetch error:', e);
+                }
+            });
+            await Promise.allSettled(promises);
         }
+        
+        return photoMap;
     }
 
     // =============================================================
-    // GET ACTIVE SUBJECTS - FILTER OUT ZERO SCORES
-    // =============================================================
-    function getActiveSubjects(subjects) {
-        if (!subjects) return {};
-        const active = {};
-        Object.keys(subjects).forEach(sub => {
-            const data = subjects[sub];
-            const hasScore = (data.firstTerm && data.firstTerm > 0) || 
-                            (data.secondTerm && data.secondTerm > 0) || 
-                            (data.thirdTerm && data.thirdTerm > 0) ||
-                            (data.average && data.average > 0);
-            if (hasScore) {
-                active[sub] = data;
-            }
-        });
-        return active;
-    }
-
-    // =============================================================
-    // LOAD REPORT CARDS
+    // LOAD REPORT CARDS - OPTIMIZED
     // =============================================================
     async function loadReportCards() {
         try {
@@ -1076,7 +1103,7 @@
                 .get();
 
             allReportCards = [];
-            const photoPromises = [];
+            const studentsNeedingPhotos = [];
 
             snap.forEach(doc => {
                 const data = doc.data();
@@ -1090,15 +1117,21 @@
                 allReportCards.push(cardData);
                 
                 if (data.studentName && data.class) {
-                    photoPromises.push(
-                        getStudentPhoto(data.studentName, data.class)
-                            .then(url => { cardData._photoUrl = url; })
-                            .catch(() => {})
-                    );
+                    studentsNeedingPhotos.push({
+                        class: data.class,
+                        name: data.studentName
+                    });
                 }
             });
 
-            await Promise.allSettled(photoPromises);
+            // Batch load photos
+            const photoMap = await getStudentPhotos(studentsNeedingPhotos);
+            allReportCards.forEach(card => {
+                if (card.studentName && card.class) {
+                    const key = `${card.class}_${card.studentName}`;
+                    card._photoUrl = photoMap[key] || null;
+                }
+            });
 
             // Load class list
             const classSnap = await db.collection('classList').doc('allClasses').get();
@@ -1106,12 +1139,11 @@
             const classFilter = $('classFilter');
             const currentVal = classFilter.value;
             classFilter.innerHTML = '<option value="">📚 All Classes</option>' +
-                classList.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+                classList.map(c => `<option value="${sanitizeHTML(c)}" ${c === currentVal ? 'selected' : ''}>${sanitizeHTML(c)}</option>`).join('');
 
-            // Also populate assign class dropdown
             const assignSelect = $('assignClassSelect');
             assignSelect.innerHTML = '<option value="">-- Select Class --</option>';
-            classList.forEach(c => assignSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            classList.forEach(c => assignSelect.innerHTML += `<option value="${sanitizeHTML(c)}">${sanitizeHTML(c)}</option>`);
 
             applyFilters();
             updateStats();
@@ -1192,7 +1224,7 @@
             if (activeSubjects) {
                 const entries = Object.entries(activeSubjects).slice(0, 4);
                 subjectsPreview = entries.map(([sub, data]) => 
-                    `<div class="scores-mini"><span class="subj">${sub}:</span> <span class="sc">${data.thirdTerm || data.average || 0}</span></div>`
+                    `<div class="scores-mini"><span class="subj">${sanitizeHTML(sub)}:</span> <span class="sc">${data.thirdTerm || data.average || 0}</span></div>`
                 ).join('');
                 if (Object.keys(activeSubjects).length > 4) {
                     subjectsPreview += `<div style="color:#94a3b8; font-size:10px;">+${Object.keys(activeSubjects).length - 4} more</div>`;
@@ -1201,26 +1233,27 @@
 
             const photoUrl = rc._photoUrl;
             let photoHtml = photoUrl ? 
-                `<img src="${photoUrl}" alt="${rc.studentName}" />` : 
+                `<img src="${photoUrl}" alt="${sanitizeHTML(rc.studentName)}" />` : 
                 `<div class="no-photo">👤</div>`;
 
-            const teacherName = rc.teacherName || 'Unknown Teacher';
+            const teacherName = sanitizeHTML(rc.teacherName || 'Unknown Teacher');
             const pushedAt = rc.pushedAt?.toDate ? rc.pushedAt.toDate().toLocaleString() : 'N/A';
 
             const adminComment = rc.adminComment || '';
             const isCommentOpen = openCommentId === rc.id;
 
-            // Show PIN if assigned
-            const pinDisplay = rc.pin ? `<div style="font-size:11px; font-weight:600; color:#4f46e5; margin-top:2px;">🔑 PIN: <span style="font-family:monospace; letter-spacing:1px;">${rc.pin}</span></div>` : '';
+            const pinDisplay = rc.pin ? `<div style="font-size:11px; font-weight:600; color:#4f46e5; margin-top:2px;">🔑 PIN: <span style="font-family:monospace; letter-spacing:1px;">${sanitizeHTML(rc.pin)}</span></div>` : '';
 
             return `
             <div class="report-card-item" data-id="${rc.id}">
                 <div class="card-header">
                     <div class="student-info">
-                        <div class="photo-thumb">${photoHtml}</div>
+                        <div class="photo-thumb" onclick="editStudentPhoto('${rc.id}')" title="Click to change photo">
+                            ${photoHtml}
+                        </div>
                         <div>
-                            <div class="student-name">${rc.studentName || 'Unknown'}</div>
-                            <div class="student-class">${rc.class || 'N/A'} · ${teacherName}</div>
+                            <div class="student-name">${sanitizeHTML(rc.studentName || 'Unknown')}</div>
+                            <div class="student-class">${sanitizeHTML(rc.class || 'N/A')} · ${teacherName}</div>
                             <div style="font-size:10px; color:#94a3b8;">Submitted: ${pushedAt}</div>
                             ${pinDisplay}
                         </div>
@@ -1234,8 +1267,8 @@
                 <div class="card-body">
                     <div class="preview-condensed">
                         <div class="preview-row"><span class="label">👨‍🏫 Teacher</span><span class="value">${teacherName}</span></div>
-                        ${rc.classTeacherCommentary ? `<div class="preview-row"><span class="label">📝 Commentary</span><span class="value" style="font-size:11px; font-style:italic;">"${rc.classTeacherCommentary.substring(0, 60)}${rc.classTeacherCommentary.length > 60 ? '...' : ''}"</span></div>` : ''}
-                        ${rc.promotionStatus ? `<div class="preview-row"><span class="label">📈 Promotion</span><span class="value">${rc.promotionStatus}</span></div>` : ''}
+                        ${rc.classTeacherCommentary ? `<div class="preview-row"><span class="label">📝 Commentary</span><span class="value" style="font-size:11px; font-style:italic;">"${sanitizeHTML(rc.classTeacherCommentary.substring(0, 60))}${rc.classTeacherCommentary.length > 60 ? '...' : ''}"</span></div>` : ''}
+                        ${rc.promotionStatus ? `<div class="preview-row"><span class="label">📈 Promotion</span><span class="value">${sanitizeHTML(rc.promotionStatus)}</span></div>` : ''}
                         ${rc.overallAverage ? `<div class="preview-row"><span class="label">📊 Overall Avg</span><span class="value" style="color:#4f46e5;">${rc.overallAverage.toFixed(1)}%</span></div>` : ''}
                         <div style="margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
                             <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">📚 Subjects (${subjectCount})</div>
@@ -1257,13 +1290,13 @@
                             </button>
                         </div>
                         ${isCommentOpen ? `
-                        <textarea id="comment_${rc.id}" placeholder="Add your admin comment here..." style="width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:'Inter',sans-serif; resize:vertical; min-height:50px;">${adminComment}</textarea>
+                        <textarea id="comment_${rc.id}" placeholder="Add your admin comment here..." style="width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-family:'Inter',sans-serif; resize:vertical; min-height:50px;">${sanitizeHTML(adminComment)}</textarea>
                         <div class="comment-actions">
                             <button class="btn-sm btn-sm-save" onclick="saveAdminComment('${rc.id}')">💾 Save Comment</button>
                             ${adminComment ? `<button class="btn-sm btn-sm-clear" onclick="clearAdminComment('${rc.id}')">🗑️ Clear</button>` : ''}
                         </div>
                         ` : ''}
-                        ${adminComment && !isCommentOpen ? `<div style="font-size:11px; color:#475569; font-style:italic; margin-top:4px; padding:6px 10px; background:#f8fafc; border-radius:6px; border-left:3px solid #4f46e5;">"${adminComment}"</div>` : ''}
+                        ${adminComment && !isCommentOpen ? `<div style="font-size:11px; color:#475569; font-style:italic; margin-top:4px; padding:6px 10px; background:#f8fafc; border-radius:6px; border-left:3px solid #4f46e5;">"${sanitizeHTML(adminComment)}"</div>` : ''}
                     </div>
                 </div>
 
@@ -1291,7 +1324,10 @@
         } else {
             openCommentId = id;
         }
-        renderReportCards();
+        // Only re-render if we have filtered cards
+        if (filteredReportCards.length > 0) {
+            renderReportCards();
+        }
     }
 
     // =============================================================
@@ -1305,9 +1341,8 @@
         try {
             await db.collection('reportCards').doc(id).update({
                 adminComment: comment,
-                adminCommentAt: new Date(),
-                adminCommentBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                _version: firebase.firestore.FieldValue.increment(1)
+                adminCommentAt: firebase.firestore.FieldValue.serverTimestamp(),
+                adminCommentBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
             });
             showToast('💬 Comment saved!', 'success');
             openCommentId = null;
@@ -1325,10 +1360,9 @@
         
         try {
             await db.collection('reportCards').doc(id).update({
-                adminComment: '',
-                adminCommentAt: null,
-                adminCommentBy: null,
-                _version: firebase.firestore.FieldValue.increment(1)
+                adminComment: firebase.firestore.FieldValue.delete(),
+                adminCommentAt: firebase.firestore.FieldValue.delete(),
+                adminCommentBy: firebase.firestore.FieldValue.delete()
             });
             showToast('🗑️ Comment cleared.', 'warning');
             openCommentId = null;
@@ -1339,9 +1373,14 @@
     }
 
     // =============================================================
-    // APPROVE / REJECT
+    // APPROVE / REJECT - FIXED
     // =============================================================
     async function approveReportCard(id) {
+        if (isProcessing) {
+            showToast('⚠️ Please wait for the current operation to complete.', 'warning');
+            return;
+        }
+        
         if (!confirm('✅ Approve this report card? It will become visible to students.')) return;
 
         if (!adminSigData) {
@@ -1350,37 +1389,54 @@
             return;
         }
 
+        isProcessing = true;
+        const cardElement = document.querySelector(`[data-id="${id}"]`);
+        if (cardElement) cardElement.classList.add('processing');
+
         try {
             await db.collection('reportCards').doc(id).update({
                 approved: true,
                 rejected: false,
-                approvedAt: new Date(),
+                approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                adminSignature: adminSigData,
-                _version: firebase.firestore.FieldValue.increment(1)
+                adminSignature: adminSigData
             });
             showToast('✅ Report card approved and published to students!', 'success');
             await loadReportCards();
         } catch (e) {
             showToast('❌ Failed: ' + e.message, 'error');
+        } finally {
+            isProcessing = false;
+            if (cardElement) cardElement.classList.remove('processing');
         }
     }
 
     async function rejectReportCard(id) {
+        if (isProcessing) {
+            showToast('⚠️ Please wait for the current operation to complete.', 'warning');
+            return;
+        }
+        
         if (!confirm('❌ Reject this report card?')) return;
+
+        isProcessing = true;
+        const cardElement = document.querySelector(`[data-id="${id}"]`);
+        if (cardElement) cardElement.classList.add('processing');
 
         try {
             await db.collection('reportCards').doc(id).update({
                 rejected: true,
                 approved: false,
-                rejectedAt: new Date(),
-                rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                _version: firebase.firestore.FieldValue.increment(1)
+                rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
             });
             showToast('❌ Report card rejected.', 'error');
             await loadReportCards();
         } catch (e) {
             showToast('❌ Failed: ' + e.message, 'error');
+        } finally {
+            isProcessing = false;
+            if (cardElement) cardElement.classList.remove('processing');
         }
     }
 
@@ -1391,9 +1447,8 @@
             await db.collection('reportCards').doc(id).update({
                 approved: false,
                 rejected: false,
-                approvedAt: null,
-                approvedBy: null,
-                _version: firebase.firestore.FieldValue.increment(1)
+                approvedAt: firebase.firestore.FieldValue.delete(),
+                approvedBy: firebase.firestore.FieldValue.delete()
             });
             showToast('↩️ Report card reverted to pending.', 'warning');
             await loadReportCards();
@@ -1425,10 +1480,9 @@
                 batch.update(rc._ref, {
                     approved: true,
                     rejected: false,
-                    approvedAt: new Date(),
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                    adminSignature: adminSigData,
-                    _version: firebase.firestore.FieldValue.increment(1)
+                    adminSignature: adminSigData
                 });
             });
             await batch.commit();
@@ -1453,9 +1507,8 @@
                 batch.update(rc._ref, {
                     rejected: true,
                     approved: false,
-                    rejectedAt: new Date(),
-                    rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                    _version: firebase.firestore.FieldValue.increment(1)
+                    rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    rejectedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
                 });
             });
             await batch.commit();
@@ -1467,14 +1520,14 @@
     }
 
     // =============================================================
-    // EDIT STUDENT PHOTO
+    // EDIT STUDENT PHOTO - IMPROVED
     // =============================================================
     function editStudentPhoto(id) {
         const rc = allReportCards.find(r => r.id === id);
         if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
 
         if (typeof cloudinary === 'undefined') {
-            showToast('❌ Cloudinary not loaded.', 'error');
+            showToast('❌ Cloudinary widget not loaded. Please refresh the page.', 'error');
             return;
         }
 
@@ -1485,24 +1538,42 @@
             maxFileSize: cloudinaryConfig.maxFileSize,
             allowedFormats: cloudinaryConfig.allowedFormats,
             cropping: true,
-            croppingAspectRatio: 1,
+            croppingAspectRatio: 3/4,
             showSkipCropButton: false,
             multiple: false,
             singleUploadAutoClose: true,
-            publicId: `${rc.class || 'general'}_${(rc.studentName || 'student').replace(/\s+/g, '_')}_${Date.now()}`
+            publicId: `${rc.class || 'general'}_${(rc.studentName || 'student').replace(/\s+/g, '_')}_${Date.now()}`,
+            styles: {
+                palette: {
+                    window: "#FFFFFF",
+                    windowBorder: "#4f46e5",
+                    tabIcon: "#4f46e5",
+                    menuIcons: "#4f46e5",
+                    textDark: "#1e1b4b",
+                    textLight: "#FFFFFF",
+                    link: "#4f46e5",
+                    action: "#4f46e5",
+                    inactiveTabIcon: "#94a3b8",
+                    error: "#dc2626",
+                    inProgress: "#4f46e5",
+                    complete: "#10b981",
+                    sourceBg: "#f8fafc"
+                }
+            }
         }, async (error, result) => {
             if (error) {
-                showToast('❌ Upload failed.', 'error');
+                showToast('❌ Upload failed: ' + error.message, 'error');
                 return;
             }
             if (result && result.event === "success") {
                 try {
-                    await db.collection('reportCards').doc(id).update({
+                    const updateData = {
                         photoUrl: result.info.secure_url,
                         photoPublicId: result.info.public_id,
-                        photoUpdatedAt: new Date(),
-                        _version: firebase.firestore.FieldValue.increment(1)
-                    });
+                        photoUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    await db.collection('reportCards').doc(id).update(updateData);
                     
                     if (rc.studentName && rc.class) {
                         await db.collection('studentPhotos').doc(`${rc.class}_${rc.studentName}`).set({
@@ -1510,7 +1581,7 @@
                             studentName: rc.studentName,
                             photoUrl: result.info.secure_url,
                             publicId: result.info.public_id,
-                            updatedAt: new Date()
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
                     }
                     
@@ -1525,6 +1596,161 @@
     }
 
     // =============================================================
+    // BULK PHOTO MANAGEMENT
+    // =============================================================
+    function openBulkPhotoManager() {
+        const studentsWithoutPhotos = allReportCards.filter(rc => !rc._photoUrl && rc.studentName);
+        
+        const modal = $('modalOverlay');
+        const title = $('modalTitle');
+        const content = $('modalContent');
+
+        title.textContent = '📸 Bulk Photo Management';
+
+        let studentList = '';
+        if (studentsWithoutPhotos.length === 0) {
+            studentList = '<p style="color:#10b981; font-weight:600;">✅ All students have photos!</p>';
+        } else {
+            studentList = studentsWithoutPhotos.map((rc, index) => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid #e2e8f0; ${index % 2 === 0 ? 'background:#f8fafc;' : ''}">
+                    <div>
+                        <strong>${sanitizeHTML(rc.studentName)}</strong>
+                        <span style="color:#64748b; font-size:12px; margin-left:10px;">${sanitizeHTML(rc.class)}</span>
+                    </div>
+                    <button class="btn btn-edit-photo" onclick="editStudentPhoto('${rc.id}'); hideModal();" style="padding:6px 14px; font-size:12px;">
+                        📷 Add Photo
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        content.innerHTML = `
+            <div style="background:#f8fafc; border-radius:12px; padding:16px; border:1px solid #e2e8f0; margin-bottom:16px;">
+                <p style="font-weight:700; color:#1e1b4b;">📊 Summary</p>
+                <p>Total Students: <strong>${allReportCards.length}</strong></p>
+                <p>Missing Photos: <strong style="color:#dc2626;">${studentsWithoutPhotos.length}</strong></p>
+            </div>
+            <div style="max-height:400px; overflow-y:auto;">
+                ${studentList}
+            </div>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px;">Close</button>
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    }
+
+    // =============================================================
+    // GLOBAL DATES MANAGEMENT (RESUMPTION DATE)
+    // =============================================================
+    function openGlobalDatesModal() {
+        const modal = $('modalOverlay');
+        const title = $('modalTitle');
+        const content = $('modalContent');
+
+        // Load existing global dates
+        db.collection('settings').doc('globalDates').get().then(doc => {
+            const data = doc.exists ? doc.data() : {};
+            
+            title.textContent = '📅 Global Dates Settings';
+            
+            content.innerHTML = `
+                <div style="background:#fefce8; border-radius:12px; padding:16px; border:2px solid #f59e0b; margin-bottom:16px;">
+                    <p style="font-weight:700; color:#92400e;">⚠️ Important</p>
+                    <p style="font-size:13px; color:#92400e;">These dates will appear on ALL report cards. Changes will only affect newly approved cards (re-approval required).</p>
+                </div>
+
+                <div style="display:grid; gap:16px;">
+                    <div>
+                        <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:6px;">📅 Next Term Resumption Date</label>
+                        <input type="date" id="globalResumptionDate" value="${data.nextTermResumption || ''}" 
+                               style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif;" />
+                    </div>
+                    <div>
+                        <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:6px;">📅 Current Term Closing Date</label>
+                        <input type="date" id="globalClosingDate" value="${data.closingDate || ''}" 
+                               style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif;" />
+                    </div>
+                    <div>
+                        <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:6px;">📝 Current Term</label>
+                        <select id="globalTerm" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif;">
+                            <option value="FIRST TERM" ${data.term === 'FIRST TERM' ? 'selected' : ''}>FIRST TERM</option>
+                            <option value="SECOND TERM" ${data.term === 'SECOND TERM' ? 'selected' : ''}>SECOND TERM</option>
+                            <option value="THIRD TERM" ${data.term === 'THIRD TERM' ? 'selected' : ''}>THIRD TERM</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:700; color:#1e1b4b; display:block; margin-bottom:6px;">📅 Academic Session</label>
+                        <input type="text" id="globalSession" value="${data.session || new Date().getFullYear() + '/' + (new Date().getFullYear() + 1)}" 
+                               style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; font-family:'Inter',sans-serif;" />
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn btn-success" onclick="saveGlobalDates()" style="padding:12px 24px;">💾 Save Dates</button>
+                    <button class="btn btn-primary" onclick="applyDatesToAll()" style="padding:12px 24px;">📋 Apply to All Report Cards</button>
+                    <button class="btn btn-outline" onclick="hideModal()" style="padding:12px 24px;">Cancel</button>
+                </div>
+            `;
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    async function saveGlobalDates() {
+        const data = {
+            nextTermResumption: $('globalResumptionDate').value,
+            closingDate: $('globalClosingDate').value,
+            term: $('globalTerm').value,
+            session: $('globalSession').value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
+        };
+
+        try {
+            await db.collection('settings').doc('globalDates').set(data, { merge: true });
+            showToast('✅ Global dates saved successfully!', 'success');
+            hideModal();
+        } catch (e) {
+            showToast('❌ Failed to save: ' + e.message, 'error');
+        }
+    }
+
+    async function applyDatesToAll() {
+        if (!confirm('⚠️ Apply these dates to ALL report cards? This will overwrite existing dates.')) return;
+
+        const nextTermResumption = $('globalResumptionDate').value;
+        const closingDate = $('globalClosingDate').value;
+        const term = $('globalTerm').value;
+        const session = $('globalSession').value;
+
+        if (!nextTermResumption || !closingDate) {
+            showToast('⚠️ Please set both dates first.', 'warning');
+            return;
+        }
+
+        try {
+            const batch = db.batch();
+            allReportCards.forEach(rc => {
+                batch.update(rc._ref, {
+                    nextTermBegins: nextTermResumption,
+                    closingDate: closingDate,
+                    term: term,
+                    session: session,
+                    datesUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await batch.commit();
+            showToast(`✅ Dates applied to ${allReportCards.length} report cards!`, 'success');
+            await saveGlobalDates();
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to apply dates: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
     // VIEW FULL REPORT - EXACT STUDENT VIEW
     // =============================================================
     function viewFullReport(id) {
@@ -1535,7 +1761,7 @@
         const title = $('modalTitle');
         const content = $('modalContent');
 
-        title.textContent = `📋 ${rc.studentName || 'Student'} - Report Card Preview (Student View)`;
+        title.textContent = `📋 ${sanitizeHTML(rc.studentName || 'Student')} - Report Card Preview (Student View)`;
 
         const reportHtml = generateFullReportCard(rc);
 
@@ -1571,7 +1797,7 @@
     }
 
     // =============================================================
-    // GENERATE FULL REPORT CARD - EXACT STUDENT VIEW
+    // GENERATE FULL REPORT CARD - WITH GLOBAL DATES
     // =============================================================
     function generateFullReportCard(data) {
         const activeSubjects = getActiveSubjects(data.subjects);
@@ -1589,6 +1815,10 @@
 
         const photoUrl = data._photoUrl || data.photoUrl || null;
 
+        // Use global dates or card-specific dates
+        const nextTermBegins = data.nextTermBegins || '';
+        const closingDate = data.closingDate || '';
+
         let subjectRows = '';
         subjects.forEach((sub, index) => {
             const s = activeSubjects[sub] || {};
@@ -1602,7 +1832,7 @@
             subjectRows += `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${sub}</td>
+                    <td>${sanitizeHTML(sub)}</td>
                     <td>${first || '--'}</td>
                     <td>${second || '--'}</td>
                     <td>${third || '--'}</td>
@@ -1617,7 +1847,7 @@
         if (affectiveKeys.length > 0) {
             affectiveKeys.forEach(q => {
                 const stars = '⭐'.repeat(Math.min(affective[q], 5)) + '☆'.repeat(Math.max(0, 5 - affective[q]));
-                affectiveHtml += `<div class="item"><span>${q}</span><span class="rating-stars">${stars}</span></div>`;
+                affectiveHtml += `<div class="item"><span>${sanitizeHTML(q)}</span><span class="rating-stars">${stars}</span></div>`;
             });
         } else { affectiveHtml = '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'; }
 
@@ -1626,14 +1856,14 @@
         if (psychomotorKeys.length > 0) {
             psychomotorKeys.forEach(q => {
                 const stars = '⭐'.repeat(Math.min(psychomotor[q], 5)) + '☆'.repeat(Math.max(0, 5 - psychomotor[q]));
-                psychomotorHtml += `<div class="item"><span>${q}</span><span class="rating-stars">${stars}</span></div>`;
+                psychomotorHtml += `<div class="item"><span>${sanitizeHTML(q)}</span><span class="rating-stars">${stars}</span></div>`;
             });
         } else { psychomotorHtml = '<p style="font-size:12px; color:#94a3b8;">Not recorded.</p>'; }
 
         const allExtrasList = ['JETS Club','Literary & Debating','Press Club','Red Cross','Boys/Girls Scout','Brass Band','Drama Society','Road Safety','Farmers Club','Home Makers','Choral Group'];
         let extrasHtml = allExtrasList.map(e => {
             const done = extracurriculars.includes(e);
-            return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${e}</span>`;
+            return `<span class="badge ${done ? '' : 'missing'}">${done ? '✅' : '⬜'} ${sanitizeHTML(e)}</span>`;
         }).join(' ');
 
         let positionHtml = '';
@@ -1644,10 +1874,10 @@
             else if (overallPosition === 2) posEmoji = '🥈';
             else if (overallPosition === 3) posEmoji = '🥉';
             
-            let percentDisplay = 100;
-            if (totalStudents > 1) {
-                const percentage = ((totalStudents - overallPosition) / (totalStudents - 1)) * 100;
-                percentDisplay = Math.round(percentage);
+            // Fixed position calculation
+            let percentDisplay = 0;
+            if (totalStudents > 0) {
+                percentDisplay = Math.round((overallPosition / totalStudents) * 100);
             }
             
             positionHtml = `
@@ -1666,13 +1896,13 @@
                         <div class="pos-label">Total Students</div>
                     </div>
                     <div class="pos-item">
-                        <div class="pos-value" style="font-size:20px;">${percentDisplay}%</div>
-                        <div class="pos-label">Top ${percentDisplay}%</div>
+                        <div class="pos-value" style="font-size:20px;">Top ${percentDisplay}%</div>
+                        <div class="pos-label">Class Ranking</div>
                     </div>` : ''}
                     ${promotionStatus ? `
                     <div class="pos-item">
                         <div class="pos-value" style="font-size:16px;">
-                            <span class="promotion-badge ${promotionStatus.toLowerCase().replace(/\s+/g, '-')}">${promotionStatus}</span>
+                            <span class="promotion-badge ${sanitizeHTML(promotionStatus.toLowerCase().replace(/\s+/g, '-'))}">${sanitizeHTML(promotionStatus)}</span>
                         </div>
                         <div class="pos-label">Promotion Status</div>
                     </div>` : ''}
@@ -1690,7 +1920,7 @@
         }
 
         let photoHtml = photoUrl ? 
-            `<img src="${photoUrl}" alt="${data.studentName}" />` : 
+            `<img src="${photoUrl}" alt="${sanitizeHTML(data.studentName)}" />` : 
             `<span class="student-photo-placeholder">👤</span>`;
 
         const teacherSig = data.teacherSignature || null;
@@ -1702,14 +1932,14 @@
                 <div class="sig-image-container">
                     <img src="${teacherSig}" alt="Teacher Signature" />
                 </div>
-                <div class="sub">${data.teacherName || 'Teacher'}</div>
+                <div class="sub">${sanitizeHTML(data.teacherName || 'Teacher')}</div>
             `;
         } else {
             teacherSigHtml = `
                 <div class="sig-image-container">
                     <span class="no-sig">No signature</span>
                 </div>
-                <div class="sub">${data.teacherName || 'Teacher'}</div>
+                <div class="sub">${sanitizeHTML(data.teacherName || 'Teacher')}</div>
             `;
         }
 
@@ -1719,7 +1949,7 @@
                 <div class="sig-image-container">
                     <img src="${adminSig}" alt="Admin Signature" />
                 </div>
-                <div class="sub">${data.approvedBy || 'Admin'}</div>
+                <div class="sub">${sanitizeHTML(data.approvedBy || 'Admin')}</div>
             `;
         } else {
             adminSigHtml = `
@@ -1744,20 +1974,20 @@
                 <div class="header-logo-row">
                     <img class="school-logo" src="${SCHOOL_LOGO_URL}" alt="School Logo" />
                     <div class="header-text">
-                        <div class="school-name">${data.schoolName || 'COVENANT ARROWS\' MODEL'}</div>
+                        <div class="school-name">${sanitizeHTML(data.schoolName || 'COVENANT ARROWS\' MODEL')}</div>
                         <div class="motto">✝️ Raising Future Leaders Through Christ-Centered Learning</div>
                         <div class="location">📍 Abiola Way, Abeokuta, Ogun State.</div>
                     </div>
                 </div>
-                <div class="term-info">${data.term || 'THIRD TERM'} REPORT — ${data.session || data.year || new Date().getFullYear()}</div>
+                <div class="term-info">${sanitizeHTML(data.term || 'THIRD TERM')} REPORT — ${sanitizeHTML(data.session || data.year || new Date().getFullYear())}</div>
             </div>
 
             <div class="student-meta">
                 <div class="student-photo-container">${photoHtml}</div>
                 <div class="student-details">
-                    <div class="name">👤 <span>${data.studentName}</span></div>
-                    <div class="class">📚 Class: <strong>${data.class}</strong> | Category: <strong>${data.category || 'Day'}</strong></div>
-                    <div class="teacher">👨‍🏫 Teacher: <strong>${data.teacherName || 'N/A'}</strong></div>
+                    <div class="name">👤 <span>${sanitizeHTML(data.studentName)}</span></div>
+                    <div class="class">📚 Class: <strong>${sanitizeHTML(data.class)}</strong> | Category: <strong>${sanitizeHTML(data.category || 'Day')}</strong></div>
+                    <div class="teacher">👨‍🏫 Teacher: <strong>${sanitizeHTML(data.teacherName || 'N/A')}</strong></div>
                     <div style="font-size:12px; color:#64748b;">📅 Date of Issue: ${formatDate(data.dateOfIssue || data.date)}</div>
                 </div>
             </div>
@@ -1771,8 +2001,8 @@
 
             <div class="dates-row">
                 <span>📅 Resumption: <strong>${formatDate(att.resumptionDate || data.resumptionDate)}</strong></span>
-                <span>📅 Closing: <strong>${formatDate(att.closingDate || data.closingDate)}</strong></span>
-                <span>📅 Next Term: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
+                <span>📅 Closing: <strong>${formatDate(closingDate || att.closingDate || data.closingDate)}</strong></span>
+                <span>📅 Next Term: <strong>${formatDate(nextTermBegins || data.nextTermBegins || data.nextTermResumption)}</strong></span>
             </div>
 
             ${positionHtml}
@@ -1824,20 +2054,20 @@
 
             <div class="commentary-box">
                 <h4>📝 Class Teacher's Commentary</h4>
-                <p>${commentary}</p>
+                <p>${sanitizeHTML(commentary)}</p>
             </div>
 
             ${principalRemarks ? `
             <div class="commentary-box" style="background:#fefce8;">
                 <h4>👨‍💼 Principal's Remarks</h4>
-                <p>${principalRemarks}</p>
+                <p>${sanitizeHTML(principalRemarks)}</p>
             </div>` : ''}
 
             ${data.adminComment ? `
             <div class="commentary-box" style="background:#e0f2fe; border-color:#38bdf8;">
                 <h4>💬 Admin's Comment</h4>
-                <p style="font-style:italic; color:#0369a1;">${data.adminComment}</p>
-                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">— ${data.adminCommentBy || 'Admin'} on ${formatDate(data.adminCommentAt)}</div>
+                <p style="font-style:italic; color:#0369a1;">${sanitizeHTML(data.adminComment)}</p>
+                <div style="font-size:10px; color:#94a3b8; margin-top:4px;">— ${sanitizeHTML(data.adminCommentBy || 'Admin')} on ${formatDate(data.adminCommentAt)}</div>
             </div>` : ''}
 
             <div class="signature-section">
@@ -1856,7 +2086,7 @@
             </div>
 
             <div class="report-footer">
-                🔐 Verified & Approved | PIN: ${data.pin || 'Claimed'} | Generated by Covenant Arrows' Model School System
+                🔐 Verified & Approved | PIN: ${sanitizeHTML(data.pin || 'Claimed')} | Generated by Covenant Arrows' Model School System
             </div>
         `;
     }
@@ -1887,9 +2117,20 @@
     }
 
     // =============================================================
-    // ADMIN SIGNATURE
+    // ADMIN SIGNATURE - STORED IN FIRESTORE
     // =============================================================
     let adminSigCanvasInstance = null;
+
+    async function loadAdminSignature() {
+        try {
+            const doc = await db.collection('settings').doc('adminSignature').get();
+            if (doc.exists && doc.data().signatureData) {
+                adminSigData = doc.data().signatureData;
+            }
+        } catch (e) {
+            console.warn('Failed to load admin signature:', e);
+        }
+    }
 
     function openAdminSignatureModal() {
         const modal = $('modalOverlay');
@@ -1909,13 +2150,13 @@
             </div>
             <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                 <button class="btn btn-sm" onclick="clearAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#fee2e2; color:#dc2626;">🗑️ Clear</button>
-                <button class="btn btn-sm" onclick="saveAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">💾 Save Signature</button>
+                <button class="btn btn-sm" onclick="saveAdminSignatureToFirestore()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">💾 Save to Cloud</button>
                 <button class="btn btn-sm" onclick="uploadAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#f59e0b; color:#1e1b4b;">📤 Upload Image</button>
             </div>
-            <p style="font-size:12px; color:#94a3b8; margin-top:8px;">Draw or upload your signature. It will be applied to all report cards you approve.</p>
+            <p style="font-size:12px; color:#94a3b8; margin-top:8px;">Draw or upload your signature. Saving to cloud will sync across all your devices.</p>
 
             <div style="display:flex; gap:10px; margin-top:16px;">
-                <button class="btn btn-primary" onclick="closeAdminSignatureModal()" style="padding:10px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white;">✅ Done</button>
+                <button class="btn btn-primary" onclick="hideModal()" style="padding:10px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white;">✅ Done</button>
                 <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">Cancel</button>
             </div>
         `;
@@ -1994,8 +2235,7 @@
                 isDrawing = false;
                 const dataUrl = canvas.toDataURL('image/png');
                 adminSigData = dataUrl;
-                localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
-                showToast('✍️ Signature saved!', 'success');
+                showToast('✍️ Signature drawn! Click "Save to Cloud" to sync.', 'success');
             }
         }
 
@@ -2011,14 +2251,23 @@
         setTimeout(resizeCanvas, 50);
     }
 
-    function saveAdminSignature() {
+    async function saveAdminSignatureToFirestore() {
         const canvas = document.getElementById('adminSigCanvas');
         if (!canvas) { showToast('❌ Canvas not found.', 'error'); return; }
         const dataUrl = canvas.toDataURL('image/png');
         adminSigData = dataUrl;
-        localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
-        showToast('✅ Admin signature saved!', 'success');
-        closeAdminSignatureModal();
+        
+        try {
+            await db.collection('settings').doc('adminSignature').set({
+                signatureData: dataUrl,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
+            });
+            showToast('✅ Admin signature saved to cloud!', 'success');
+            hideModal();
+        } catch (e) {
+            showToast('❌ Failed to save signature: ' + e.message, 'error');
+        }
     }
 
     function clearAdminSignature() {
@@ -2027,7 +2276,8 @@
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         adminSigData = null;
-        localStorage.removeItem('adminSignature_' + (currentUser?.uid || 'admin'));
+        
+        db.collection('settings').doc('adminSignature').delete().catch(() => {});
         showToast('🗑️ Signature cleared.', 'warning');
     }
 
@@ -2049,8 +2299,7 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/png');
                     adminSigData = dataUrl;
-                    localStorage.setItem('adminSignature_' + (currentUser?.uid || 'admin'), dataUrl);
-                    showToast('📤 Signature uploaded and saved!', 'success');
+                    showToast('📤 Signature uploaded! Click "Save to Cloud" to sync.', 'success');
                 };
                 img.src = event.target.result;
             };
@@ -2059,17 +2308,11 @@
         input.click();
     }
 
-    function closeAdminSignatureModal() {
-        hideModal();
-        if (adminSigData) {
-            showToast('✅ Admin signature ready!', 'success');
-        }
-    }
-
     // =============================================================
     // PIN MANAGEMENT FUNCTIONS
     // =============================================================
-
+    // [Keep all existing PIN management code the same]
+    
     // TAB SWITCHING
     document.querySelectorAll('.pin-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2091,6 +2334,9 @@
             return showToast('⚠️ Please enter a number between 1 and 60.', 'warning');
         }
 
+        $('genBulkPinBtn').disabled = true;
+        $('genBulkPinBtn').innerHTML = '<span class="loading-spinner"></span> Generating...';
+
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
         const generatedPins = [];
         const batch = db.batch();
@@ -2111,7 +2357,7 @@
                     usedBy: null, 
                     usedAt: null, 
                     class: null, 
-                    createdAt: new Date() 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         }
@@ -2126,6 +2372,9 @@
             showToast(`✅ ${generatedPins.length} PINs generated!`, 'success');
         } catch (e) {
             showToast('❌ Error saving PINs: ' + e.message, 'error');
+        } finally {
+            $('genBulkPinBtn').disabled = false;
+            $('genBulkPinBtn').innerHTML = '🔄 Generate PINs';
         }
     });
 
@@ -2165,7 +2414,7 @@
             snap.forEach(doc => {
                 const data = doc.data();
                 const date = data.usedAt?.toDate?.()?.toLocaleString() || 'N/A';
-                html += `<tr><td><strong>${doc.id}</strong></td><td>${data.usedBy || 'N/A'}</td><td>${data.class || 'N/A'}</td><td>${date}</td></tr>`;
+                html += `<tr><td><strong>${sanitizeHTML(doc.id)}</strong></td><td>${sanitizeHTML(data.usedBy || 'N/A')}</td><td>${sanitizeHTML(data.class || 'N/A')}</td><td>${date}</td></tr>`;
             });
             container.innerHTML = html + '</table>';
         } catch (e) {
@@ -2187,7 +2436,7 @@
                 const status = data.used ? '✅ Used' : '🆕 Available';
                 const statusClass = data.used ? 'pin-used-status used' : 'pin-used-status unused';
                 const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
-                html += `<tr><td><strong>${doc.id}</strong></td><td class="${statusClass}">${status}</td><td>${data.usedBy||'--'}</td><td>${data.class||'--'}</td><td>${created}</td></tr>`;
+                html += `<tr><td><strong>${sanitizeHTML(doc.id)}</strong></td><td class="${statusClass}">${status}</td><td>${sanitizeHTML(data.usedBy||'--')}</td><td>${sanitizeHTML(data.class||'--')}</td><td>${created}</td></tr>`;
             });
             container.innerHTML = html + '</table>';
         } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error loading PINs.</p>'; }
@@ -2205,7 +2454,6 @@
         const rc = allReportCards.find(r => r.id === reportCardId);
         if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
 
-        // Prompt for PIN
         const pin = prompt(`🔑 Enter PIN to assign to ${rc.studentName} (${rc.class}):`);
         if (!pin || pin.trim().length < 8) {
             showToast('⚠️ Please enter a valid 8-character PIN.', 'warning');
@@ -2224,17 +2472,14 @@
                 return;
             }
 
-            // Assign PIN to report card
             await db.collection('reportCards').doc(reportCardId).update({
-                pin: pin.trim(),
-                _version: firebase.firestore.FieldValue.increment(1)
+                pin: pin.trim()
             });
 
-            // Mark PIN as assigned (not used yet)
             await db.collection('pins').doc(pin.trim()).update({
                 class: rc.class,
                 assignedTo: rc.studentName,
-                assignedAt: new Date()
+                assignedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             showToast(`✅ PIN "${pin}" assigned to ${rc.studentName}!`, 'success');
@@ -2255,7 +2500,6 @@
         if (!className) { showToast('⚠️ Please select a class.', 'warning'); return; }
 
         try {
-            // Verify PIN exists and is unused
             const pinDoc = await db.collection('pins').doc(pin).get();
             if (!pinDoc.exists) {
                 showToast('❌ PIN not found. Please generate it first.', 'error');
@@ -2267,7 +2511,6 @@
                 return;
             }
 
-            // Find the report card
             const snap = await db.collection('reportCards')
                 .where('class', '==', className)
                 .where('studentName', '==', studentName)
@@ -2280,14 +2523,13 @@
 
             const doc = snap.docs[0];
             await db.collection('reportCards').doc(doc.id).update({
-                pin: pin,
-                _version: firebase.firestore.FieldValue.increment(1)
+                pin: pin
             });
 
             await db.collection('pins').doc(pin).update({
                 class: className,
                 assignedTo: studentName,
-                assignedAt: new Date()
+                assignedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             showToast(`✅ PIN "${pin}" assigned to ${studentName}!`, 'success');
@@ -2309,6 +2551,8 @@
     $('approveAllBtn').addEventListener('click', approveAll);
     $('rejectAllBtn').addEventListener('click', rejectAll);
     $('adminSigBtn').addEventListener('click', openAdminSignatureModal);
+    $('globalDatesBtn').addEventListener('click', openGlobalDatesModal);
+    $('globalPhotoBtn').addEventListener('click', openBulkPhotoManager);
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') hideModal();
@@ -2348,10 +2592,8 @@
             $('adminName').textContent = 'Admin';
         }
 
-        const savedSig = localStorage.getItem('adminSignature_' + (user.uid || 'admin'));
-        if (savedSig) {
-            adminSigData = savedSig;
-        }
+        // Load admin signature from Firestore
+        await loadAdminSignature();
 
         await loadReportCards();
         await loadPinHistory();
@@ -2382,22 +2624,29 @@
     window.approveFromModal = approveFromModal;
     window.rejectFromModal = rejectFromModal;
     window.openAdminSignatureModal = openAdminSignatureModal;
-    window.saveAdminSignature = saveAdminSignature;
+    window.saveAdminSignature = saveAdminSignatureToFirestore;
     window.clearAdminSignature = clearAdminSignature;
     window.uploadAdminSignature = uploadAdminSignature;
-    window.closeAdminSignatureModal = closeAdminSignatureModal;
     window.toggleComment = toggleComment;
     window.saveAdminComment = saveAdminComment;
     window.clearAdminComment = clearAdminComment;
     window.loadReportCards = loadReportCards;
     window.assignPinToStudent = assignPinToStudent;
+    window.saveGlobalDates = saveGlobalDates;
+    window.applyDatesToAll = applyDatesToAll;
+    window.openBulkPhotoManager = openBulkPhotoManager;
+    window.openGlobalDatesModal = openGlobalDatesModal;
 
-    console.log('✅ Admin Dashboard with PIN Management loaded!');
-    console.log('📌 PIN Features:');
-    console.log('  - Generate 1-60 unique PINs');
-    console.log('  - Track PIN usage history');
-    console.log('  - View all PINs with status');
-    console.log('  - Manually assign PINs to students');
+    console.log('✅ Admin Dashboard v2.0 loaded with improvements!');
+    console.log('🆕 New Features:');
+    console.log('  - Fixed approval status updates');
+    console.log('  - Global dates management (resumption, closing, term)');
+    console.log('  - Bulk photo management');
+    console.log('  - Admin signature synced to cloud');
+    console.log('  - Improved performance with batch photo loading');
+    console.log('  - Sanitized HTML to prevent XSS');
+    console.log('  - Processing states for better UX');
+    console.log('  - Fixed position percentage calculation');
 </script>
 
 </body>
