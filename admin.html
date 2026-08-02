@@ -1072,7 +1072,6 @@
         const active = {};
         Object.keys(subjects).forEach(sub => {
             const data = subjects[sub];
-            // Check if subject has any scores
             const hasScore = (data.firstTerm && data.firstTerm > 0) || 
                             (data.secondTerm && data.secondTerm > 0) || 
                             (data.thirdTerm && data.thirdTerm > 0) ||
@@ -1299,6 +1298,11 @@
                             <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">✍️ Teacher Signature</div>
                             <img src="${rc.teacherSignature}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" />
                         </div>` : ''}
+                        ${rc.adminSignature ? `
+                        <div style="margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
+                            <div style="font-weight:600; font-size:11px; color:#64748b; margin-bottom:4px;">✍️ Admin Signature</div>
+                            <img src="${rc.adminSignature}" style="max-height:40px; max-width:120px; border:1px solid #e2e8f0; border-radius:4px; padding:2px; background:white;" />
+                        </div>` : ''}
                     </div>
 
                     <!-- Admin Comment Area -->
@@ -1344,7 +1348,6 @@
         } else {
             openCommentId = id;
         }
-        // Only re-render if we have filtered cards
         if (filteredReportCards.length > 0) {
             renderReportCards();
         }
@@ -1669,7 +1672,6 @@
         const title = $('modalTitle');
         const content = $('modalContent');
 
-        // Load existing global dates
         db.collection('settings').doc('globalDates').get().then(doc => {
             const data = doc.exists ? doc.data() : {};
             
@@ -1817,7 +1819,7 @@
     }
 
     // =============================================================
-    // GENERATE FULL REPORT CARD - WITH GLOBAL DATES
+    // GENERATE FULL REPORT CARD - WITH GLOBAL DATES AND ADMIN SIGNATURE
     // =============================================================
     function generateFullReportCard(data) {
         const activeSubjects = getActiveSubjects(data.subjects);
@@ -1835,7 +1837,6 @@
 
         const photoUrl = data._photoUrl || data.photoUrl || null;
 
-        // Use global dates or card-specific dates
         const nextTermBegins = data.nextTermBegins || '';
         const closingDate = data.closingDate || '';
 
@@ -1894,7 +1895,6 @@
             else if (overallPosition === 2) posEmoji = '🥈';
             else if (overallPosition === 3) posEmoji = '🥉';
             
-            // Fixed position calculation
             let percentDisplay = 0;
             if (totalStudents > 0) {
                 percentDisplay = Math.round((overallPosition / totalStudents) * 100);
@@ -1944,6 +1944,7 @@
             `<span class="student-photo-placeholder">👤</span>`;
 
         const teacherSig = data.teacherSignature || null;
+        // Use card-specific admin signature, or fall back to global adminSigData
         const adminSig = data.adminSignature || adminSigData || null;
 
         let teacherSigHtml = '';
@@ -2137,7 +2138,7 @@
     }
 
     // =============================================================
-    // ADMIN SIGNATURE - STORED IN FIRESTORE
+    // ADMIN SIGNATURE - STORED IN FIRESTORE & APPLIED TO ALL CARDS
     // =============================================================
     let adminSigCanvasInstance = null;
 
@@ -2149,6 +2150,59 @@
             }
         } catch (e) {
             console.warn('Failed to load admin signature:', e);
+        }
+    }
+
+    // NEW FUNCTION: Apply admin signature to ALL report cards at once
+    async function applyAdminSignatureToAll() {
+        if (!adminSigData) {
+            showToast('⚠️ Please draw or upload a signature first.', 'warning');
+            return;
+        }
+
+        if (!confirm(`⚠️ Apply this admin signature to ALL ${allReportCards.length} report cards? This will make it visible on every card permanently.`)) return;
+
+        try {
+            const batch = db.batch();
+            let count = 0;
+            
+            allReportCards.forEach(rc => {
+                batch.update(rc._ref, {
+                    adminSignature: adminSigData,
+                    signatureUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            });
+            
+            await batch.commit();
+            showToast(`✅ Admin signature applied to all ${count} report cards! It will now appear on every card.`, 'success');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to apply signature: ' + e.message, 'error');
+        }
+    }
+
+    // NEW FUNCTION: Remove admin signature from ALL report cards
+    async function removeAdminSignatureFromAll() {
+        if (!confirm('⚠️ Remove admin signature from ALL report cards? This cannot be undone.')) return;
+
+        try {
+            const batch = db.batch();
+            let count = 0;
+            
+            allReportCards.forEach(rc => {
+                batch.update(rc._ref, {
+                    adminSignature: firebase.firestore.FieldValue.delete(),
+                    signatureUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            });
+            
+            await batch.commit();
+            showToast(`🗑️ Admin signature removed from all ${count} report cards.`, 'warning');
+            await loadReportCards();
+        } catch (e) {
+            showToast('❌ Failed to remove signature: ' + e.message, 'error');
         }
     }
 
@@ -2165,6 +2219,16 @@
                 ${adminSigData ? `<img src="${adminSigData}" style="max-height:80px; max-width:200px; border:1px solid #e2e8f0; border-radius:8px; padding:4px; background:white;" />` : '<span style="color:#94a3b8;">No signature saved.</span>'}
             </div>
 
+            <div style="background:#fefce8; border-radius:12px; padding:16px; border:2px solid #f59e0b; margin-bottom:12px;">
+                <p style="font-weight:700; color:#92400e; margin-bottom:8px;">⚠️ How Admin Signatures Work</p>
+                <ul style="font-size:13px; color:#92400e; padding-left:20px;">
+                    <li>✅ <strong>Auto-applied when approving:</strong> Signature appears on cards you approve</li>
+                    <li>📋 <strong>Apply to All:</strong> Force signature on ALL cards immediately (like teacher signature)</li>
+                    <li>🗑️ <strong>Remove from All:</strong> Delete signature from all cards</li>
+                    <li>💾 <strong>Save to Cloud:</strong> Syncs signature across your devices</li>
+                </ul>
+            </div>
+
             <div style="border:2px solid #e2e8f0; border-radius:12px; overflow:hidden; background:white; touch-action:none;">
                 <canvas id="adminSigCanvas" style="width:100%; height:150px; display:block; cursor:crosshair;"></canvas>
             </div>
@@ -2173,11 +2237,21 @@
                 <button class="btn btn-sm" onclick="saveAdminSignatureToFirestore()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">💾 Save to Cloud</button>
                 <button class="btn btn-sm" onclick="uploadAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#f59e0b; color:#1e1b4b;">📤 Upload Image</button>
             </div>
-            <p style="font-size:12px; color:#94a3b8; margin-top:8px;">Draw or upload your signature. Saving to cloud will sync across all your devices.</p>
 
-            <div style="display:flex; gap:10px; margin-top:16px;">
-                <button class="btn btn-primary" onclick="hideModal()" style="padding:10px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white;">✅ Done</button>
-                <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b;">Cancel</button>
+            <div style="display:flex; gap:10px; margin-top:16px; padding-top:16px; border-top:2px solid #e2e8f0;">
+                <button class="btn btn-primary" onclick="applyAdminSignatureToAll()" style="padding:12px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white; flex:1;">
+                    📋 Apply to ALL Report Cards
+                </button>
+                <button class="btn btn-danger" onclick="removeAdminSignatureFromAll()" style="padding:12px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#dc2626; color:white; flex:1;">
+                    🗑️ Remove from ALL
+                </button>
+            </div>
+            <p style="font-size:11px; color:#64748b; margin-top:6px; text-align:center;">
+                Use "Apply to ALL" to make your signature appear on every report card immediately and permanently (just like teacher signatures)
+            </p>
+
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b; flex:1;">Close</button>
             </div>
         `;
 
@@ -2255,7 +2329,7 @@
                 isDrawing = false;
                 const dataUrl = canvas.toDataURL('image/png');
                 adminSigData = dataUrl;
-                showToast('✍️ Signature drawn! Click "Save to Cloud" to sync.', 'success');
+                showToast('✍️ Signature drawn! Click "Save to Cloud" to sync, then "Apply to ALL" to make it visible everywhere.', 'success');
             }
         }
 
@@ -2283,7 +2357,7 @@
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
             });
-            showToast('✅ Admin signature saved to cloud!', 'success');
+            showToast('✅ Admin signature saved to cloud! Now click "Apply to ALL" to make it visible on every card.', 'success');
             hideModal();
         } catch (e) {
             showToast('❌ Failed to save signature: ' + e.message, 'error');
@@ -2298,7 +2372,7 @@
         adminSigData = null;
         
         db.collection('settings').doc('adminSignature').delete().catch(() => {});
-        showToast('🗑️ Signature cleared.', 'warning');
+        showToast('🗑️ Signature cleared. Use "Remove from ALL" to also remove from report cards.', 'warning');
     }
 
     function uploadAdminSignature() {
@@ -2319,7 +2393,7 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/png');
                     adminSigData = dataUrl;
-                    showToast('📤 Signature uploaded! Click "Save to Cloud" to sync.', 'success');
+                    showToast('📤 Signature uploaded! Click "Save to Cloud" to sync, then "Apply to ALL" to make it visible everywhere.', 'success');
                 };
                 img.src = event.target.result;
             };
@@ -2646,6 +2720,8 @@
     window.saveAdminSignature = saveAdminSignatureToFirestore;
     window.clearAdminSignature = clearAdminSignature;
     window.uploadAdminSignature = uploadAdminSignature;
+    window.applyAdminSignatureToAll = applyAdminSignatureToAll;
+    window.removeAdminSignatureFromAll = removeAdminSignatureFromAll;
     window.toggleComment = toggleComment;
     window.saveAdminComment = saveAdminComment;
     window.clearAdminComment = clearAdminComment;
@@ -2656,16 +2732,14 @@
     window.openBulkPhotoManager = openBulkPhotoManager;
     window.openGlobalDatesModal = openGlobalDatesModal;
 
-    console.log('✅ Admin Dashboard v2.0 loaded with improvements!');
-    console.log('🆕 New Features:');
-    console.log('  - Fixed approval status updates');
-    console.log('  - Global dates management (resumption, closing, term)');
-    console.log('  - Bulk photo management');
-    console.log('  - Admin signature synced to cloud');
-    console.log('  - Improved performance with batch photo loading');
-    console.log('  - Sanitized HTML to prevent XSS');
-    console.log('  - Processing states for better UX');
-    console.log('  - Fixed position percentage calculation');
+    console.log('✅ Admin Dashboard v3.0 loaded!');
+    console.log('🆕 Admin Signature Features:');
+    console.log('  - Draw/upload admin signature');
+    console.log('  - Save to cloud for syncing');
+    console.log('  - "Apply to ALL" makes signature appear on every card permanently (like teacher signature)');
+    console.log('  - "Remove from ALL" deletes signature from all cards');
+    console.log('  - Signature visible in card previews and full report view');
+    console.log('  - Auto-applied when approving individual cards');
 </script>
 
 </body>
