@@ -581,66 +581,71 @@
         }
 
         /* ========================================================== */
-        /* ===== PRINT STYLES - A4 SINGLE PAGE ===== */
+        /* ===== PRINT STYLES - A4 SINGLE PAGE GUARANTEED ===== */
         /* ========================================================== */
         @media print {
-            body { background: white; padding: 0; margin: 0; }
-            #app { max-width: 100%; padding: 0; }
-            .no-print { display: none !important; }
+            @page {
+                size: A4;
+                margin: 8mm;               /* Tight margins */
+            }
+
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            #app {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
             .report-wrapper {
                 box-shadow: none;
                 border: none;
                 border-radius: 0;
-                padding: 6px 10px;
+                padding: 0;
                 margin: 0;
             }
+
+            /* Scale down slightly to guarantee one page */
             .report-card {
                 max-width: 100%;
                 padding: 0;
-                overflow: visible;
+                overflow: hidden;           /* Clip any tiny overflow */
                 font-size: 10px;
+                zoom: 0.88;                 /* Shrink to fit – keeps layout intact */
+                page-break-after: avoid;
+                page-break-inside: avoid;
             }
 
             .watermark-img {
                 opacity: 0.06 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
 
             table th {
                 background: #1e1b4b !important;
                 color: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
             .grand-total-row td {
                 background: #f1f5f9 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
             .student-meta, .dates-row, .info-grid .box,
             .commentary-box, .position-summary, .attendance-grid {
                 background: #f8fafc !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
             .position-summary {
                 background: #fefce8 !important;
                 border-color: #f59e0b !important;
             }
-            .school-logo {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .student-photo-container img {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .signature-box .sig-image-container img {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
 
+            /* Slightly smaller fonts for extra safety */
             .header-text .school-name { font-size: 20px; }
             .term-info { font-size: 13px; padding: 1px 20px; }
             table { font-size: 9.5px; }
@@ -648,10 +653,6 @@
             .info-grid .box .item { font-size: 9.5px; }
             .student-details .name { font-size: 15px; }
             .position-summary .pos-value { font-size: 18px; }
-
-            /* Force single A4 page */
-            .report-card { page-break-after: avoid; page-break-inside: avoid; }
-            .report-wrapper { page-break-after: avoid; }
         }
 
         /* ========================================================== */
@@ -840,6 +841,66 @@
         }
 
         // =============================================================
+        // Helper functions
+        // =============================================================
+        function getRemark(avg) {
+            if (avg >= 75) return 'Distinction';
+            if (avg >= 70) return 'Excellent';
+            if (avg >= 65) return 'Very Good';
+            if (avg >= 60) return 'Good';
+            if (avg >= 55) return 'Above Average';
+            if (avg >= 50) return 'Average';
+            if (avg >= 45) return 'Below Average';
+            if (avg >= 40) return 'Weak Pass';
+            return 'Fail';
+        }
+
+        function getGradeClass(avg) {
+            if (avg >= 75) return 'grade-distinction';
+            if (avg >= 70) return 'grade-excellent';
+            if (avg >= 65) return 'grade-verygood';
+            if (avg >= 60) return 'grade-good';
+            if (avg >= 55) return 'grade-aboveavg';
+            if (avg >= 50) return 'grade-average';
+            if (avg >= 45) return 'grade-belowavg';
+            if (avg >= 40) return 'grade-weak';
+            return 'grade-fail';
+        }
+
+        function getOrdinalSuffix(n) {
+            const s = ['th', 'st', 'nd', 'rd'];
+            const v = n % 100;
+            return s[(v - 20) % 10] || s[v] || s[0];
+        }
+
+        function formatDate(d) {
+            if (!d) return 'Not set';
+            if (d.toDate) d = d.toDate();
+            if (typeof d === 'string') d = new Date(d);
+            if (isNaN(d.getTime())) return 'Invalid date';
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // =============================================================
+        // GET ACTIVE SUBJECTS - FILTER OUT ZERO SCORES
+        // =============================================================
+        function getActiveSubjects(subjects) {
+            if (!subjects) return {};
+            const active = {};
+            Object.keys(subjects).forEach(sub => {
+                const data = subjects[sub];
+                const hasScore = (data.firstTerm && data.firstTerm > 0) || 
+                                (data.secondTerm && data.secondTerm > 0) || 
+                                (data.thirdTerm && data.thirdTerm > 0) ||
+                                (data.average && data.average > 0);
+                if (hasScore) {
+                    active[sub] = data;
+                }
+            });
+            return active;
+        }
+
+        // =============================================================
         // Cloudinary photo fetching function
         // =============================================================
         async function getStudentPhoto(studentName, className) {
@@ -880,47 +941,6 @@
                 select.innerHTML += `<option value="${cls}">${cls}</option>`;
             });
             $('authStatus').innerHTML = '✅ Ready. Enter details to view report.';
-        }
-
-        // =============================================================
-        // Helper functions
-        // =============================================================
-        function getRemark(avg) {
-            if (avg >= 75) return 'Distinction';
-            if (avg >= 70) return 'Excellent';
-            if (avg >= 65) return 'Very Good';
-            if (avg >= 60) return 'Good';
-            if (avg >= 55) return 'Above Average';
-            if (avg >= 50) return 'Average';
-            if (avg >= 45) return 'Below Average';
-            if (avg >= 40) return 'Weak Pass';
-            return 'Fail';
-        }
-
-        function getGradeClass(avg) {
-            if (avg >= 75) return 'grade-distinction';
-            if (avg >= 70) return 'grade-excellent';
-            if (avg >= 65) return 'grade-verygood';
-            if (avg >= 60) return 'grade-good';
-            if (avg >= 55) return 'grade-aboveavg';
-            if (avg >= 50) return 'grade-average';
-            if (avg >= 45) return 'grade-belowavg';
-            if (avg >= 40) return 'grade-weak';
-            return 'grade-fail';
-        }
-
-        function getOrdinalSuffix(n) {
-            const s = ['th', 'st', 'nd', 'rd'];
-            const v = n % 100;
-            return s[(v - 20) % 10] || s[v] || s[0];
-        }
-
-        function formatDate(d) {
-            if (!d) return 'Not set';
-            if (d.toDate) d = d.toDate();
-            if (typeof d === 'string') d = new Date(d);
-            if (isNaN(d.getTime())) return 'Invalid date';
-            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
         // =============================================================
@@ -1035,11 +1055,14 @@
         });
 
         // =============================================================
-        // RENDER REPORT CARD - FULL VERSION WITH SIGNATURE IMAGES
+        // RENDER REPORT CARD - COMPLETE VERSION WITH ALL DATA
         // =============================================================
         function renderReportCard(data, school, studentPhotoUrl) {
             const container = $('reportContainer');
-            const subjects = Object.keys(data.subjects || {});
+
+            // Filter out subjects with no scores
+            const activeSubjects = getActiveSubjects(data.subjects);
+            const subjects = Object.keys(activeSubjects);
             const att = data.attendance || {};
             const affective = data.affectiveDomain || {};
             const psychomotor = data.psychomotorDomain || {};
@@ -1047,6 +1070,7 @@
             const commentary = data.classTeacherCommentary || data.commentary || 'No comments provided.';
             const principalRemarks = data.principalRemarks || '';
             const promotionStatus = data.promotionStatus || '';
+            const adminComment = data.adminComment || '';
 
             const overallPosition = data.overallPosition || null;
             const overallAverage = data.overallAverage || 0;
@@ -1058,7 +1082,7 @@
 
             let subjectRows = '';
             subjects.forEach((sub, index) => {
-                const s = data.subjects[sub] || {};
+                const s = activeSubjects[sub] || {};
                 const first = s.firstTerm || 0;
                 const second = s.secondTerm || 0;
                 const third = s.thirdTerm || 0;
@@ -1113,10 +1137,10 @@
                 else if (overallPosition === 2) posEmoji = '🥈';
                 else if (overallPosition === 3) posEmoji = '🥉';
 
-                let percentDisplay = 100;
-                if (totalStudents > 1) {
-                    const percentage = ((totalStudents - overallPosition) / (totalStudents - 1)) * 100;
-                    percentDisplay = Math.round(percentage);
+                // FIXED: Correct position percentage calculation
+                let percentDisplay = 0;
+                if (totalStudents > 0) {
+                    percentDisplay = Math.round((overallPosition / totalStudents) * 100);
                 }
 
                 positionHtml = `
@@ -1135,8 +1159,8 @@
                             <div class="pos-label">Total Students</div>
                         </div>
                         <div class="pos-item">
-                            <div class="pos-value" style="font-size:18px;">${percentDisplay}%</div>
-                            <div class="pos-label">Top ${percentDisplay}%</div>
+                            <div class="pos-value" style="font-size:18px;">Top ${percentDisplay}%</div>
+                            <div class="pos-label">Class Ranking</div>
                         </div>` : ''}
                         ${promotionStatus ? `
                         <div class="pos-item">
@@ -1154,6 +1178,13 @@
                             <div class="pos-value" style="font-size:16px; color:#64748b;">📊 Position not calculated yet</div>
                             <div class="pos-label">Please ask your teacher to calculate positions</div>
                         </div>
+                        ${promotionStatus ? `
+                        <div class="pos-item">
+                            <div class="pos-value" style="font-size:15px;">
+                                <span class="promotion-badge ${promotionStatus.toLowerCase().replace(/\s+/g, '-')}">${promotionStatus}</span>
+                            </div>
+                            <div class="pos-label">Promotion Status</div>
+                        </div>` : ''}
                     </div>
                 `;
             }
@@ -1244,7 +1275,7 @@
                 <div class="dates-row">
                     <span>📅 Resumption: <strong>${formatDate(att.resumptionDate || data.resumptionDate)}</strong></span>
                     <span>📅 Closing: <strong>${formatDate(att.closingDate || data.closingDate)}</strong></span>
-                    <span>📅 Next Term: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
+                    <span>📅 Next Term Resumption: <strong>${formatDate(data.nextTermBegins || data.nextTermResumption)}</strong></span>
                 </div>
 
                 ${positionHtml}
@@ -1305,6 +1336,13 @@
                     <p>${principalRemarks}</p>
                 </div>` : ''}
 
+                ${adminComment ? `
+                <div class="commentary-box" style="background:#e0f2fe; border-color:#38bdf8;">
+                    <h4>💬 Admin's Comment</h4>
+                    <p style="font-style:italic; color:#0369a1;">${adminComment}</p>
+                    ${data.adminCommentBy ? `<div style="font-size:10px; color:#94a3b8; margin-top:4px;">— ${data.adminCommentBy} on ${formatDate(data.adminCommentAt)}</div>` : ''}
+                </div>` : ''}
+
                 <!-- ===== SIGNATURES WITH IMAGES ===== -->
                 <div class="signature-section">
                     <div class="signature-box">
@@ -1346,7 +1384,7 @@
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer - FULL VERSION with A4, numeric ratings, signature images');
+        console.log('✅ Report Card Viewer - SINGLE PAGE PRINT VERSION');
     </script>
 </body>
 </html>
