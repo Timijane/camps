@@ -1049,9 +1049,11 @@
     // CLOUDINARY CONFIG
     // =============================================================
     const SCHOOL_LOGO_URL = 'https://res.cloudinary.com/dmbjrohtn/image/upload/v1784394346/file_000000007740824697c6de26e1b93f23_vqij6m.png';
+    const CLOUDINARY_CLOUD_NAME = 'dmbjrohtn';
+    const CLOUDINARY_UPLOAD_PRESET = 'pelumi';
     const cloudinaryConfig = {
-        cloudName: 'dmbjrohtn',
-        uploadPreset: 'pelumi',
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
         folder: 'student_photos',
         maxFileSize: 5000000,
         allowedFormats: ['jpg', 'jpeg', 'png', 'webp']
@@ -1071,6 +1073,7 @@
     let allReportCards = [];
     let filteredReportCards = [];
     let adminSigData = null;
+    let adminSigPublicId = null;
     let openCommentId = null;
     let isProcessing = false;
 
@@ -1088,6 +1091,28 @@
     }
 
     function $(id) { return document.getElementById(id); }
+
+    // =============================================================
+    // CLOUDINARY UPLOAD HELPER (for admin signature)
+    // =============================================================
+    async function uploadToCloudinary(base64Data, folder, publicId) {
+        const blob = await (await fetch(base64Data)).blob();
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('folder', folder);
+        if (publicId) formData.append('public_id', publicId);
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        if (result.secure_url) {
+            return { url: result.secure_url, publicId: result.public_id };
+        }
+        throw new Error(result.error?.message || 'Upload failed');
+    }
 
     // =============================================================
     // PAYMENT PIN MODAL FUNCTIONS
@@ -1119,7 +1144,6 @@
             return;
         }
 
-        // PIN verified - close modal and generate PINs
         closePaymentPinModal();
         showToast('✅ Payment verified! Generating PINs...', 'success');
         await generatePINs(pendingPinCount);
@@ -1974,6 +1998,7 @@
             `<span class="student-photo-placeholder">👤</span>`;
 
         const teacherSig = data.teacherSignature || null;
+        // Use card-specific admin signature (Cloudinary URL), or fall back to global adminSigData
         const adminSig = data.adminSignature || adminSigData || null;
 
         let teacherSigHtml = '';
@@ -2154,13 +2179,15 @@
     }
 
     // =============================================================
-    // ADMIN SIGNATURE
+    // ADMIN SIGNATURE - CLOUDINARY UPLOAD + FIRESTORE SAVE
     // =============================================================
+
     async function loadAdminSignature() {
         try {
             const doc = await db.collection('settings').doc('adminSignature').get();
-            if (doc.exists && doc.data().signatureData) {
-                adminSigData = doc.data().signatureData;
+            if (doc.exists && doc.data().signatureUrl) {
+                adminSigData = doc.data().signatureUrl;
+                adminSigPublicId = doc.data().publicId || null;
             }
         } catch (e) {
             console.warn('Failed to load admin signature:', e);
@@ -2179,6 +2206,7 @@
             allReportCards.forEach(rc => {
                 batch.update(rc._ref, {
                     adminSignature: adminSigData,
+                    adminSignaturePublicId: adminSigPublicId || null,
                     signatureUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 count++;
@@ -2199,6 +2227,7 @@
             allReportCards.forEach(rc => {
                 batch.update(rc._ref, {
                     adminSignature: firebase.firestore.FieldValue.delete(),
+                    adminSignaturePublicId: firebase.firestore.FieldValue.delete(),
                     signatureUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 count++;
@@ -2227,7 +2256,7 @@
                     <li>✅ <strong>Auto-applied when approving:</strong> Signature appears on cards you approve</li>
                     <li>📋 <strong>Apply to All:</strong> Force signature on ALL cards immediately (like teacher signature)</li>
                     <li>🗑️ <strong>Remove from All:</strong> Delete signature from all cards</li>
-                    <li>💾 <strong>Save to Cloud:</strong> Syncs signature across your devices</li>
+                    <li>☁️ <strong>Save to Cloudinary:</strong> Uploads to Cloudinary and saves URL in Firestore (same as teacher signatures)</li>
                 </ul>
             </div>
             <div style="border:2px solid #e2e8f0; border-radius:12px; overflow:hidden; background:white; touch-action:none;">
@@ -2235,8 +2264,8 @@
             </div>
             <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                 <button class="btn btn-sm" onclick="clearAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#fee2e2; color:#dc2626;">🗑️ Clear</button>
-                <button class="btn btn-sm" onclick="saveAdminSignatureToFirestore()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">💾 Save to Cloud</button>
-                <button class="btn btn-sm" onclick="uploadAdminSignature()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#f59e0b; color:#1e1b4b;">📤 Upload Image</button>
+                <button class="btn btn-sm" onclick="saveAdminSignatureToCloudinary()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#4f46e5; color:white;">☁️ Save to Cloudinary</button>
+                <button class="btn btn-sm" onclick="uploadAdminSignatureImage()" style="padding:6px 14px; border:none; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; background:#f59e0b; color:#1e1b4b;">📤 Upload Image</button>
             </div>
             <div style="display:flex; gap:10px; margin-top:16px; padding-top:16px; border-top:2px solid #e2e8f0;">
                 <button class="btn btn-primary" onclick="applyAdminSignatureToAll()" style="padding:12px 24px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#4f46e5; color:white; flex:1;">
@@ -2247,7 +2276,7 @@
                 </button>
             </div>
             <p style="font-size:11px; color:#64748b; margin-top:6px; text-align:center;">
-                Use "Apply to ALL" to make your signature appear on every report card immediately and permanently (just like teacher signatures)
+                Draw or upload your signature, then click "Save to Cloudinary" to upload it to the cloud (same as teacher signatures). Then "Apply to ALL" to make it visible on every card.
             </p>
             <div style="display:flex; gap:10px; margin-top:12px;">
                 <button class="btn btn-outline" onclick="hideModal()" style="padding:10px 24px; border:2px solid #e2e8f0; border-radius:60px; font-weight:700; cursor:pointer; background:white; color:#1e293b; flex:1;">Close</button>
@@ -2315,9 +2344,7 @@
             e.preventDefault();
             if (isDrawing) {
                 isDrawing = false;
-                const dataUrl = canvas.toDataURL('image/png');
-                adminSigData = dataUrl;
-                showToast('✍️ Signature drawn! Click "Save to Cloud" to sync, then "Apply to ALL" to make it visible everywhere.', 'success');
+                showToast('✍️ Signature drawn! Click "Save to Cloudinary" to upload.', 'success');
             }
         }
         canvas.addEventListener('mousedown', startDrawing);
@@ -2331,21 +2358,36 @@
         setTimeout(resizeCanvas, 50);
     }
 
-    async function saveAdminSignatureToFirestore() {
+    // NEW: Save admin signature to Cloudinary and store URL in Firestore
+    async function saveAdminSignatureToCloudinary() {
         const canvas = document.getElementById('adminSigCanvas');
         if (!canvas) { showToast('❌ Canvas not found.', 'error'); return; }
+        
         const dataUrl = canvas.toDataURL('image/png');
-        adminSigData = dataUrl;
+        showToast('☁️ Uploading signature to Cloudinary...', 'info');
+        
         try {
+            const result = await uploadToCloudinary(
+                dataUrl, 
+                'admin_signatures', 
+                `admin_sig_${Date.now()}`
+            );
+            
+            adminSigData = result.url;
+            adminSigPublicId = result.publicId;
+            
+            // Save Cloudinary URL to Firestore (same structure as teacher signatures)
             await db.collection('settings').doc('adminSignature').set({
-                signatureData: dataUrl,
+                signatureUrl: result.url,
+                publicId: result.publicId,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
             });
-            showToast('✅ Admin signature saved to cloud! Now click "Apply to ALL" to make it visible on every card.', 'success');
+            
+            showToast('✅ Admin signature uploaded to Cloudinary and saved! Click "Apply to ALL" to make it visible on every card.', 'success');
             hideModal();
         } catch (e) {
-            showToast('❌ Failed to save signature: ' + e.message, 'error');
+            showToast('❌ Cloudinary upload failed: ' + e.message, 'error');
         }
     }
 
@@ -2355,31 +2397,59 @@
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         adminSigData = null;
+        adminSigPublicId = null;
+        
         db.collection('settings').doc('adminSignature').delete().catch(() => {});
         showToast('🗑️ Signature cleared. Use "Remove from ALL" to also remove from report cards.', 'warning');
     }
 
-    function uploadAdminSignature() {
+    // UPDATED: Upload image file via Cloudinary
+    function uploadAdminSignatureImage() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
-        input.onchange = function(e) {
+        input.onchange = async function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
+            showToast('☁️ Uploading image to Cloudinary...', 'info');
+            
             const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
+            reader.onload = async function(event) {
+                try {
+                    const result = await uploadToCloudinary(
+                        event.target.result,
+                        'admin_signatures',
+                        `admin_sig_${Date.now()}`
+                    );
+                    
+                    adminSigData = result.url;
+                    adminSigPublicId = result.publicId;
+                    
+                    // Display in canvas
                     const canvas = document.getElementById('adminSigCanvas');
-                    if (!canvas) return;
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const dataUrl = canvas.toDataURL('image/png');
-                    adminSigData = dataUrl;
-                    showToast('📤 Signature uploaded! Click "Save to Cloud" to sync, then "Apply to ALL" to make it visible everywhere.', 'success');
-                };
-                img.src = event.target.result;
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = result.url;
+                    }
+                    
+                    // Save to Firestore
+                    await db.collection('settings').doc('adminSignature').set({
+                        signatureUrl: result.url,
+                        publicId: result.publicId,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
+                    });
+                    
+                    showToast('📤 Signature image uploaded to Cloudinary! Click "Apply to ALL" to make it visible everywhere.', 'success');
+                } catch (err) {
+                    showToast('❌ Upload failed: ' + err.message, 'error');
+                }
             };
             reader.readAsDataURL(file);
         };
@@ -2404,13 +2474,12 @@
         });
     });
 
-    // GENERATE PINs BUTTON - NOW OPENS PAYMENT VERIFICATION
+    // GENERATE PINs BUTTON - OPENS PAYMENT VERIFICATION
     $('genBulkPinBtn').addEventListener('click', () => {
         const count = parseInt($('pinCount').value) || 20;
         if (count < 1 || count > 60) {
             return showToast('⚠️ Please enter a number between 1 and 60.', 'warning');
         }
-        // Show payment message first
         if (confirm(`💳 Kindly make payment for ${count} PIN purchase.\n\nClick OK to enter your payment PIN.`)) {
             openPaymentPinModal(count);
         }
@@ -2700,9 +2769,9 @@
     window.approveFromModal = approveFromModal;
     window.rejectFromModal = rejectFromModal;
     window.openAdminSignatureModal = openAdminSignatureModal;
-    window.saveAdminSignature = saveAdminSignatureToFirestore;
+    window.saveAdminSignatureToCloudinary = saveAdminSignatureToCloudinary;
     window.clearAdminSignature = clearAdminSignature;
-    window.uploadAdminSignature = uploadAdminSignature;
+    window.uploadAdminSignatureImage = uploadAdminSignatureImage;
     window.applyAdminSignatureToAll = applyAdminSignatureToAll;
     window.removeAdminSignatureFromAll = removeAdminSignatureFromAll;
     window.toggleComment = toggleComment;
@@ -2717,11 +2786,13 @@
     window.verifyPaymentPin = verifyPaymentPin;
     window.closePaymentPinModal = closePaymentPinModal;
 
-    console.log('✅ Admin Dashboard v4.0 loaded!');
-    console.log('🆕 Features:');
-    console.log('  - Resumption Date only (removed closing date, term, session)');
-    console.log('  - PIN payment verification with SAMsam2021');
-    console.log('  - Admin signature apply/remove to all cards');
+    console.log('✅ Admin Dashboard v5.0 loaded with Cloudinary admin signatures!');
+    console.log('☁️ Admin Signature Flow:');
+    console.log('  1. Draw or upload signature');
+    console.log('  2. Click "Save to Cloudinary" → uploads to cloudinary.com');
+    console.log('  3. Cloudinary URL saved in Firestore settings/adminSignature');
+    console.log('  4. Click "Apply to ALL" → writes Cloudinary URL to all report cards');
+    console.log('  ✅ Same flow as teacher signatures!');
 </script>
 
 </body>
