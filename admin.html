@@ -1542,7 +1542,8 @@
                 rejected: false,
                 approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                adminSignature: adminSigData
+                adminSignature: adminSigData,
+                adminSignaturePublicId: adminSigPublicId || null
             });
             showToast('✅ Report card approved and published to students!', 'success');
             await loadReportCards();
@@ -1619,7 +1620,8 @@
                     rejected: false,
                     approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     approvedBy: currentUserData?.fullName || currentUserData?.name || 'Admin',
-                    adminSignature: adminSigData
+                    adminSignature: adminSigData,
+                    adminSignaturePublicId: adminSigPublicId || null
                 });
             });
             await batch.commit();
@@ -1998,7 +2000,6 @@
             `<span class="student-photo-placeholder">👤</span>`;
 
         const teacherSig = data.teacherSignature || null;
-        // Use card-specific admin signature (Cloudinary URL), or fall back to global adminSigData
         const adminSig = data.adminSignature || adminSigData || null;
 
         let teacherSigHtml = '';
@@ -2179,7 +2180,7 @@
     }
 
     // =============================================================
-    // ADMIN SIGNATURE - CLOUDINARY UPLOAD + FIRESTORE SAVE
+    // ADMIN SIGNATURE - CLOUDINARY UPLOAD + FIRESTORE DOCUMENTS
     // =============================================================
 
     async function loadAdminSignature() {
@@ -2256,7 +2257,7 @@
                     <li>✅ <strong>Auto-applied when approving:</strong> Signature appears on cards you approve</li>
                     <li>📋 <strong>Apply to All:</strong> Force signature on ALL cards immediately (like teacher signature)</li>
                     <li>🗑️ <strong>Remove from All:</strong> Delete signature from all cards</li>
-                    <li>☁️ <strong>Save to Cloudinary:</strong> Uploads to Cloudinary and saves URL in Firestore (same as teacher signatures)</li>
+                    <li>☁️ <strong>Save to Cloudinary:</strong> Uploads to Cloudinary and saves URL in Firestore documents (same as teacher signatures)</li>
                 </ul>
             </div>
             <div style="border:2px solid #e2e8f0; border-radius:12px; overflow:hidden; background:white; touch-action:none;">
@@ -2358,7 +2359,7 @@
         setTimeout(resizeCanvas, 50);
     }
 
-    // NEW: Save admin signature to Cloudinary and store URL in Firestore
+    // Save admin signature to Cloudinary and store URL in Firestore documents
     async function saveAdminSignatureToCloudinary() {
         const canvas = document.getElementById('adminSigCanvas');
         if (!canvas) { showToast('❌ Canvas not found.', 'error'); return; }
@@ -2376,7 +2377,7 @@
             adminSigData = result.url;
             adminSigPublicId = result.publicId;
             
-            // Save Cloudinary URL to Firestore (same structure as teacher signatures)
+            // Save Cloudinary URL to Firestore document (settings/adminSignature)
             await db.collection('settings').doc('adminSignature').set({
                 signatureUrl: result.url,
                 publicId: result.publicId,
@@ -2384,7 +2385,7 @@
                 updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
             });
             
-            showToast('✅ Admin signature uploaded to Cloudinary and saved! Click "Apply to ALL" to make it visible on every card.', 'success');
+            showToast('✅ Admin signature uploaded to Cloudinary and saved in Firestore! Click "Apply to ALL" to make it visible on every card.', 'success');
             hideModal();
         } catch (e) {
             showToast('❌ Cloudinary upload failed: ' + e.message, 'error');
@@ -2403,7 +2404,7 @@
         showToast('🗑️ Signature cleared. Use "Remove from ALL" to also remove from report cards.', 'warning');
     }
 
-    // UPDATED: Upload image file via Cloudinary
+    // Upload image file to Cloudinary and save URL in Firestore
     function uploadAdminSignatureImage() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -2438,7 +2439,7 @@
                         img.src = result.url;
                     }
                     
-                    // Save to Firestore
+                    // Save Cloudinary URL to Firestore document
                     await db.collection('settings').doc('adminSignature').set({
                         signatureUrl: result.url,
                         publicId: result.publicId,
@@ -2446,7 +2447,7 @@
                         updatedBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
                     });
                     
-                    showToast('📤 Signature image uploaded to Cloudinary! Click "Apply to ALL" to make it visible everywhere.', 'success');
+                    showToast('📤 Signature image uploaded to Cloudinary and saved in Firestore! Click "Apply to ALL" to make it visible everywhere.', 'success');
                 } catch (err) {
                     showToast('❌ Upload failed: ' + err.message, 'error');
                 }
@@ -2787,12 +2788,14 @@
     window.closePaymentPinModal = closePaymentPinModal;
 
     console.log('✅ Admin Dashboard v5.0 loaded with Cloudinary admin signatures!');
-    console.log('☁️ Admin Signature Flow:');
-    console.log('  1. Draw or upload signature');
+    console.log('☁️ Admin Signature Flow (same as teacher signatures):');
+    console.log('  1. Draw or upload signature on canvas');
     console.log('  2. Click "Save to Cloudinary" → uploads to cloudinary.com');
-    console.log('  3. Cloudinary URL saved in Firestore settings/adminSignature');
-    console.log('  4. Click "Apply to ALL" → writes Cloudinary URL to all report cards');
-    console.log('  ✅ Same flow as teacher signatures!');
+    console.log('  3. Cloudinary returns URL → saved in Firestore: settings/adminSignature');
+    console.log('  4. Firestore document: { signatureUrl: "https://res.cloudinary.com/...", publicId: "..." }');
+    console.log('  5. Click "Apply to ALL" → writes Cloudinary URL to each reportCards/{id} document');
+    console.log('  6. Each report card: { adminSignature: "https://res.cloudinary.com/...", adminSignaturePublicId: "..." }');
+    console.log('  ✅ EXACT same flow as teacher signatures! Cloudinary URL stored in Firestore documents.');
 </script>
 
 </body>
