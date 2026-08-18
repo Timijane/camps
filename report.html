@@ -1020,7 +1020,7 @@
         }
 
         // =============================================================
-        // 3. CHECK REPORT LOGIC WITH DEBUG
+        // 3. CHECK REPORT LOGIC WITH DEBUG AND FLEXIBLE CLASS MATCHING
         // =============================================================
         $('checkReportBtn').addEventListener('click', async () => {
             const nameRaw = $('studentName').value.trim();
@@ -1085,52 +1085,97 @@
                     return;
                 }
 
-                // ---- STEP 2: Query report cards ----
-                // We'll query without the 'approved' filter to see all docs for this student
-                const snap = await db.collection('reportCards')
+                // ---- STEP 2: Fetch report cards with flexible class matching ----
+                let snap;
+                let fallbackUsed = false;
+
+                // First attempt: exact class match
+                const exactSnap = await db.collection('reportCards')
                     .where('class', '==', cls)
-                    .where('studentName', '==', name)
                     .get();
 
+                if (!exactSnap.empty) {
+                    snap = exactSnap;
+                    fallbackUsed = false;
+                    debugData.classMatch = 'exact';
+                } else {
+                    // Fallback: fetch all and filter by class (case-insensitive, trimmed)
+                    console.warn(`⚠️ Exact class match "${cls}" returned 0 docs. Falling back to full scan.`);
+                    const allSnap = await db.collection('reportCards').get();
+                    const clsNormalized = cls.trim().toUpperCase();
+                    const filteredDocs = [];
+                    allSnap.forEach(doc => {
+                        const data = doc.data();
+                        const docClass = (data.class || '').trim().toUpperCase();
+                        if (docClass === clsNormalized) {
+                            filteredDocs.push(doc);
+                        }
+                    });
+                    // Create a mock snapshot
+                    snap = {
+                        docs: filteredDocs,
+                        empty: filteredDocs.length === 0,
+                        forEach: (cb) => filteredDocs.forEach(cb)
+                    };
+                    fallbackUsed = true;
+                    debugData.classMatch = 'fallback';
+                    debugData.normalizedClass = clsNormalized;
+                    console.log(`🔍 Fallback: found ${filteredDocs.length} docs with normalized class "${clsNormalized}"`);
+                }
+
+                // Store debug info about the query
+                debugData.fallbackUsed = fallbackUsed;
                 debugData.docsFound = snap.docs.length;
                 debugData.documents = [];
 
+                // Now filter by student name (case-insensitive, trimmed)
+                let matchedDocs = [];
                 let approvedDoc = null;
-                let allDocs = [];
+                let allStudentNames = [];
 
                 snap.forEach(doc => {
                     const data = doc.data();
+                    const storedName = (data.studentName || '').trim().toUpperCase();
                     const docInfo = {
                         id: doc.id,
+                        storedName: data.studentName,
                         approved: data.approved,
                         rejected: data.rejected,
                         pushedToAdmin: data.pushedToAdmin,
                         hasAdminSignature: !!data.adminSignature,
                         overallAverage: data.overallAverage,
-                        // capture field types to detect booleans vs strings
                         approvedType: typeof data.approved,
                         rejectedType: typeof data.rejected,
                         fullData: data
                     };
                     debugData.documents.push(docInfo);
-                    allDocs.push(docInfo);
-                    if (data.approved === true) {
-                        approvedDoc = doc;
+                    allStudentNames.push(storedName);
+                    if (storedName === name) {
+                        matchedDocs.push(doc);
+                        if (data.approved === true) {
+                            approvedDoc = doc;
+                        }
                     }
                 });
 
+                debugData.matchedCount = matchedDocs.length;
                 debugData.hasApproved = !!approvedDoc;
-                debugData.allDocs = allDocs;
+                debugData.allStudentNames = allStudentNames;
 
                 // ---- STEP 3: Determine outcome ----
                 if (!approvedDoc) {
-                    // No approved document found
                     let msg = '❌ No approved report card found for this student.';
-                    if (allDocs.length === 0) {
-                        msg = '❌ No report card found for this student in this class.';
+                    if (matchedDocs.length === 0) {
+                        msg = `❌ No report card found for "${nameRaw}" in class "${cls}".`;
+                        // Show some similar names for debugging
+                        const similarNames = allStudentNames.filter(n => n.includes(name.substring(0, 3)));
+                        if (similarNames.length > 0) {
+                            msg += `\nSimilar names in this class: ${similarNames.join(', ')}`;
+                            debugData.similarNames = similarNames;
+                        }
                     } else {
-                        const hasUnapproved = allDocs.some(d => d.approved === false || d.approved === undefined);
-                        const hasRejected = allDocs.some(d => d.rejected === true);
+                        const hasUnapproved = matchedDocs.some(d => d.data().approved !== true);
+                        const hasRejected = matchedDocs.some(d => d.data().rejected === true);
                         if (hasRejected) msg += ' (Some documents are rejected.)';
                         if (hasUnapproved) msg += ' (Some documents are pending approval.)';
                     }
@@ -1138,7 +1183,6 @@
                     $('checkReportBtn').innerText = '🔍 View Report Card';
                     $('checkReportBtn').disabled = false;
                     renderDebug();
-                    // Show debug panel automatically if no result
                     openDebugPanel();
                     return;
                 }
@@ -1196,7 +1240,7 @@
         });
 
         // =============================================================
-        // DEBUG RENDER
+        // DEBUG RENDER (enhanced)
         // =============================================================
         function renderDebug() {
             const container = $('debugContent');
@@ -1211,34 +1255,30 @@
             if (debugData.pinData) {
                 html += `<div class="debug-line"><span class="debug-key">PIN used:</span> <span class="${debugData.pinData.used ? 'debug-warn' : 'debug-ok'}">${debugData.pinData.used ? 'YES (by ' + (debugData.pinData.usedBy || 'unknown') + ')' : 'NO'}</span></div>`;
             }
-            html += `<div class="debug-line"><span class="debug-key">📄 Documents found:</span> <span class="${debugData.docsFound > 0 ? 'debug-ok' : 'debug-error'}">${debugData.docsFound || 0}</span></div>`;
+            html += `<div class="debug-line"><span class="debug-key">📄 Documents in class:</span> <span class="${debugData.docsFound > 0 ? 'debug-ok' : 'debug-error'}">${debugData.docsFound || 0}</span></div>`;
+            html += `<div class="debug-line"><span class="debug-key">🔤 Class match method:</span> <span class="${debugData.classMatch === 'exact' ? 'debug-ok' : 'debug-warn'}">${debugData.classMatch === 'exact' ? 'Exact (used index)' : 'Fallback (scanned all)'}</span></div>`;
+            if (debugData.normalizedClass) {
+                html += `<div class="debug-line"><span class="debug-key">Normalized class:</span> <span class="debug-value">"${debugData.normalizedClass}"</span></div>`;
+            }
+            html += `<div class="debug-line"><span class="debug-key">✅ Matched student name:</span> <span class="${debugData.matchedCount > 0 ? 'debug-ok' : 'debug-error'}">${debugData.matchedCount || 0}</span></div>`;
+            html += `<div class="debug-line"><span class="debug-key">📋 Approved document:</span> <span class="${debugData.hasApproved ? 'debug-ok' : 'debug-error'}">${debugData.hasApproved ? 'FOUND' : 'NOT FOUND'}</span></div>`;
 
-            if (debugData.documents && debugData.documents.length > 0) {
-                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">📋 All documents for this student:</div>`;
-                debugData.documents.forEach((doc, i) => {
-                    const status = doc.approved === true ? '✅ APPROVED' :
-                        (doc.rejected === true ? '❌ REJECTED' : '⏳ PENDING');
-                    const statusColor = doc.approved === true ? 'debug-ok' :
-                        (doc.rejected === true ? 'debug-error' : 'debug-warn');
+            // List all student names in the class for comparison
+            if (debugData.allStudentNames && debugData.allStudentNames.length > 0) {
+                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">📋 All student names in this class (${debugData.allStudentNames.length}):</div>`;
+                debugData.allStudentNames.forEach((name, i) => {
                     html += `<div class="debug-line" style="padding-left:12px; border-left: 2px solid #334155;">
-                        <span class="debug-key">Doc #${i+1}:</span> 
-                        <span class="${statusColor}">${status}</span> 
-                        | avg: ${doc.overallAverage || 'N/A'} 
-                        | sig: ${doc.hasAdminSignature ? '✅' : '❌'}
-                        | approved type: <span class="debug-value">${doc.approvedType}</span>
+                        <span class="debug-value">"${name}"</span>
                     </div>`;
                 });
             }
 
-            if (debugData.error) {
-                html += `<div class="debug-line"><span class="debug-error">❌ Error: ${debugData.error}</span></div>`;
+            if (debugData.similarNames) {
+                html += `<div class="debug-line" style="margin-top:6px;"><span class="debug-warn">⚠️ Similar names found: ${debugData.similarNames.join(', ')}</span></div>`;
             }
 
-            if (debugData.hasApproved === false && debugData.docsFound > 0) {
-                html += `<div class="debug-line" style="margin-top:6px; background:#1e293b; padding:6px; border-radius:6px;">
-                    <span class="debug-warn">⚠️ No document with <strong>approved === true</strong> was found.</span>
-                    <span style="color:#94a3b8;"> Check the field type above – it should be boolean, not string.</span>
-                </div>`;
+            if (debugData.error) {
+                html += `<div class="debug-line"><span class="debug-error">❌ Error: ${debugData.error}</span></div>`;
             }
 
             container.innerHTML = html;
@@ -1600,7 +1640,7 @@
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer - DEBUG ENABLED');
+        console.log('✅ Report Card Viewer - FLEXIBLE MATCHING + ENHANCED DEBUG');
     </script>
 </body>
 </html>
