@@ -34,7 +34,7 @@
         }
         .admin-header .brand { font-weight: 900; font-size: 24px; color: #1e1b4b; }
         .admin-header .brand span { color: #4f46e5; }
-        .admin-header .user-info { font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 12px; }
+        .admin-header .user-info { font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .admin-header .user-info .role-badge { 
             background: #4f46e5; color: white; padding: 4px 14px; border-radius: 60px; font-size: 12px; 
         }
@@ -116,6 +116,7 @@
         .btn-reject:hover { background: #b91c1c; }
         .btn-force { background: #f59e0b; color: #1e1b4b; }
         .btn-force:hover { background: #d97706; }
+        .btn-sm { padding: 6px 16px; font-size: 12px; }
 
         .report-grid {
             display: grid;
@@ -403,32 +404,81 @@
             text-align: center;
             border: 2px dashed #4f46e5;
             margin-top: 12px;
-            max-height: 180px;
+            max-height: 220px;
             overflow-y: auto;
         }
-        .pin-display-box .pin-value {
-            font-family: monospace;
-            font-size: 18px;
+        .pin-display-box .pin-label {
+            display: block;
+            font-weight: 700;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .pin-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
             font-weight: 700;
             letter-spacing: 2px;
             color: #1e1b4b;
             display: inline-block;
             background: white;
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 30px;
             margin: 3px;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: 0.2s;
+            user-select: all;
         }
-        .pin-display-box .pin-value.pin-unused { border-color: #f59e0b; background: #fefce8; }
-        .pin-display-box .pin-value.pin-used { border-color: #10b981; background: #d1fae5; }
+        .pin-value:hover {
+            border-color: #4f46e5;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(79,70,229,0.2);
+        }
+        .pin-value.pin-unused { 
+            border-color: #f59e0b; 
+            background: #fefce8; 
+        }
+        .pin-value.pin-used { 
+            border-color: #10b981; 
+            background: #d1fae5; 
+        }
+        .pin-value.pin-assigned { 
+            border-color: #8b5cf6; 
+            background: #ede9fe; 
+        }
 
         .table-scroll {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
             margin-top: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
         }
-        .table-scroll table { font-size: 12px; }
-        .table-scroll th { position: sticky; top: 0; background: #f1f5f9; z-index: 2; }
+        .table-scroll table { 
+            width: 100%; 
+            font-size: 12px; 
+            border-collapse: collapse;
+        }
+        .table-scroll th { 
+            position: sticky; 
+            top: 0; 
+            background: #f1f5f9; 
+            z-index: 2; 
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #1e1b4b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table-scroll td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-scroll tr:hover td {
+            background: #f8fafc;
+        }
 
         .payment-pin-modal {
             background: white;
@@ -480,17 +530,29 @@
             transition: 0.2s;
         }
 
-        @media (max-width: 768px) {
-            .app-container { padding: 12px; }
-            .report-grid { grid-template-columns: 1fr; }
-            .admin-header .brand { font-size: 18px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .filter-bar { flex-direction: column; }
-            .filter-bar select, .filter-bar input { width: 100%; }
-            .pin-management-section { padding: 16px; }
-            .pin-tab-row { flex-direction: column; }
-            .pin-tab-btn { text-align: center; }
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s ease infinite;
         }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state h3 { color: #1e1b4b; margin-bottom: 8px; }
+        .empty-state p { color: #94a3b8; }
 
         /* Report card preview styles */
         .report-card-preview {
@@ -740,6 +802,24 @@
         .position-summary .pos-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
         .promotion-badge { padding: 4px 14px; border-radius: 30px; font-weight: 800; font-size: 13px; white-space: nowrap; display: inline-block; }
         .rating-stars { color: #f59e0b; letter-spacing: 1px; }
+
+        .processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .app-container { padding: 12px; }
+            .report-grid { grid-template-columns: 1fr; }
+            .admin-header .brand { font-size: 18px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; }
+            .filter-bar select, .filter-bar input { width: 100%; }
+            .pin-management-section { padding: 16px; }
+            .pin-tab-row { flex-direction: column; }
+            .pin-tab-btn { text-align: center; }
+            .report-card-preview .info-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -813,16 +893,18 @@
     <!-- PIN Management Section -->
     <div class="pin-management-section">
         <h3>🔐 PIN Management System</h3>
-        <p class="sub">Generate, track, and manage PINs for parent/student access to report cards.</p>
+        <p class="sub">Generate PINs, view available PINs, track ownership, and assign PINs to students.</p>
         <div class="pin-tab-row">
             <button class="pin-tab-btn active" data-pin-tab="pinGenerate">🔄 Generate PINs</button>
+            <button class="pin-tab-btn" data-pin-tab="pinAvailable">📋 Available PINs</button>
             <button class="pin-tab-btn" data-pin-tab="pinHistory">📜 Usage History</button>
             <button class="pin-tab-btn" data-pin-tab="pinAll">📋 All PINs</button>
             <button class="pin-tab-btn" data-pin-tab="pinAssign">📌 Assign to Student</button>
         </div>
 
+        <!-- Generate PINs Tab -->
         <div id="pinGenerate" class="pin-tab-panel active">
-            <div class="sub">Generate 1 to 60 unique PINs at once for parents to purchase.</div>
+            <div class="sub">Generate 1 to 60 unique PINs at once. Students will claim these PINs to view their report cards.</div>
             <div class="flex-input">
                 <input id="pinCount" type="number" min="1" max="60" value="20" style="flex:0 0 80px; text-align:center;" />
                 <button class="btn btn-primary" id="genBulkPinBtn" style="padding:12px 24px;">🔄 Generate PINs</button>
@@ -834,20 +916,34 @@
             </div>
         </div>
 
+        <!-- Available PINs Tab -->
+        <div id="pinAvailable" class="pin-tab-panel">
+            <div class="sub">📋 All available (unused) PINs ready for students to claim. Click a PIN to copy it.</div>
+            <button class="btn btn-primary btn-sm" id="refreshAvailablePinsBtn" style="margin-bottom:10px; padding:8px 20px;">🔄 Refresh</button>
+            <div class="table-scroll" id="availablePinsContainer"><p style="color:#94a3b8; padding:16px;">Loading available PINs...</p></div>
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn btn-success" id="copyAvailablePinsBtn" style="padding:8px 20px;">📋 Copy All Available PINs</button>
+                <button class="btn btn-warning" id="refreshAvailablePinsBtn2" style="padding:8px 20px;">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- PIN History Tab -->
         <div id="pinHistory" class="pin-tab-panel">
-            <div class="sub">Track which student used which PIN and when.</div>
+            <div class="sub">Track which student used which PIN and when. First student to claim a PIN becomes its owner.</div>
             <button class="btn btn-primary btn-sm" id="refreshHistoryBtn" style="margin-bottom:10px; padding:8px 20px;">🔄 Refresh</button>
-            <div class="table-scroll" id="pinHistoryContainer"><p style="color:#94a3b8; font-size:14px;">Loading...</p></div>
+            <div class="table-scroll" id="pinHistoryContainer"><p style="color:#94a3b8; padding:16px;">Loading history...</p></div>
         </div>
 
+        <!-- All PINs Tab -->
         <div id="pinAll" class="pin-tab-panel">
-            <div class="sub">View all generated PINs and their current status.</div>
+            <div class="sub">View all generated PINs and their current status. PINs can be deleted if unused.</div>
             <button class="btn btn-primary btn-sm" id="refreshAllPinsBtn" style="margin-bottom:10px; padding:8px 20px;">🔄 Refresh</button>
-            <div class="table-scroll" id="allPinsContainer"><p style="color:#94a3b8; font-size:14px;">Loading...</p></div>
+            <div class="table-scroll" id="allPinsContainer"><p style="color:#94a3b8; padding:16px;">Loading all PINs...</p></div>
         </div>
 
+        <!-- Assign PIN Tab -->
         <div id="pinAssign" class="pin-tab-panel">
-            <div class="sub">Manually assign a PIN to a student's report card.</div>
+            <div class="sub">Manually assign a PIN to a student's report card. This pre-assigns the PIN before the student claims it.</div>
             <div class="flex-input">
                 <input id="assignPinInput" placeholder="🔑 Enter PIN (e.g. A#3kL9!@)" style="flex:1;" />
                 <input id="assignStudentName" placeholder="👤 Student Full Name" style="flex:1;" />
@@ -859,7 +955,11 @@
     </div>
 
     <div id="reportGrid" class="report-grid">
-        <div class="empty-state"><div class="icon">📋</div><h3>No submitted report cards</h3><p>Teachers haven't submitted any report cards yet.</p></div>
+        <div class="empty-state">
+            <div class="icon">📋</div>
+            <h3>No submitted report cards</h3>
+            <p>Teachers haven't submitted any report cards yet.</p>
+        </div>
     </div>
 </div>
 
@@ -910,6 +1010,7 @@
     let adminSigPublicId = null;
     let isProcessing = false;
     let currentSignatureCanvas = null;
+    let pendingPinCount = 0;
 
     // =============================================================
     // TOAST
@@ -1007,6 +1108,20 @@
             if (hasScore) active[sub] = data;
         });
         return active;
+    }
+
+    function copySinglePin(pin) {
+        navigator.clipboard.writeText(pin).then(() => {
+            showToast(`📋 PIN "${pin}" copied!`, 'success');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = pin;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(`📋 PIN "${pin}" copied!`, 'success');
+        });
     }
 
     // =============================================================
@@ -1192,7 +1307,7 @@
     }
 
     // =============================================================
-    // APPROVE REPORT CARD (with signature check)
+    // APPROVE REPORT CARD
     // =============================================================
     async function approveReportCard(id) {
         if (isProcessing) {
@@ -1201,7 +1316,6 @@
         }
         if (!confirm('✅ Approve this report card? It will become visible to students.')) return;
         
-        // Check if admin has a signature
         if (!adminSigData) {
             showToast('⚠️ Please add your admin signature first. Click "Admin Signature" button.', 'warning');
             openAdminSignatureModal();
@@ -1232,7 +1346,7 @@
     }
 
     // =============================================================
-    // FORCE APPROVE (bypasses signature check)
+    // FORCE APPROVE REPORT CARD
     // =============================================================
     async function forceApproveReportCard(id) {
         if (isProcessing) {
@@ -1255,7 +1369,6 @@
                 forceApprovedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            // If admin has a signature, include it; otherwise leave it
             if (adminSigData) {
                 updateData.adminSignature = adminSigData;
                 updateData.adminSignaturePublicId = adminSigPublicId || null;
@@ -1703,7 +1816,7 @@
                     <span style="font-weight:700; color:#1e1b4b;">👁️ Student View Preview</span>
                     <span style="font-size:12px; color:#64748b; margin-left:10px;">This is exactly how students will see their report card</span>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     ${!rc.approved && !rc.rejected ? `
                         <button class="btn btn-approve" onclick="approveFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#10b981; color:white;">✅ Approve</button>
                         <button class="btn btn-force" onclick="forceApproveFromModal('${rc.id}')" style="padding:8px 20px; border:none; border-radius:60px; font-weight:700; cursor:pointer; background:#f59e0b; color:#1e1b4b;">⚡ Force</button>
@@ -1910,6 +2023,8 @@
     // =============================================================
     // PIN MANAGEMENT FUNCTIONS
     // =============================================================
+    
+    // Tab switching
     document.querySelectorAll('.pin-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const parent = btn.parentElement;
@@ -1918,145 +2033,490 @@
             const section = btn.closest('.pin-management-section');
             section.querySelectorAll('.pin-tab-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(btn.dataset.pinTab).classList.add('active');
+            
+            if (btn.dataset.pinTab === 'pinAvailable') loadAvailablePins();
             if (btn.dataset.pinTab === 'pinHistory') loadPinHistory();
             if (btn.dataset.pinTab === 'pinAll') loadAllPins();
         });
     });
 
-    $('genBulkPinBtn').addEventListener('click', () => {
-        const count = parseInt($('pinCount').value) || 20;
-        if (count < 1 || count > 60) return showToast('⚠️ Enter a number between 1 and 60.', 'warning');
-        if (confirm(`💳 Kindly make payment for ${count} PIN purchase.\n\nClick OK to enter your payment PIN.`)) {
-            openPaymentPinModal(count);
-        }
-    });
-
+    // =============================================================
+    // GENERATE PINS
+    // =============================================================
     async function generatePINs(count) {
         $('genBulkPinBtn').disabled = true;
         $('genBulkPinBtn').innerHTML = '<span class="loading-spinner"></span> Generating...';
+        
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&';
         const generatedPins = [];
         const batch = db.batch();
         let attempts = 0;
         const maxAttempts = count * 10;
+        
         while (generatedPins.length < count && attempts < maxAttempts) {
             attempts++;
             let pin = '';
-            for (let i = 0; i < 8; i++) pin += chars[Math.floor(Math.random() * chars.length)];
+            for (let i = 0; i < 8; i++) {
+                pin += chars[Math.floor(Math.random() * chars.length)];
+            }
+            
             const check = await db.collection('pins').doc(pin).get();
             if (!check.exists && !generatedPins.includes(pin)) {
                 generatedPins.push(pin);
-                batch.set(db.collection('pins').doc(pin), { used: false, usedBy: null, usedAt: null, class: null, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                batch.set(db.collection('pins').doc(pin), {
+                    used: false,
+                    usedBy: null,
+                    usedClass: null,
+                    usedAt: null,
+                    assignedTo: null,
+                    assignedClass: null,
+                    assignedAt: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: currentUserData?.fullName || currentUserData?.name || 'Admin'
+                });
             }
         }
+        
         try {
             await batch.commit();
-            $('pinListContainer').innerHTML = generatedPins.map(p => `<span class="pin-value pin-unused">${p}</span>`).join(' ');
-            showToast(`✅ ${generatedPins.length} PINs generated!`, 'success');
-        } catch (e) { showToast('❌ Error: ' + e.message, 'error'); }
-        finally { $('genBulkPinBtn').disabled = false; $('genBulkPinBtn').innerHTML = '🔄 Generate PINs'; }
+            
+            const container = $('pinListContainer');
+            container.innerHTML = generatedPins.map(p => 
+                `<span class="pin-value pin-unused" onclick="copySinglePin('${p}')" title="Click to copy">${p}</span>`
+            ).join(' ');
+            
+            showToast(`✅ ${generatedPins.length} PINs generated! Click any PIN to copy.`, 'success');
+            
+            await loadAvailablePins();
+            await loadAllPins();
+            
+        } catch (e) {
+            showToast('❌ Error generating PINs: ' + e.message, 'error');
+        } finally {
+            $('genBulkPinBtn').disabled = false;
+            $('genBulkPinBtn').innerHTML = '🔄 Generate PINs';
+        }
     }
+
+    $('genBulkPinBtn').addEventListener('click', () => {
+        const count = parseInt($('pinCount').value) || 20;
+        if (count < 1 || count > 60) {
+            showToast('⚠️ Enter a number between 1 and 60.', 'warning');
+            return;
+        }
+        if (confirm(`💳 Generate ${count} PINs? Click OK to proceed.`)) {
+            generatePINs(count);
+        }
+    });
 
     $('copyPinsBtn').addEventListener('click', () => {
         const pinSpans = document.querySelectorAll('#pinListContainer .pin-value');
-        if (!pinSpans.length) return showToast('⚠️ No PINs to copy.', 'warning');
+        if (!pinSpans.length) {
+            showToast('⚠️ No PINs to copy.', 'warning');
+            return;
+        }
         const pins = Array.from(pinSpans).map(el => el.innerText).join('\n');
-        navigator.clipboard.writeText(pins).then(() => showToast('📋 PINs copied!', 'success'))
-            .catch(() => { const ta = document.createElement('textarea'); ta.value = pins; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('📋 PINs copied!', 'success'); });
+        navigator.clipboard.writeText(pins).then(() => {
+            showToast(`📋 ${pinSpans.length} PINs copied!`, 'success');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = pins;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(`📋 ${pinSpans.length} PINs copied!`, 'success');
+        });
     });
 
+    // =============================================================
+    // LOAD AVAILABLE PINS
+    // =============================================================
+    async function loadAvailablePins() {
+        const container = $('availablePinsContainer');
+        try {
+            const snap = await db.collection('pins')
+                .where('used', '==', false)
+                .orderBy('createdAt', 'desc')
+                .limit(200)
+                .get();
+            
+            if (snap.empty) {
+                container.innerHTML = '<p style="color:#94a3b8; padding:16px;">🎉 All PINs have been claimed! Generate more PINs.</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <tr>
+                    <th>#</th>
+                    <th>PIN</th>
+                    <th>Assigned To</th>
+                    <th>Class</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>`;
+            
+            let index = 1;
+            snap.forEach(doc => {
+                const data = doc.data();
+                const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
+                const assignedTo = data.assignedTo || '—';
+                const className = data.assignedClass || '—';
+                
+                html += `
+                    <tr>
+                        <td>${index++}</td>
+                        <td><strong style="font-family:monospace; font-size:14px; background:#f1f5f9; padding:2px 8px; border-radius:4px; cursor:pointer;" onclick="copySinglePin('${doc.id}')" title="Click to copy">${doc.id}</strong></td>
+                        <td>${assignedTo}</td>
+                        <td>${className}</td>
+                        <td>${created}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="preAssignPin('${doc.id}')" style="padding:4px 12px; font-size:11px; border:none; border-radius:30px; cursor:pointer; background:#4f46e5; color:white; font-weight:600;">📌 Assign</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletePin('${doc.id}')" style="padding:4px 12px; font-size:11px; background:#dc2626; color:white; border:none; border-radius:30px; cursor:pointer; font-weight:600;">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            const totalCount = snap.size;
+            container.innerHTML = `
+                <div style="background:#d1fae5; padding:8px 16px; border-radius:8px; margin-bottom:10px; font-weight:600; color:#065f46;">
+                    📊 ${totalCount} available PIN${totalCount > 1 ? 's' : ''} ready for students
+                </div>
+                ${html}</table>
+            `;
+            
+        } catch (e) {
+            console.error('Error loading available PINs:', e);
+            container.innerHTML = '<p style="color:#dc2626; padding:16px;">❌ Error loading available PINs.</p>';
+        }
+    }
+
+    // =============================================================
+    // PRE-ASSIGN PIN TO STUDENT
+    // =============================================================
+    async function preAssignPin(pin) {
+        const studentName = prompt('👤 Enter student name to assign this PIN to:');
+        if (!studentName || studentName.trim() === '') {
+            showToast('⚠️ Student name is required.', 'warning');
+            return;
+        }
+        
+        const className = prompt('📚 Enter student class:');
+        if (!className || className.trim() === '') {
+            showToast('⚠️ Class is required.', 'warning');
+            return;
+        }
+        
+        try {
+            const pinDoc = await db.collection('pins').doc(pin).get();
+            if (!pinDoc.exists) {
+                showToast('❌ PIN not found.', 'error');
+                return;
+            }
+            
+            if (pinDoc.data().used) {
+                showToast('❌ PIN already used by ' + (pinDoc.data().usedBy || 'someone else'), 'error');
+                return;
+            }
+            
+            await db.collection('pins').doc(pin).update({
+                assignedTo: studentName.trim(),
+                assignedClass: className.trim(),
+                assignedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            showToast(`✅ PIN "${pin}" assigned to ${studentName} (${className})`, 'success');
+            await loadAvailablePins();
+            await loadAllPins();
+            
+        } catch (e) {
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // DELETE PIN
+    // =============================================================
+    async function deletePin(pin) {
+        if (!confirm(`⚠️ Delete PIN "${pin}"? This action cannot be undone.`)) return;
+        
+        try {
+            await db.collection('pins').doc(pin).delete();
+            showToast(`🗑️ PIN "${pin}" deleted.`, 'warning');
+            await loadAvailablePins();
+            await loadAllPins();
+        } catch (e) {
+            showToast('❌ Failed to delete: ' + e.message, 'error');
+        }
+    }
+
+    // =============================================================
+    // COPY AVAILABLE PINS
+    // =============================================================
+    function copyAvailablePins() {
+        const container = $('availablePinsContainer');
+        const pinElements = container.querySelectorAll('td strong');
+        if (!pinElements.length) {
+            showToast('⚠️ No available PINs to copy.', 'warning');
+            return;
+        }
+        
+        const pins = Array.from(pinElements).map(el => el.innerText).join('\n');
+        navigator.clipboard.writeText(pins).then(() => {
+            showToast(`📋 ${pinElements.length} PINs copied!`, 'success');
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = pins;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(`📋 ${pinElements.length} PINs copied!`, 'success');
+        });
+    }
+
+    // =============================================================
+    // LOAD PIN HISTORY
+    // =============================================================
     async function loadPinHistory() {
         const container = $('pinHistoryContainer');
         try {
-            const snap = await db.collection('pins').where('used', '==', true).orderBy('usedAt', 'desc').get();
-            if (snap.empty) { container.innerHTML = '<p style="color:#94a3b8;">No PINs have been used yet.</p>'; return; }
-            let html = '<table><tr><th>PIN</th><th>Used By</th><th>Class</th><th>Used At</th></tr>';
+            const snap = await db.collection('pins')
+                .where('used', '==', true)
+                .orderBy('usedAt', 'desc')
+                .limit(100)
+                .get();
+                
+            if (snap.empty) {
+                container.innerHTML = '<p style="color:#94a3b8; padding:16px;">No PINs have been used yet.</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <tr>
+                    <th>PIN</th>
+                    <th>Used By</th>
+                    <th>Class</th>
+                    <th>Used At</th>
+                </tr>`;
+            
             snap.forEach(doc => {
                 const data = doc.data();
                 const date = data.usedAt?.toDate?.()?.toLocaleString() || 'N/A';
-                html += `<tr><td><strong>${sanitizeHTML(doc.id)}</strong></td><td>${sanitizeHTML(data.usedBy || 'N/A')}</td><td>${sanitizeHTML(data.class || 'N/A')}</td><td>${date}</td></tr>`;
+                html += `
+                    <tr>
+                        <td><strong style="font-family:monospace;">${sanitizeHTML(doc.id)}</strong></td>
+                        <td><strong>${sanitizeHTML(data.usedBy || 'N/A')}</strong></td>
+                        <td>${sanitizeHTML(data.usedClass || 'N/A')}</td>
+                        <td>${date}</td>
+                    </tr>
+                `;
             });
+            
             container.innerHTML = html + '</table>';
-        } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error loading history.</p>'; }
+            
+        } catch (e) {
+            console.error('Error loading PIN history:', e);
+            container.innerHTML = '<p style="color:#dc2626; padding:16px;">❌ Error loading history.</p>';
+        }
     }
 
+    // =============================================================
+    // LOAD ALL PINS
+    // =============================================================
     async function loadAllPins() {
         const container = $('allPinsContainer');
         try {
-            const snap = await db.collection('pins').orderBy('createdAt','desc').limit(150).get();
-            if (snap.empty) { container.innerHTML = '<p style="color:#94a3b8;">No PINs generated yet.</p>'; return; }
-            let html = '<table><tr><th>PIN</th><th>Status</th><th>Used By</th><th>Class</th><th>Created</th></tr>';
+            const snap = await db.collection('pins')
+                .orderBy('createdAt', 'desc')
+                .limit(200)
+                .get();
+                
+            if (snap.empty) {
+                container.innerHTML = '<p style="color:#94a3b8; padding:16px;">No PINs generated yet.</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <tr>
+                    <th>PIN</th>
+                    <th>Status</th>
+                    <th>Owner</th>
+                    <th>Class</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>`;
+            
             snap.forEach(doc => {
                 const data = doc.data();
-                const status = data.used ? '✅ Used' : '🆕 Available';
+                let status = '🆕 Available';
+                let statusClass = '';
+                if (data.used) {
+                    status = '✅ Used';
+                    statusClass = 'color:#065f46;';
+                } else if (data.assignedTo) {
+                    status = '📌 Assigned';
+                    statusClass = 'color:#6d28d9;';
+                }
                 const created = data.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A';
-                html += `<tr><td><strong>${sanitizeHTML(doc.id)}</strong></td><td>${status}</td><td>${sanitizeHTML(data.usedBy||'--')}</td><td>${sanitizeHTML(data.class||'--')}</td><td>${created}</td></tr>`;
+                const owner = data.usedBy || data.assignedTo || '—';
+                const className = data.usedClass || data.assignedClass || '—';
+                
+                html += `
+                    <tr>
+                        <td><strong style="font-family:monospace; cursor:pointer;" onclick="copySinglePin('${doc.id}')" title="Click to copy">${doc.id}</strong></td>
+                        <td style="${statusClass}">${status}</td>
+                        <td>${sanitizeHTML(owner)}</td>
+                        <td>${sanitizeHTML(className)}</td>
+                        <td>${created}</td>
+                        <td>
+                            ${!data.used ? `<button class="btn btn-danger btn-sm" onclick="deletePin('${doc.id}')" style="padding:4px 12px; font-size:11px; background:#dc2626; color:white; border:none; border-radius:30px; cursor:pointer; font-weight:600;">🗑️</button>` : '—'}
+                        </td>
+                    </tr>
+                `;
             });
+            
             container.innerHTML = html + '</table>';
-        } catch (e) { container.innerHTML = '<p style="color:#dc2626;">❌ Error loading PINs.</p>'; }
+            
+        } catch (e) {
+            console.error('Error loading all PINs:', e);
+            container.innerHTML = '<p style="color:#dc2626; padding:16px;">❌ Error loading PINs.</p>';
+        }
     }
 
+    // =============================================================
+    // ASSIGN PIN TO STUDENT (from card actions)
+    // =============================================================
     async function assignPinToStudent(reportCardId) {
-        if (!reportCardId) { showToast('⚠️ No report card selected.', 'warning'); return; }
+        if (!reportCardId) { 
+            showToast('⚠️ No report card selected.', 'warning'); 
+            return; 
+        }
         const rc = allReportCards.find(r => r.id === reportCardId);
-        if (!rc) { showToast('⚠️ Report card not found.', 'error'); return; }
+        if (!rc) { 
+            showToast('⚠️ Report card not found.', 'error'); 
+            return; 
+        }
+        
         const pin = prompt(`🔑 Enter PIN to assign to ${rc.studentName} (${rc.class}):`);
-        if (!pin || pin.trim().length < 8) { showToast('⚠️ Enter a valid 8-character PIN.', 'warning'); return; }
+        if (!pin || pin.trim().length < 8) { 
+            showToast('⚠️ Enter a valid 8-character PIN.', 'warning'); 
+            return; 
+        }
+        
         try {
             const pinDoc = await db.collection('pins').doc(pin.trim()).get();
-            if (!pinDoc.exists) { showToast('❌ PIN not found. Generate it first.', 'error'); return; }
-            if (pinDoc.data().used) { showToast('❌ PIN already used.', 'error'); return; }
-            await db.collection('reportCards').doc(reportCardId).update({ pin: pin.trim() });
-            await db.collection('pins').doc(pin.trim()).update({ class: rc.class, assignedTo: rc.studentName, assignedAt: firebase.firestore.FieldValue.serverTimestamp() });
-            showToast(`✅ PIN "${pin}" assigned to ${rc.studentName}!`, 'success');
+            if (!pinDoc.exists) { 
+                showToast('❌ PIN not found. Generate it first.', 'error'); 
+                return; 
+            }
+            if (pinDoc.data().used) { 
+                showToast('❌ PIN already used by ' + (pinDoc.data().usedBy || 'someone else'), 'error'); 
+                return; 
+            }
+            
+            await db.collection('reportCards').doc(reportCardId).update({ 
+                pin: pin.trim() 
+            });
+            
+            await db.collection('pins').doc(pin.trim()).update({ 
+                assignedTo: rc.studentName,
+                assignedClass: rc.class,
+                assignedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            showToast(`✅ PIN "${pin}" assigned to ${rc.studentName}! They can now view their report.`, 'success');
             await loadReportCards();
-        } catch (e) { showToast('❌ Failed: ' + e.message, 'error'); }
+            await loadAvailablePins();
+            await loadAllPins();
+        } catch (e) { 
+            showToast('❌ Failed: ' + e.message, 'error'); 
+        }
     }
 
+    // =============================================================
+    // ASSIGN PIN (from assign tab)
+    // =============================================================
     $('assignPinBtn').addEventListener('click', async () => {
         const pin = $('assignPinInput').value.trim();
         const studentName = $('assignStudentName').value.trim();
         const className = $('assignClassSelect').value;
-        if (!pin || !studentName || !className) { showToast('⚠️ Fill all fields.', 'warning'); return; }
+        const resultEl = $('assignResult');
+        
+        if (!pin || !studentName || !className) {
+            resultEl.innerHTML = '<span style="color:#dc2626;">⚠️ Fill all fields.</span>';
+            return;
+        }
+        
         try {
             const pinDoc = await db.collection('pins').doc(pin).get();
-            if (!pinDoc.exists) { showToast('❌ PIN not found.', 'error'); return; }
-            if (pinDoc.data().used) { showToast('❌ PIN already used.', 'error'); return; }
-            const snap = await db.collection('reportCards').where('class','==',className).where('studentName','==',studentName).get();
-            if (snap.empty) { showToast('❌ No report card found.', 'error'); return; }
+            if (!pinDoc.exists) {
+                resultEl.innerHTML = '<span style="color:#dc2626;">❌ PIN not found.</span>';
+                return;
+            }
+            if (pinDoc.data().used) {
+                resultEl.innerHTML = `<span style="color:#dc2626;">❌ PIN already used by ${pinDoc.data().usedBy || 'someone else'}.</span>`;
+                return;
+            }
+            
+            const snap = await db.collection('reportCards')
+                .where('class', '==', className)
+                .where('studentName', '==', studentName)
+                .get();
+                
+            if (snap.empty) {
+                resultEl.innerHTML = '<span style="color:#dc2626;">❌ No report card found for this student in this class.</span>';
+                return;
+            }
+            
             const doc = snap.docs[0];
             await db.collection('reportCards').doc(doc.id).update({ pin: pin });
-            await db.collection('pins').doc(pin).update({ class: className, assignedTo: studentName, assignedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await db.collection('pins').doc(pin).update({
+                assignedTo: studentName,
+                assignedClass: className,
+                assignedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            resultEl.innerHTML = `<span style="color:#10b981;">✅ PIN "${pin}" assigned to ${studentName} (${className})!</span>`;
             showToast(`✅ PIN "${pin}" assigned to ${studentName}!`, 'success');
+            
             $('assignPinInput').value = '';
             $('assignStudentName').value = '';
             await loadReportCards();
-        } catch (e) { showToast('❌ Failed: ' + e.message, 'error'); }
+            await loadAvailablePins();
+            await loadAllPins();
+            
+        } catch (e) {
+            resultEl.innerHTML = `<span style="color:#dc2626;">❌ Failed: ${e.message}</span>`;
+            showToast('❌ Failed: ' + e.message, 'error');
+        }
     });
 
     // =============================================================
-    // PAYMENT PIN MODAL
+    // REFRESH BUTTONS
     // =============================================================
-    function openPaymentPinModal(count) {
-        pendingPinCount = count;
-        $('paymentPinModal').style.display = 'flex';
-        $('paymentPinInput').value = '';
-        $('paymentPinInput').focus();
-    }
+    $('refreshAvailablePinsBtn')?.addEventListener('click', () => {
+        loadAvailablePins();
+        showToast('🔄 Refreshed available PINs.', 'success');
+    });
+    
+    $('refreshAvailablePinsBtn2')?.addEventListener('click', () => {
+        loadAvailablePins();
+        showToast('🔄 Refreshed available PINs.', 'success');
+    });
 
-    function closePaymentPinModal() {
-        $('paymentPinModal').style.display = 'none';
-        pendingPinCount = 0;
-    }
+    $('copyAvailablePinsBtn')?.addEventListener('click', copyAvailablePins);
 
-    async function verifyPaymentPin() {
-        const enteredPin = $('paymentPinInput').value.trim();
-        if (!enteredPin) { showToast('⚠️ Enter payment PIN.', 'warning'); return; }
-        if (enteredPin !== VALID_PAYMENT_PIN) { showToast('❌ Invalid payment PIN.', 'error'); $('paymentPinInput').value = ''; $('paymentPinInput').focus(); return; }
-        closePaymentPinModal();
-        showToast('✅ Payment verified! Generating PINs...', 'success');
-        await generatePINs(pendingPinCount);
-    }
+    $('refreshHistoryBtn')?.addEventListener('click', () => {
+        loadPinHistory();
+        showToast('🔄 Refreshed history.', 'success');
+    });
+
+    $('refreshAllPinsBtn')?.addEventListener('click', () => {
+        loadAllPins();
+        showToast('🔄 Refreshed all PINs.', 'success');
+    });
 
     // =============================================================
     // FILTER EVENTS
@@ -2070,19 +2530,6 @@
     $('forceApproveAllBtn').addEventListener('click', forceApproveAll);
     $('adminSigBtn').addEventListener('click', openAdminSignatureModal);
     $('applySigToAllBtn').addEventListener('click', applySignatureToAll);
-    $('refreshHistoryBtn').addEventListener('click', () => { loadPinHistory(); showToast('🔄 Refreshed.', 'success'); });
-    $('refreshAllPinsBtn').addEventListener('click', () => { loadAllPins(); showToast('🔄 Refreshed.', 'success'); });
-
-    // Payment PIN Enter key
-    $('paymentPinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyPaymentPin(); });
-
-    // Close modals with Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if ($('paymentPinModal').style.display === 'flex') closePaymentPinModal();
-            else hideModal();
-        }
-    });
 
     // =============================================================
     // AUTH
@@ -2110,11 +2557,15 @@
         } catch (e) { $('adminName').textContent = 'Admin'; }
         await loadAdminSignature();
         await loadReportCards();
+        await loadAvailablePins();
         await loadPinHistory();
         await loadAllPins();
     });
 
-    $('logoutBtn').addEventListener('click', async () => { await auth.signOut(); window.location.reload(); });
+    $('logoutBtn').addEventListener('click', async () => { 
+        await auth.signOut(); 
+        window.location.reload(); 
+    });
 
     // =============================================================
     // EXPOSE FUNCTIONS TO GLOBAL SCOPE
@@ -2135,13 +2586,18 @@
     window.applySignatureToAll = applySignatureToAll;
     window.loadReportCards = loadReportCards;
     window.assignPinToStudent = assignPinToStudent;
-    window.verifyPaymentPin = verifyPaymentPin;
-    window.closePaymentPinModal = closePaymentPinModal;
+    window.preAssignPin = preAssignPin;
+    window.deletePin = deletePin;
+    window.copySinglePin = copySinglePin;
+    window.copyAvailablePins = copyAvailablePins;
+    window.loadAvailablePins = loadAvailablePins;
+    window.loadPinHistory = loadPinHistory;
+    window.loadAllPins = loadAllPins;
 
-    console.log('✅ Admin Dashboard v6.0 - Signature Fixed + Force Approve Added');
-    console.log('⚡ Force Approve: approves WITHOUT requiring a signature');
-    console.log('📋 Apply Sig to All: adds your signature to all report cards');
-    console.log('✅ Signature saves to Cloudinary → Firestore → reportCards documents');
+    console.log('✅ Admin Dashboard v7.0 - Complete PIN Management System');
+    console.log('📋 Features: Generate PINs | View Available | Track Usage | Assign PINs');
+    console.log('🔑 Students claim PINs - first come, first served');
+    console.log('📊 Available PINs show all unused PINs ready for students');
 </script>
 </body>
 </html>
