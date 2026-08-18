@@ -162,7 +162,7 @@
             font-family: 'Courier New', monospace;
             font-size: 12px;
             overflow-x: auto;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
             display: none;
             border: 2px solid #4f46e5;
@@ -194,6 +194,7 @@
         .debug-panel .debug-ok { color: #34d399; }
         .debug-panel .debug-error { color: #f87171; }
         .debug-panel .debug-warn { color: #fbbf24; }
+        .debug-panel .debug-char-codes { color: #a78bfa; font-size: 10px; }
         .debug-panel pre {
             margin: 4px 0;
             white-space: pre-wrap;
@@ -1020,16 +1021,31 @@
         }
 
         // =============================================================
-        // 3. CHECK REPORT LOGIC WITH DEBUG AND FLEXIBLE CLASS MATCHING
+        // 3. CHECK REPORT LOGIC - AGGRESSIVE NAME CLEANING
         // =============================================================
+        
+        // 🔑 KEY FIX: Aggressive name cleaning function
+        function cleanName(name) {
+            if (!name) return '';
+            return name
+                .toUpperCase()
+                .trim()
+                // Replace all whitespace characters (including non-breaking spaces) with regular space
+                .replace(/\s+/g, ' ')
+                // Remove all non-alphanumeric characters EXCEPT spaces
+                .replace(/[^A-Z0-9 ]/g, '')
+                // Trim again
+                .trim();
+        }
+
         $('checkReportBtn').addEventListener('click', async () => {
             const nameRaw = $('studentName').value.trim();
             const cls = $('classSelect').value.trim();
             const pin = $('studentPin').value.trim();
             const err = $('reportErr');
 
-            // Convert name to uppercase to match stored data
-            const name = nameRaw.toUpperCase();
+            // Clean the input name aggressively
+            const name = cleanName(nameRaw);
 
             if (!name) {
                 err.innerText = '⚠️ Please enter the student\'s name.';
@@ -1049,7 +1065,7 @@
             $('checkReportBtn').disabled = true;
 
             // Clear previous debug
-            debugData = { query: { name, cls, pin } };
+            debugData = { query: { name, cls, pin, original: nameRaw } };
             $('debugContent').innerHTML = '<span style="color:#94a3b8;">Collecting debug data...</span>';
 
             try {
@@ -1127,30 +1143,49 @@
                 debugData.fallbackUsed = fallbackUsed;
                 debugData.docsFound = snap.docs.length;
                 debugData.documents = [];
+                debugData.rawNames = [];
 
-                // Now filter by student name (case-insensitive, trimmed)
+                // Now filter by student name with aggressive cleaning
                 let matchedDocs = [];
                 let approvedDoc = null;
                 let allStudentNames = [];
 
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const storedName = (data.studentName || '').trim().toUpperCase();
+                    const rawName = data.studentName || '';
+                    
+                    // Apply the same aggressive cleaning to stored name
+                    const storedName = cleanName(rawName);
+
+                    // Store raw name for debug
+                    debugData.rawNames.push({
+                        raw: rawName,
+                        cleaned: storedName,
+                        charCodes: [...rawName].map(c => c.charCodeAt(0)).join(', ')
+                    });
+
                     const docInfo = {
                         id: doc.id,
-                        storedName: data.studentName,
+                        rawName: rawName,
+                        cleanedName: storedName,
                         approved: data.approved,
                         rejected: data.rejected,
                         pushedToAdmin: data.pushedToAdmin,
                         hasAdminSignature: !!data.adminSignature,
                         overallAverage: data.overallAverage,
                         approvedType: typeof data.approved,
-                        rejectedType: typeof data.rejected,
                         fullData: data
                     };
                     debugData.documents.push(docInfo);
                     allStudentNames.push(storedName);
-                    if (storedName === name) {
+                    
+                    // 🔑 KEY FIX: Compare cleaned names
+                    const isMatch = storedName === name;
+                    
+                    // Log the comparison for debugging
+                    console.log(`🔍 Comparing cleaned "${storedName}" with "${name}" => match: ${isMatch}`);
+                    
+                    if (isMatch) {
                         matchedDocs.push(doc);
                         if (data.approved === true) {
                             approvedDoc = doc;
@@ -1168,7 +1203,9 @@
                     if (matchedDocs.length === 0) {
                         msg = `❌ No report card found for "${nameRaw}" in class "${cls}".`;
                         // Show some similar names for debugging
-                        const similarNames = allStudentNames.filter(n => n.includes(name.substring(0, 3)));
+                        const similarNames = allStudentNames.filter(n => {
+                            return n.includes(name.substring(0, 3)) || name.includes(n.substring(0, 3));
+                        });
                         if (similarNames.length > 0) {
                             msg += `\nSimilar names in this class: ${similarNames.join(', ')}`;
                             debugData.similarNames = similarNames;
@@ -1240,7 +1277,7 @@
         });
 
         // =============================================================
-        // DEBUG RENDER (enhanced)
+        // DEBUG RENDER
         // =============================================================
         function renderDebug() {
             const container = $('debugContent');
@@ -1250,7 +1287,7 @@
             }
 
             let html = '';
-            html += `<div class="debug-line"><span class="debug-key">🔍 Query:</span> <span class="debug-value">${debugData.query?.name || '?'} | ${debugData.query?.cls || '?'} | PIN: ${debugData.query?.pin || '?'}</span></div>`;
+            html += `<div class="debug-line"><span class="debug-key">🔍 Query:</span> <span class="debug-value">${debugData.query?.original || '?'} → cleaned: "${debugData.query?.name || '?'}" | ${debugData.query?.cls || '?'} | PIN: ${debugData.query?.pin || '?'}</span></div>`;
             html += `<div class="debug-line"><span class="debug-key">📌 PIN exists:</span> <span class="${debugData.pinExists ? 'debug-ok' : 'debug-error'}">${debugData.pinExists ? 'YES' : 'NO'}</span></div>`;
             if (debugData.pinData) {
                 html += `<div class="debug-line"><span class="debug-key">PIN used:</span> <span class="${debugData.pinData.used ? 'debug-warn' : 'debug-ok'}">${debugData.pinData.used ? 'YES (by ' + (debugData.pinData.usedBy || 'unknown') + ')' : 'NO'}</span></div>`;
@@ -1263,12 +1300,28 @@
             html += `<div class="debug-line"><span class="debug-key">✅ Matched student name:</span> <span class="${debugData.matchedCount > 0 ? 'debug-ok' : 'debug-error'}">${debugData.matchedCount || 0}</span></div>`;
             html += `<div class="debug-line"><span class="debug-key">📋 Approved document:</span> <span class="${debugData.hasApproved ? 'debug-ok' : 'debug-error'}">${debugData.hasApproved ? 'FOUND' : 'NOT FOUND'}</span></div>`;
 
+            // Show raw name character codes for debugging
+            if (debugData.rawNames && debugData.rawNames.length > 0) {
+                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">🔣 Raw Name → Cleaned:</div>`;
+                debugData.rawNames.forEach((item, i) => {
+                    const isMatch = item.cleaned === debugData.query?.name;
+                    html += `<div class="debug-line" style="padding-left:12px; border-left: 2px solid ${isMatch ? '#34d399' : '#334155'};">
+                        <span class="debug-key">Raw:</span> <span class="debug-value">"${item.raw}"</span> 
+                        → <span class="${isMatch ? 'debug-ok' : 'debug-warn'}">"${item.cleaned}"</span>
+                        ${isMatch ? ' ✅ MATCH!' : ''}
+                        <span class="debug-char-codes"> | codes: ${item.charCodes}</span>
+                    </div>`;
+                });
+            }
+
             // List all student names in the class for comparison
             if (debugData.allStudentNames && debugData.allStudentNames.length > 0) {
-                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">📋 All student names in this class (${debugData.allStudentNames.length}):</div>`;
+                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">📋 All cleaned student names in this class (${debugData.allStudentNames.length}):</div>`;
                 debugData.allStudentNames.forEach((name, i) => {
-                    html += `<div class="debug-line" style="padding-left:12px; border-left: 2px solid #334155;">
-                        <span class="debug-value">"${name}"</span>
+                    const isMatch = name === debugData.query?.name;
+                    html += `<div class="debug-line" style="padding-left:12px; border-left: 2px solid ${isMatch ? '#34d399' : '#334155'};">
+                        <span class="${isMatch ? 'debug-ok' : 'debug-value'}">"${name}"</span>
+                        ${isMatch ? ' ← MATCH!' : ''}
                     </div>`;
                 });
             }
@@ -1640,7 +1693,8 @@
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer - FLEXIBLE MATCHING + ENHANCED DEBUG');
+        console.log('✅ Report Card Viewer - AGGRESSIVE NAME CLEANING + ENHANCED DEBUG');
+        console.log('🔑 If names don\'t match, check the "Raw Name → Cleaned" section in debug panel');
     </script>
 </body>
 </html>
