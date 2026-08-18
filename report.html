@@ -79,7 +79,7 @@
             padding: 40px 35px;
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            max-width: 560px;
+            max-width: 620px;
             margin: 40px auto;
             border: 1px solid #e2e8f0;
         }
@@ -115,26 +115,90 @@
             border-color: #4f46e5;
             background: white;
         }
-        .login-card button {
+        .login-card .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .login-card .btn-row button {
             font-family: 'Inter', sans-serif;
             font-weight: 800;
-            padding: 14px 40px;
-            background: linear-gradient(to right, #4f46e5, #7c3aed);
-            color: white;
+            padding: 14px 32px;
             border: none;
             border-radius: 60px;
             font-size: 16px;
             cursor: pointer;
             transition: 0.2s;
-            width: 100%;
-            margin-top: 12px;
+            flex: 1;
         }
-        .login-card button:hover {
+        .login-card .btn-row .btn-primary {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+        }
+        .login-card .btn-row .btn-primary:hover {
             transform: scale(1.02);
             box-shadow: 0 10px 20px rgba(79,70,229,0.25);
         }
+        .login-card .btn-row .btn-debug {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+            flex: 0.5;
+        }
+        .login-card .btn-row .btn-debug:hover {
+            background: #e2e8f0;
+        }
         .error-text { color: #dc2626; font-weight: 700; margin-top: 12px; }
         .status-text { font-size: 13px; color: #64748b; margin-top: 8px; }
+
+        /* ===== DEBUG PANEL ===== */
+        .debug-panel {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            border: 2px solid #4f46e5;
+        }
+        .debug-panel.open { display: block; }
+        .debug-panel .debug-title {
+            color: #8b5cf6;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .debug-panel .debug-title .close-debug {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .debug-panel .debug-title .close-debug:hover { color: #f87171; }
+        .debug-panel .debug-line {
+            padding: 2px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .debug-panel .debug-key { color: #60a5fa; }
+        .debug-panel .debug-value { color: #fbbf24; }
+        .debug-panel .debug-ok { color: #34d399; }
+        .debug-panel .debug-error { color: #f87171; }
+        .debug-panel .debug-warn { color: #fbbf24; }
+        .debug-panel pre {
+            margin: 4px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
 
         /* ========================================================== */
         /* ===== REPORT CARD (A4 TRADITIONAL STYLING) ===== */
@@ -586,7 +650,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 8mm;               /* Tight margins */
+                margin: 8mm;
             }
 
             body {
@@ -614,13 +678,12 @@
                 margin: 0;
             }
 
-            /* Scale down slightly to guarantee one page */
             .report-card {
                 max-width: 100%;
                 padding: 0;
-                overflow: hidden;           /* Clip any tiny overflow */
+                overflow: hidden;
                 font-size: 10px;
-                zoom: 0.88;                 /* Shrink to fit – keeps layout intact */
+                zoom: 0.88;
                 page-break-after: avoid;
                 page-break-inside: avoid;
             }
@@ -645,7 +708,6 @@
                 border-color: #f59e0b !important;
             }
 
-            /* Slightly smaller fonts for extra safety */
             .header-text .school-name { font-size: 20px; }
             .term-info { font-size: 13px; padding: 1px 20px; }
             table { font-size: 9.5px; }
@@ -740,9 +802,22 @@
                     </select>
                     <input id="studentPin" placeholder="🔑 PIN (e.g. A#3kL9!@)" style="flex:1;" />
                 </div>
-                <button id="checkReportBtn" style="width:100%; margin-top:12px;">🔍 View Report Card</button>
+                <div class="btn-row">
+                    <button class="btn-primary" id="checkReportBtn">🔍 View Report Card</button>
+                    <button class="btn-debug" id="debugToggleBtn">🐞 Debug</button>
+                    <button class="btn-debug" id="refreshClassesBtn" style="flex:0.4;">🔄</button>
+                </div>
                 <p id="reportErr" class="error-text"></p>
                 <p id="authStatus" class="status-text">⏳ Connecting to server...</p>
+
+                <!-- DEBUG PANEL -->
+                <div class="debug-panel" id="debugPanel">
+                    <div class="debug-title">
+                        <span>🐞 DEBUG INFORMATION</span>
+                        <button class="close-debug" id="closeDebugBtn">✕</button>
+                    </div>
+                    <div id="debugContent"><span style="color:#94a3b8;">No debug data yet. Run a search.</span></div>
+                </div>
             </div>
         </div>
 
@@ -810,6 +885,7 @@
             $(id + 'Page').classList.add('active');
         };
         let masterClassList = [];
+        let debugData = null;
 
         // =============================================================
         // 1. AUTHENTICATION
@@ -889,10 +965,10 @@
             const active = {};
             Object.keys(subjects).forEach(sub => {
                 const data = subjects[sub];
-                const hasScore = (data.firstTerm && data.firstTerm > 0) || 
-                                (data.secondTerm && data.secondTerm > 0) || 
-                                (data.thirdTerm && data.thirdTerm > 0) ||
-                                (data.average && data.average > 0);
+                const hasScore = (data.firstTerm && data.firstTerm > 0) ||
+                    (data.secondTerm && data.secondTerm > 0) ||
+                    (data.thirdTerm && data.thirdTerm > 0) ||
+                    (data.average && data.average > 0);
                 if (hasScore) {
                     active[sub] = data;
                 }
@@ -944,13 +1020,16 @@
         }
 
         // =============================================================
-        // 3. CHECK REPORT LOGIC
+        // 3. CHECK REPORT LOGIC WITH DEBUG
         // =============================================================
         $('checkReportBtn').addEventListener('click', async () => {
-            const name = $('studentName').value.trim();
-            const cls = $('classSelect').value;
+            const nameRaw = $('studentName').value.trim();
+            const cls = $('classSelect').value.trim();
             const pin = $('studentPin').value.trim();
             const err = $('reportErr');
+
+            // Convert name to uppercase to match stored data
+            const name = nameRaw.toUpperCase();
 
             if (!name) {
                 err.innerText = '⚠️ Please enter the student\'s name.';
@@ -969,6 +1048,10 @@
             $('checkReportBtn').innerText = '⏳ Searching...';
             $('checkReportBtn').disabled = true;
 
+            // Clear previous debug
+            debugData = { query: { name, cls, pin } };
+            $('debugContent').innerHTML = '<span style="color:#94a3b8;">Collecting debug data...</span>';
+
             try {
                 const user = await waitForAuth();
                 if (!user) {
@@ -978,39 +1061,89 @@
                     return;
                 }
 
+                // ---- STEP 1: Verify PIN ----
                 const pinDoc = await db.collection('pins').doc(pin).get();
+                debugData.pinExists = pinDoc.exists;
+                debugData.pinData = pinDoc.exists ? pinDoc.data() : null;
+
                 if (!pinDoc.exists) {
                     err.innerText = '❌ Invalid PIN. Please check and try again.';
                     $('checkReportBtn').innerText = '🔍 View Report Card';
                     $('checkReportBtn').disabled = false;
+                    renderDebug();
                     return;
                 }
 
                 const pinData = pinDoc.data();
 
+                // Check if PIN already used by another student
                 if (pinData.used && pinData.usedBy !== name) {
-                    err.innerText = '❌ This PIN has already been used by another student.';
+                    err.innerText = `❌ This PIN was already used by "${pinData.usedBy}".`;
                     $('checkReportBtn').innerText = '🔍 View Report Card';
                     $('checkReportBtn').disabled = false;
+                    renderDebug();
                     return;
                 }
 
+                // ---- STEP 2: Query report cards ----
+                // We'll query without the 'approved' filter to see all docs for this student
                 const snap = await db.collection('reportCards')
                     .where('class', '==', cls)
                     .where('studentName', '==', name)
-                    .where('approved', '==', true)
                     .get();
 
-                if (snap.empty) {
-                    err.innerText = '❌ No approved report card found for this student.';
+                debugData.docsFound = snap.docs.length;
+                debugData.documents = [];
+
+                let approvedDoc = null;
+                let allDocs = [];
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const docInfo = {
+                        id: doc.id,
+                        approved: data.approved,
+                        rejected: data.rejected,
+                        pushedToAdmin: data.pushedToAdmin,
+                        hasAdminSignature: !!data.adminSignature,
+                        overallAverage: data.overallAverage,
+                        // capture field types to detect booleans vs strings
+                        approvedType: typeof data.approved,
+                        rejectedType: typeof data.rejected,
+                        fullData: data
+                    };
+                    debugData.documents.push(docInfo);
+                    allDocs.push(docInfo);
+                    if (data.approved === true) {
+                        approvedDoc = doc;
+                    }
+                });
+
+                debugData.hasApproved = !!approvedDoc;
+                debugData.allDocs = allDocs;
+
+                // ---- STEP 3: Determine outcome ----
+                if (!approvedDoc) {
+                    // No approved document found
+                    let msg = '❌ No approved report card found for this student.';
+                    if (allDocs.length === 0) {
+                        msg = '❌ No report card found for this student in this class.';
+                    } else {
+                        const hasUnapproved = allDocs.some(d => d.approved === false || d.approved === undefined);
+                        const hasRejected = allDocs.some(d => d.rejected === true);
+                        if (hasRejected) msg += ' (Some documents are rejected.)';
+                        if (hasUnapproved) msg += ' (Some documents are pending approval.)';
+                    }
+                    err.innerText = msg;
                     $('checkReportBtn').innerText = '🔍 View Report Card';
                     $('checkReportBtn').disabled = false;
+                    renderDebug();
+                    // Show debug panel automatically if no result
+                    openDebugPanel();
                     return;
                 }
 
-                const doc = snap.docs[0];
-                const data = doc.data();
-
+                // ---- STEP 4: Mark PIN as used if not already ----
                 if (!pinData.used) {
                     await db.collection('pins').doc(pin).update({
                         used: true,
@@ -1018,11 +1151,14 @@
                         class: cls,
                         usedAt: new Date()
                     });
-                    await db.collection('reportCards').doc(doc.id).update({ pin: pin });
+                    await db.collection('reportCards').doc(approvedDoc.id).update({ pin: pin });
                     showToast(`✅ PIN claimed successfully for ${name}!`, 'success');
                 } else {
                     showToast(`ℹ️ Welcome back, ${name}!`, 'success');
                 }
+
+                // ---- STEP 5: Render report ----
+                const data = approvedDoc.data();
 
                 // Fetch School Settings
                 let schoolName = 'COVENANT ARROWS\' MODEL';
@@ -1043,15 +1179,96 @@
 
                 showPage('report');
                 err.innerText = '';
+                $('checkReportBtn').innerText = '🔍 View Report Card';
+                $('checkReportBtn').disabled = false;
+                renderDebug();
 
             } catch (e) {
                 err.innerText = '⚠️ Network error. Please check your connection.';
                 console.error(e);
+                debugData.error = e.message;
+                renderDebug();
                 showToast('❌ Error loading report.', 'error');
             }
 
             $('checkReportBtn').innerText = '🔍 View Report Card';
             $('checkReportBtn').disabled = false;
+        });
+
+        // =============================================================
+        // DEBUG RENDER
+        // =============================================================
+        function renderDebug() {
+            const container = $('debugContent');
+            if (!debugData) {
+                container.innerHTML = '<span style="color:#94a3b8;">No debug data yet. Run a search.</span>';
+                return;
+            }
+
+            let html = '';
+            html += `<div class="debug-line"><span class="debug-key">🔍 Query:</span> <span class="debug-value">${debugData.query?.name || '?'} | ${debugData.query?.cls || '?'} | PIN: ${debugData.query?.pin || '?'}</span></div>`;
+            html += `<div class="debug-line"><span class="debug-key">📌 PIN exists:</span> <span class="${debugData.pinExists ? 'debug-ok' : 'debug-error'}">${debugData.pinExists ? 'YES' : 'NO'}</span></div>`;
+            if (debugData.pinData) {
+                html += `<div class="debug-line"><span class="debug-key">PIN used:</span> <span class="${debugData.pinData.used ? 'debug-warn' : 'debug-ok'}">${debugData.pinData.used ? 'YES (by ' + (debugData.pinData.usedBy || 'unknown') + ')' : 'NO'}</span></div>`;
+            }
+            html += `<div class="debug-line"><span class="debug-key">📄 Documents found:</span> <span class="${debugData.docsFound > 0 ? 'debug-ok' : 'debug-error'}">${debugData.docsFound || 0}</span></div>`;
+
+            if (debugData.documents && debugData.documents.length > 0) {
+                html += `<div class="debug-line" style="margin-top:6px; font-weight:700; color:#8b5cf6;">📋 All documents for this student:</div>`;
+                debugData.documents.forEach((doc, i) => {
+                    const status = doc.approved === true ? '✅ APPROVED' :
+                        (doc.rejected === true ? '❌ REJECTED' : '⏳ PENDING');
+                    const statusColor = doc.approved === true ? 'debug-ok' :
+                        (doc.rejected === true ? 'debug-error' : 'debug-warn');
+                    html += `<div class="debug-line" style="padding-left:12px; border-left: 2px solid #334155;">
+                        <span class="debug-key">Doc #${i+1}:</span> 
+                        <span class="${statusColor}">${status}</span> 
+                        | avg: ${doc.overallAverage || 'N/A'} 
+                        | sig: ${doc.hasAdminSignature ? '✅' : '❌'}
+                        | approved type: <span class="debug-value">${doc.approvedType}</span>
+                    </div>`;
+                });
+            }
+
+            if (debugData.error) {
+                html += `<div class="debug-line"><span class="debug-error">❌ Error: ${debugData.error}</span></div>`;
+            }
+
+            if (debugData.hasApproved === false && debugData.docsFound > 0) {
+                html += `<div class="debug-line" style="margin-top:6px; background:#1e293b; padding:6px; border-radius:6px;">
+                    <span class="debug-warn">⚠️ No document with <strong>approved === true</strong> was found.</span>
+                    <span style="color:#94a3b8;"> Check the field type above – it should be boolean, not string.</span>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function openDebugPanel() {
+            $('debugPanel').classList.add('open');
+        }
+
+        // =============================================================
+        // DEBUG TOGGLE
+        // =============================================================
+        $('debugToggleBtn').addEventListener('click', () => {
+            const panel = $('debugPanel');
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) {
+                renderDebug();
+            }
+        });
+
+        $('closeDebugBtn').addEventListener('click', () => {
+            $('debugPanel').classList.remove('open');
+        });
+
+        // =============================================================
+        // REFRESH CLASSES
+        // =============================================================
+        $('refreshClassesBtn').addEventListener('click', () => {
+            loadMasterClassList();
+            showToast('🔄 Class list refreshed.', 'success');
         });
 
         // =============================================================
@@ -1137,7 +1354,6 @@
                 else if (overallPosition === 2) posEmoji = '🥈';
                 else if (overallPosition === 3) posEmoji = '🥉';
 
-                // FIXED: Correct position percentage calculation
                 let percentDisplay = 0;
                 if (totalStudents > 0) {
                     percentDisplay = Math.round((overallPosition / totalStudents) * 100);
@@ -1196,7 +1412,6 @@
                 photoHtml = `<div class="student-photo-container"><span class="student-photo-placeholder">👤</span></div>`;
             }
 
-            // ===== SIGNATURE HTML WITH IMAGE SUPPORT =====
             let teacherSigHtml = '';
             if (teacherSig) {
                 teacherSigHtml = `
@@ -1377,6 +1592,7 @@
             $('classSelect').value = '';
             $('studentPin').value = '';
             $('reportErr').innerText = '';
+            // Keep debug panel open if it was open
         });
 
         // =============================================================
@@ -1384,7 +1600,7 @@
         // =============================================================
         showPage('login');
         loadMasterClassList();
-        console.log('✅ Report Card Viewer - SINGLE PAGE PRINT VERSION');
+        console.log('✅ Report Card Viewer - DEBUG ENABLED');
     </script>
 </body>
 </html>
