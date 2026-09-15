@@ -436,7 +436,7 @@
     // =============================================================
     function showToast(message, type = "success") {
         const container = document.getElementById('toastContainer');
-        const icons = { success: '✅', error: '❌', warning: '⚠️' };
+        const icons = { success: '✅', error: '❌', warning: '⚠️', push: '📤' };
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `<span class="icon">${icons[type] || '📢'}</span> ${message}`;
@@ -2451,7 +2451,7 @@
     });
 
     // =============================================================
-    // EXAM PUBLISHING (abbreviated)
+    // EXAM PUBLISHING (FULLY WIRED — PUBLISH, FORCE, STOP, CLEAR)
     // =============================================================
     async function loadExamToggles(cls) {
         const status = await db.collection('examStatus').doc(cls).get();
@@ -2476,6 +2476,185 @@
     }
 
     // =============================================================
+    // PUBLISH BUTTONS — ADDED EVENT LISTENERS (FIX)
+    // =============================================================
+    document.getElementById('publishWithScheduleBtn')?.addEventListener('click', async () => {
+        if (!currentUser.class) {
+            showToast('⚠️ Please login first.', 'error');
+            return;
+        }
+
+        const selectedSubjects = Array.from(document.querySelectorAll('.examCb:checked')).map(cb => cb.value);
+
+        if (selectedSubjects.length === 0) {
+            showToast('⚠️ Please select at least one subject to publish.', 'warning');
+            return;
+        }
+
+        if (selectedSubjects.length > 1) {
+            const confirmMsg = `⚠️ You are about to publish ${selectedSubjects.length} subjects:\n\n${selectedSubjects.join(', ')}\n\nAre you sure?`;
+            if (!confirm(confirmMsg)) return;
+        }
+
+        try {
+            const startVal = document.getElementById('startDateTime').value;
+            const endVal = document.getElementById('endDateTime').value;
+            const duration = parseInt(document.getElementById('durationMinutes').value) || 30;
+
+            const statusRef = db.collection('examStatus').doc(currentUser.class);
+            await statusRef.set({
+                activeSubjects: selectedSubjects,
+                publishedAt: new Date(),
+                publishedBy: currentUser.name
+            }, { merge: true });
+
+            const controlsRef = db.collection('examControls').doc(currentUser.class);
+            await controlsRef.set({
+                scheduledStart: startVal ? new Date(startVal) : null,
+                scheduledEnd: endVal ? new Date(endVal) : null,
+                durationMinutes: duration,
+                forceActive: false,
+                updatedAt: new Date(),
+                updatedBy: currentUser.name
+            }, { merge: true });
+
+            const statusEl = document.getElementById('publishStatus');
+            if (statusEl) {
+                statusEl.innerText = `✅ Published ${selectedSubjects.length} subject(s) at ${new Date().toLocaleTimeString()}`;
+                statusEl.style.color = '#059669';
+            }
+
+            showToast(`✅ Published ${selectedSubjects.length} subject(s)!`, 'success');
+            await loadExamToggles(currentUser.class);
+
+        } catch (e) {
+            console.error('Publish error:', e);
+            showToast('❌ Publish failed: ' + e.message, 'error');
+        }
+    });
+
+    document.getElementById('forceStartBtn')?.addEventListener('click', async () => {
+        if (!currentUser.class) {
+            showToast('⚠️ Please login first.', 'error');
+            return;
+        }
+
+        const selectedSubjects = Array.from(document.querySelectorAll('.examCb:checked')).map(cb => cb.value);
+
+        if (selectedSubjects.length === 0) {
+            showToast('⚠️ Please select at least one subject.', 'warning');
+            return;
+        }
+
+        if (selectedSubjects.length > 1) {
+            const confirmMsg = `⚡ FORCE START ${selectedSubjects.length} subjects NOW?\n\n${selectedSubjects.join(', ')}\n\nThis will immediately activate these exams.`;
+            if (!confirm(confirmMsg)) return;
+        }
+
+        try {
+            const duration = parseInt(document.getElementById('durationMinutes').value) || 30;
+
+            const statusRef = db.collection('examStatus').doc(currentUser.class);
+            await statusRef.set({
+                activeSubjects: selectedSubjects,
+                forcedAt: new Date(),
+                forcedBy: currentUser.name
+            }, { merge: true });
+
+            const controlsRef = db.collection('examControls').doc(currentUser.class);
+            await controlsRef.set({
+                forceActive: true,
+                forceStartedAt: new Date(),
+                forceStartedBy: currentUser.name,
+                scheduledStart: new Date(),
+                scheduledEnd: new Date(Date.now() + duration * 60 * 1000),
+                durationMinutes: duration,
+                updatedAt: new Date()
+            }, { merge: true });
+
+            const statusEl = document.getElementById('publishStatus');
+            if (statusEl) {
+                statusEl.innerText = `⚡ Force started ${selectedSubjects.length} subject(s) at ${new Date().toLocaleTimeString()}`;
+                statusEl.style.color = '#dc2626';
+            }
+
+            showToast(`⚡ Force started ${selectedSubjects.length} subject(s)!`, 'success');
+            await loadExamToggles(currentUser.class);
+
+        } catch (e) {
+            console.error('Force start error:', e);
+            showToast('❌ Force start failed: ' + e.message, 'error');
+        }
+    });
+
+    document.getElementById('stopExamBtn')?.addEventListener('click', async () => {
+        if (!currentUser.class) {
+            showToast('⚠️ Please login first.', 'error');
+            return;
+        }
+
+        if (!confirm('🛑 Stop all active exams for this class?')) return;
+
+        try {
+            const statusRef = db.collection('examStatus').doc(currentUser.class);
+            await statusRef.set({
+                activeSubjects: [],
+                stoppedAt: new Date(),
+                stoppedBy: currentUser.name
+            }, { merge: true });
+
+            const controlsRef = db.collection('examControls').doc(currentUser.class);
+            await controlsRef.set({
+                forceActive: false,
+                scheduledStart: null,
+                scheduledEnd: null,
+                updatedAt: new Date()
+            }, { merge: true });
+
+            const statusEl = document.getElementById('publishStatus');
+            if (statusEl) {
+                statusEl.innerText = `🛑 All exams stopped at ${new Date().toLocaleTimeString()}`;
+                statusEl.style.color = '#dc2626';
+            }
+
+            showToast('🛑 All exams stopped!', 'warning');
+            await loadExamToggles(currentUser.class);
+
+        } catch (e) {
+            console.error('Stop error:', e);
+            showToast('❌ Stop failed: ' + e.message, 'error');
+        }
+    });
+
+    document.getElementById('clearScheduleBtn')?.addEventListener('click', async () => {
+        if (!currentUser.class) {
+            showToast('⚠️ Please login first.', 'error');
+            return;
+        }
+
+        if (!confirm('🗑️ Clear all schedule settings?')) return;
+
+        try {
+            document.getElementById('startDateTime').value = '';
+            document.getElementById('endDateTime').value = '';
+            document.getElementById('durationMinutes').value = 30;
+
+            const controlsRef = db.collection('examControls').doc(currentUser.class);
+            await controlsRef.set({
+                scheduledStart: null,
+                scheduledEnd: null,
+                durationMinutes: 30,
+                updatedAt: new Date()
+            }, { merge: true });
+
+            showToast('🗑️ Schedule cleared!', 'success');
+
+        } catch (e) {
+            showToast('❌ Clear failed: ' + e.message, 'error');
+        }
+    });
+
+    // =============================================================
     // BUILD REPORT BUTTON
     // =============================================================
     $('buildReportBtn').addEventListener('click', async () => {
@@ -2497,7 +2676,6 @@
     document.getElementById('saveTermSettingsBtn')?.addEventListener('click', async () => {
         if (!currentUser.class) { showToast('⚠️ Please select a class.', 'error'); return; }
         await saveTermSettings(currentUser.class);
-        // Refresh the report builder UI to show updated dates and total days
         if (document.getElementById('reportBuilderArea').innerHTML !== '') {
             await loadTermSettings(currentUser.class);
             if (currentSelectedStudent) {
@@ -2623,6 +2801,7 @@
     console.log('✅ SAVE FIX: now reads input values directly, no data loss!');
     console.log('✅ ATTENDANCE FIX: Days absent auto-calculates when loading a student');
     console.log('✅ TERM SETTINGS FIX: Total days opened updates attendance section when saved');
+    console.log('✅ PUBLISH FIX: Publish/Force/Stop/Clear buttons now fully wired. Publish 1 or many subjects.');
 </script>
 </body>
 </html>
